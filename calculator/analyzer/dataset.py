@@ -11,7 +11,7 @@ def create_dataset(data_dict,
     if vitals:
         data = data.join(data_dict['vitals'])
 
-    X = data.loc[:, data.columns != prediction]
+    X = data.loc[:, data.columns.difference(['outcome', 'icu'])]
     y = data.loc[:, prediction]
 
     return X, y
