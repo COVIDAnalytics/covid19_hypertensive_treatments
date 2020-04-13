@@ -1,0 +1,34 @@
+List of the names and type of the features present in the data
+
+MS                          category
+SaO2                         float64
+acidosis                    category
+age                           object
+anaemia                     category
+asthma                      category
+cancer                      category
+cardiac_frequency            float64
+chronic_heart_condition     category
+chronic_kidney              category
+chronic_liver               category
+chronic_obstructive_lung    category
+diabetes                    category
+diarrhea                    category
+diastolic_blood_pressure     float64
+epilepsy                    category
+glaucoma                    category
+high_triglycerides          category
+hypercholesterolemia        category
+hypertension                category
+leukemia                    category
+neutropenia                 category
+osteoporosis                category
+parkinson                   category
+prostatic_hyperplasia       category
+prostatic_hyperplesia       category
+respiratory_frequency        float64
+rickets                     category
+sex                         category
+systolic_blood_pressure      float64
+temperature_celsius          float64
+vomit                       category
