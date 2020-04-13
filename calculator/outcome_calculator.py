@@ -59,8 +59,13 @@ param_grid_RF = {
         "min_samples_split": [3, 5, 8],
         "n_estimators": [2500, 2000, 1500, 500]}
 
-xgboost_classifier(X_train, y_train, X_test, y_test, param_grid_XGB)
-rf_classifier(X_train, y_train, X_test, y_test, param_grid_RF)
+output_path_XGB = os.path.join(output_folder, 'XGB', folder_name)
+#create_dir(output_path_XGB)
+xgboost_classifier(X_train, y_train, X_test, y_test, param_grid_XGB, output_path_XGB, seed=SEED)
+
+output_path_RF = os.path.join(output_folder, 'RF', folder_name)
+#create_dir(output_path_RF)
+rf_classifier(X_train, y_train, X_test, y_test, param_grid_RF, output_path_RF, seed=SEED)
 
 
 
