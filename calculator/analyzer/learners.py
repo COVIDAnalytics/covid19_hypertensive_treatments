@@ -79,6 +79,8 @@ def top10(model, trainX):
 def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, seed = 1):
     X_train.sex = X_train.sex.cat.codes.astype('category')
     X_test.sex = X_test.sex.cat.codes.astype('category')
+    y_train = y_train.cat.codes.astype('category')
+    y_test = y_test.cat.codes.astype('category')
 
     XGB = xgb.XGBClassifier()
     gridsearch = GridSearchCV(estimator = XGB, param_grid = param_grid, cv = 10, verbose = 1)
@@ -100,6 +102,8 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
 def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, seed = 1):
     X_train.sex = X_train.sex.cat.codes.astype('category')
     X_test.sex = X_test.sex.cat.codes.astype('category')
+    y_train = y_train.cat.codes.astype('category')
+    y_test = y_test.cat.codes.astype('category')
 
     RF = RandomForestClassifier()
     gridsearch = GridSearchCV(estimator = RF, param_grid = param_grid, cv = 10, verbose = 1)
