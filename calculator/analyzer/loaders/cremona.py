@@ -2,6 +2,7 @@ import pandas as pd
 import datetime
 import numpy as np
 
+
 #Julia
 from julia.api import Julia
 jl = Julia(compiled_modules=False)
@@ -27,6 +28,26 @@ def n_days(t):
         return np.NaN
 
 
+def get_abg_dates(t):
+    try:
+        date = datetime.datetime.strptime(t, '%m/%d/%Y %I:%M %p')
+    except ValueError:
+        date = datetime.datetime.strptime(t, '%m/%d/%Y')
+
+    return date
+
+
+def remove_missing(df, nan_threashold=35):
+    percent_missing = df.isnull().sum() * 100 / len(df)
+    missing_values = pd.DataFrame({'percent_missing': percent_missing})
+    df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
+    df = df[df_features]
+
+    imputed_df = iai.impute(df)
+    imputed_df.index = df.index
+
+    return imputed_df
+
 
 def drop_anagraphics_duplicates(anagraphics):
     # Drop duplicates
@@ -46,6 +67,7 @@ def drop_anagraphics_duplicates(anagraphics):
     anagraphics.drop_duplicates(['NOSOLOGICO'], inplace=True)
     n_unique = len(anagraphics)
     print("Removed %d duplicates with same (Nosologico)" % (n_orig - n_unique))
+
 
 def add_codice_fiscale(df, anagraphics):
     df['CODICE FISCALE'] = ""
@@ -82,6 +104,13 @@ def load_cremona(path):
     idx_icu = icu['DESCR_REP_A'].str.contains('TERAPIA INTENSIVA CR') | icu['DESCR_REP_A'].str.contains('TERAPIA INTENSIVA OP')
     icu = icu.loc[idx_icu]
 
+    # Load arterial blood gas test
+    abg = pd.read_csv('%s/emergency_room/arterial_blood_gas.csv' % path)
+    abg = abg.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
+    abg['NOSOLOGICO'] = abg['NOSOLOGICO'].astype(str)
+    abg['DATA_RICHIESTA'] = abg['DATA_RICHIESTA'].apply(get_abg_dates)
+
+
     # Filter and merge
     #-------------------------------------------------------------------------------------
     # Select only covid patients
@@ -109,8 +138,10 @@ def load_cremona(path):
 
     # Filter by Nosologico (vitals and anagraphics)
     patients_nosologico = vitals[vitals['NOSOLOGICO'].isin(anagraphics["NOSOLOGICO"])]['NOSOLOGICO'].unique()
+    patients_nosologico = abg[abg['NOSOLOGICO'].isin(patients_nosologico)]['NOSOLOGICO'].unique()
     anagraphics = anagraphics[anagraphics['NOSOLOGICO'].isin(patients_nosologico)]
     vitals = vitals[vitals['NOSOLOGICO'].isin(patients_nosologico)]
+    abg = abg[abg['NOSOLOGICO'].isin(patients_nosologico)]
 
     # Filter again Codice Fiscale (drugs)
     patients_codice_fiscale = anagraphics['CODICE FISCALE'].unique()
@@ -131,6 +162,8 @@ def load_cremona(path):
     #-------------------------------------------------------------------------------------
     vitals = vitals.merge(anagraphics[['CODICE FISCALE', 'NOSOLOGICO']], on='NOSOLOGICO')
     vitals.drop(['NOSOLOGICO'], axis='columns', inplace=True)
+    abg = abg.merge(anagraphics[['CODICE FISCALE', 'NOSOLOGICO']], on='NOSOLOGICO')
+    abg.drop(['NOSOLOGICO'], axis='columns', inplace=True)
 
 
     # Compute length of stay
@@ -187,26 +220,33 @@ def load_cremona(path):
             vital_value = pd.to_numeric(vital_value).mean()
             dataset_vitals.loc[p, vital_name] = vital_value
 
-    # Drop columns with less than 35% values
-    nan_threashold = 35
-    percent_missing = dataset_vitals.isnull().sum() * 100 / len(dataset_vitals)
-    missing_value_dataset_vitals = pd.DataFrame({'percent_missing': percent_missing})
-    vital_signs = missing_value_dataset_vitals[missing_value_dataset_vitals['percent_missing'] < nan_threashold].index.tolist()
-    dataset_vitals = dataset_vitals[vital_signs]
-
-    # Input missing values
-    imputed_dataset_vitals = iai.impute(dataset_vitals)
-    imputed_dataset_vitals.index = dataset_vitals.index
+    # Adjust missing columns
+    dataset_vitals = remove_missing(dataset_vitals)
 
     # Rename to English
-    dataset_vitals = imputed_dataset_vitals.rename(columns={"P_ Max": "systolic_blood_pressure",
-                                                            "P_ Min": "diastolic_blood_pressure",
-                                                            "F_ Card_": "cardiac_frequency",
-                                                            "Temp_": "temperature_celsius",
-                                                            "F_ Resp_": "respiratory_frequency"})
+    dataset_vitals = dataset_vitals.rename(columns={"P_ Max": "systolic_blood_pressure",
+                                                    "P_ Min": "diastolic_blood_pressure",
+                                                    "F_ Card_": "cardiac_frequency",
+                                                    "Temp_": "temperature_celsius",
+                                                    "F_ Resp_": "respiratory_frequency"})
 
+
+    # Data with arterial blood gas
+    abg_features = abg['PRESTAZIONE'].unique().tolist()
+    dataset_abg = pd.DataFrame(np.nan, columns=abg_features, index=patients_codice_fiscale)
+    for p in patients_codice_fiscale:
+        abg_p = abg[abg['CODICE FISCALE'] == p][['DATA_RICHIESTA', 'PRESTAZIONE', 'VALORE']]
+        for abg_name in abg_p['PRESTAZIONE']:
+            abg_p_name = abg_p[abg_p['PRESTAZIONE'] == abg_name]
+            idx = abg_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
+            dataset_abg.loc[p, abg_name] = abg_p_name.loc[idx]['VALORE']
+
+    # Adjust missing columns
+    dataset_abg = remove_missing(dataset_abg)
 
     data = {'anagraphics': dataset_anagraphics,
             'comorbidities': dataset_comorbidities,
-            'vitals': dataset_vitals}
+            'vitals': dataset_vitals,
+            'abg': dataset_abg}
+
     return data

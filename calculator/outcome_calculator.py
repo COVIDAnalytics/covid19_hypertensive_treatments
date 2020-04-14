@@ -25,7 +25,7 @@ from analyzer.learners import rf_classifier
 
 
 SEED = 1
-prediction = 'icu'
+prediction = 'outcome'
 folder_name = 'cv10_script_seed' + str(SEED) + '_' + prediction
 output_folder = 'predictors/outcome'
 
@@ -37,7 +37,7 @@ X, y = create_dataset(data, prediction = prediction)
 (X_train, y_train), (X_test, y_test) = iai.split_data('classification',
                                                       X, y, train_proportion=0.8, seed=SEED)
 
-export_features_json(os.path.join(output_folder, 'test.json'))
+#  export_features_json(os.path.join(output_folder, 'test.json'))
 
 
 
