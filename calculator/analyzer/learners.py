@@ -89,16 +89,22 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
     #RECORD BEST MODEL
     bestHyp = gridsearch.best_params_
     bestXGB = gridsearch.best_estimator_
-    mlflow.sklearn.save_model(bestXGB, output_path, serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE) 
+
+    mlflow.sklearn.save_model(bestXGB, output_path, serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE)
     accTrain_XGB, accTest_XGB, ofs_fpr_XGB, ofs_tpr_XGB, isAUC_XGB, ofsAUC_XGB  = Scores(bestXGB, X_train.astype(int), y_train.astype(int), X_test.astype(int), y_test.astype(int))
+
+
     print('In Sample AUC', isAUC_XGB)
     print('Out of Sample AUC', ofsAUC_XGB)
     print('In Sample Misclassification', accTrain_XGB)
     print('Out of Sample Misclassification', accTest_XGB)
+
+    print("Top 10", top10(bestXGB, trainX))
+
     return isAUC_XGB, ofsAUC_XGB, accTrain_XGB, accTest_XGB
 
- 
- 
+
+
 def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, seed = 1):
     X_train.sex = X_train.sex.cat.codes.astype('category')
     X_test.sex = X_test.sex.cat.codes.astype('category')
@@ -112,7 +118,7 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     #RECORD BEST MODEL
     bestHypRF = gridsearch.best_params_
     bestRF = gridsearch.best_estimator_
-    mlflow.sklearn.save_model(bestRF, output_path, serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE) 
+    mlflow.sklearn.save_model(bestRF, output_path, serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE)
     accTrain_RF, accTest_RF, ofs_fpr_RF, ofs_tpr_RF, isAUC_RF, ofsAUC_RF  = Scores(bestRF, X_train.astype(int), y_train.astype(int), X_test.astype(int), y_test.astype(int))
     print('In Sample AUC', isAUC_RF)
     print('Out of Sample AUC', ofsAUC_RF)
