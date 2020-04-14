@@ -25,7 +25,7 @@ from analyzer.learners import rf_classifier
 
 
 SEED = 1
-prediction = 'outcome'
+prediction = 'icu'
 folder_name = 'cv10_script_seed' + str(SEED) + '_' + prediction
 output_folder = 'predictors/outcome'
 
