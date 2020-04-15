@@ -82,7 +82,7 @@ def add_codice_fiscale(df, anagraphics):
         vitals.loc[vitals['SCHEDA_PS'] == nosologico[0], 'CODICE FISCALE'] = p
 
 
-def load_cremona(path):
+def load_cremona(path, lab_tests=True):
 
     # Load data
     #-------------------------------------------------------------------------------------
@@ -215,8 +215,10 @@ def load_cremona(path):
 
 
     # Data with ER vitals
-    #  vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
-    vital_signs = ['P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
+    vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
+    if lab_tests:
+        vital_signs.remove('Sa02')  # Remove oxygen saturation if we have lab values (it is there)
+
     dataset_vitals = pd.DataFrame(np.nan, columns=vital_signs, index=patients_codice_fiscale)
     for p in patients_codice_fiscale:
         vitals_p = vitals[vitals['CODICE FISCALE'] == p][['NOME_PARAMETRO_VITALE', 'VALORE_PARAMETRO']]
@@ -230,11 +232,11 @@ def load_cremona(path):
     dataset_vitals = remove_missing(dataset_vitals)
 
     # Rename to English
-    dataset_vitals = dataset_vitals.rename(columns={"P_ Max": "systolic_blood_pressure",
-                                                    "P_ Min": "diastolic_blood_pressure",
-                                                    "F_ Card_": "cardiac_frequency",
-                                                    "Temp_": "temperature_celsius",
-                                                    "F_ Resp_": "respiratory_frequency"})
+    dataset_vitals = dataset_vitals.rename(columns={"P. Max": "systolic_blood_pressure",
+                                                    "P. Min": "diastolic_blood_pressure",
+                                                    "F. Card.": "cardiac_frequency",
+                                                    "Temp.": "temperature_celsius",
+                                                    "F. Resp.": "respiratory_frequency"})
 
 
     # Data with lab results
@@ -246,6 +248,7 @@ def load_cremona(path):
             lab_p_name = lab_p[lab_p['PRESTAZIONE'] == lab_name]
             idx = lab_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
             dataset_lab.loc[p, lab_name] = lab_p_name.loc[idx]['VALORE']
+
 
     # Adjust missing columns
     dataset_lab = remove_missing(dataset_lab)
