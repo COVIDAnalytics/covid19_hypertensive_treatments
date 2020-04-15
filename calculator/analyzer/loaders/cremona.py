@@ -2,11 +2,15 @@ import pandas as pd
 import datetime
 import numpy as np
 
+# explicitly require this experimental feature
+from sklearn.experimental import enable_iterative_imputer  # noqa
+# now you can import normally from sklearn.impute
+from sklearn.impute import IterativeImputer
 
 #Julia
-from julia.api import Julia
-jl = Julia(compiled_modules=False)
-from interpretableai import iai
+#  from julia.api import Julia
+#  jl = Julia(compiled_modules=False)
+#  from interpretableai import iai
 
 
 def fix_outcome(outcome):
@@ -43,10 +47,11 @@ def remove_missing(df, nan_threashold=35):
     df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
     df = df[df_features]
 
-    imputed_df = iai.impute(df)
-    imputed_df.index = df.index
+    imp_mean = IterativeImputer(random_state=0)
+    imp_mean.fit(df)
+    imputed_df = imp_mean.transform(df)
 
-    return imputed_df
+    return pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
 
 
 def drop_anagraphics_duplicates(anagraphics):
