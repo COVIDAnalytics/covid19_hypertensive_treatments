@@ -34,18 +34,12 @@ output_folder = 'predictors/outcome'
 data = load_cremona('../data/cremona/')
 
 # Create dataset
-X, y = create_dataset(data, prediction = prediction)
+#  X, y = create_dataset(data, prediction = prediction)
 
 # Split in train and test
-X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.1,
-                                                    random_state=SEED)
+#  X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.1,
+#                                                      random_state=SEED)
 
-
-
-#  (X_train, y_train), (X_test, y_test) = iai.split_data('classification',
-#                                                        X, y, train_proportion=0.9, seed=SEED)
-
-# export_features_json(os.path.join(output_folder, 'test.json'))
 
 
 
@@ -74,8 +68,8 @@ param_grid_XGB = {
 
 
 
-output_path_XGB = os.path.join(output_folder, 'XGB', folder_name)
-xgboost_classifier(X_train, y_train, X_test, y_test, param_grid_XGB, output_path_XGB, seed=SEED)
+#  output_path_XGB = os.path.join(output_folder, 'XGB', folder_name)
+#  xgboost_classifier(X_train, y_train, X_test, y_test, param_grid_XGB, output_path_XGB, seed=SEED)
 
 
 param_grid_RF = {
@@ -97,5 +91,5 @@ param_grid_RF = {
 #  }
 
 
-output_path_RF = os.path.join(output_folder, 'RF', folder_name)
-rf_classifier(X_train, y_train, X_test, y_test, param_grid_RF, output_path_RF, seed=SEED)
+#  output_path_RF = os.path.join(output_folder, 'RF', folder_name)
+#  rf_classifier(X_train, y_train, X_test, y_test, param_grid_RF, output_path_RF, seed=SEED)
