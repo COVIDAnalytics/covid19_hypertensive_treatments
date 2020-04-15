@@ -32,11 +32,11 @@ def n_days(t):
         return np.NaN
 
 
-def get_abg_dates(t):
+def get_lab_dates(t):
     try:
-        date = datetime.datetime.strptime(t, '%m/%d/%Y %I:%M %p')
+        date = datetime.datetime.strptime(t, '%d/%m/%Y %H:%M')
     except ValueError:
-        date = datetime.datetime.strptime(t, '%m/%d/%Y')
+        date = datetime.datetime.strptime(t, '%d/%m/%Y')
 
     return date
 
@@ -110,10 +110,10 @@ def load_cremona(path):
     icu = icu.loc[idx_icu]
 
     # Load arterial blood gas test
-    abg = pd.read_csv('%s/emergency_room/arterial_blood_gas.csv' % path)
-    abg = abg.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
-    abg['NOSOLOGICO'] = abg['NOSOLOGICO'].astype(str)
-    abg['DATA_RICHIESTA'] = abg['DATA_RICHIESTA'].apply(get_abg_dates)
+    lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
+    lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
+    lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
+    lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(get_lab_dates)
 
 
     # Filter and merge
@@ -143,10 +143,10 @@ def load_cremona(path):
 
     # Filter by Nosologico (vitals and anagraphics)
     patients_nosologico = vitals[vitals['NOSOLOGICO'].isin(anagraphics["NOSOLOGICO"])]['NOSOLOGICO'].unique()
-    patients_nosologico = abg[abg['NOSOLOGICO'].isin(patients_nosologico)]['NOSOLOGICO'].unique()
+    patients_nosologico = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]['NOSOLOGICO'].unique()
     anagraphics = anagraphics[anagraphics['NOSOLOGICO'].isin(patients_nosologico)]
     vitals = vitals[vitals['NOSOLOGICO'].isin(patients_nosologico)]
-    abg = abg[abg['NOSOLOGICO'].isin(patients_nosologico)]
+    lab = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]
 
     # Filter again Codice Fiscale (drugs)
     patients_codice_fiscale = anagraphics['CODICE FISCALE'].unique()
@@ -167,8 +167,8 @@ def load_cremona(path):
     #-------------------------------------------------------------------------------------
     vitals = vitals.merge(anagraphics[['CODICE FISCALE', 'NOSOLOGICO']], on='NOSOLOGICO')
     vitals.drop(['NOSOLOGICO'], axis='columns', inplace=True)
-    abg = abg.merge(anagraphics[['CODICE FISCALE', 'NOSOLOGICO']], on='NOSOLOGICO')
-    abg.drop(['NOSOLOGICO'], axis='columns', inplace=True)
+    lab = lab.merge(anagraphics[['CODICE FISCALE', 'NOSOLOGICO']], on='NOSOLOGICO')
+    lab.drop(['NOSOLOGICO'], axis='columns', inplace=True)
 
 
     # Compute length of stay
@@ -237,22 +237,22 @@ def load_cremona(path):
                                                     "F_ Resp_": "respiratory_frequency"})
 
 
-    # Data with arterial blood gas
-    abg_features = abg['PRESTAZIONE'].unique().tolist()
-    dataset_abg = pd.DataFrame(np.nan, columns=abg_features, index=patients_codice_fiscale)
+    # Data with lab results
+    lab_features = lab['PRESTAZIONE'].unique().tolist()
+    dataset_lab = pd.DataFrame(np.nan, columns=lab_features, index=patients_codice_fiscale)
     for p in patients_codice_fiscale:
-        abg_p = abg[abg['CODICE FISCALE'] == p][['DATA_RICHIESTA', 'PRESTAZIONE', 'VALORE']]
-        for abg_name in abg_p['PRESTAZIONE']:
-            abg_p_name = abg_p[abg_p['PRESTAZIONE'] == abg_name]
-            idx = abg_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
-            dataset_abg.loc[p, abg_name] = abg_p_name.loc[idx]['VALORE']
+        lab_p = lab[lab['CODICE FISCALE'] == p][['DATA_RICHIESTA', 'PRESTAZIONE', 'VALORE']]
+        for lab_name in lab_p['PRESTAZIONE']:
+            lab_p_name = lab_p[lab_p['PRESTAZIONE'] == lab_name]
+            idx = lab_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
+            dataset_lab.loc[p, lab_name] = lab_p_name.loc[idx]['VALORE']
 
     # Adjust missing columns
-    dataset_abg = remove_missing(dataset_abg)
+    dataset_lab = remove_missing(dataset_lab)
 
     data = {'anagraphics': dataset_anagraphics,
             'comorbidities': dataset_comorbidities,
             'vitals': dataset_vitals,
-            'abg': dataset_abg}
+            'lab': dataset_lab}
 
     return data
