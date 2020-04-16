@@ -86,9 +86,10 @@ def load_cremona(path, lab_tests=True):
 
     # TODO:
     # 1. Get general data discharge -> Extract diagnosis
+    #    (Use R package icd) => TODO!
     # 2. Merge with vitals from ER
     # 3. Merge with lab tests
-    # 4. Add ICU admissions
+    # 4. Add ICU admissions (later)
 
     # Load data
     #-------------------------------------------------------------------------------------
