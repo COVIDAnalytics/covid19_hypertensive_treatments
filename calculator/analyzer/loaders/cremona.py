@@ -122,7 +122,6 @@ def load_cremona(path, lab_tests=True):
     # Try 2: luca pkl
     with open('%s/general/dict_ccs.pkl' % path, "rb") as f:
         dict_ccs = pickle.load(f)
-        ccs = pd.Series(dict_ccs)
 
     # Try 3: italian stuff
     italian_map = pd.read_csv('%s/general/icd9_italy_diagnosis.csv' % path, index_col=0, encoding = "ISO-8859-1")
@@ -132,10 +131,22 @@ def load_cremona(path, lab_tests=True):
     print("CCS map", ccs['1']) # Example 'Tubercolosis'
 
 
+    #Import the comorbidity csv
+    comorb_df = pd.read_csv('%s/general/comorbidities.csv' % path, index_col="id")
+    comorb_df.drop(comorb_df.columns[0], axis = 1, inplace = True)
 
-    comorb_df = pd.read_csv('%s/general/comorbidities.csv' % path, index_col=0)
+    #Change the name of the cols from CCS code to comorbidity name
+    old_cols = list(comorb_df.columns)
+    new_cols = [dict_ccs[i] for i in old_cols]
+    comorb_df.columns = new_cols
 
-
+    # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
+    cols_keep = list(comorb_df.columns[comorb_df.sum() >10])
+    cols_keep.remove("Immunizations and screening for infectious disease")
+    cols_keep.remove("Pneumonia (except that caused by tuberculosis or sexually transmitted disease)")
+    cols_keep.remove("Respiratory failure; insufficiency; arrest (adult)")
+    cols_keep.remove("Residual codes; unclassified")
+    comorb_df = comorb_df[cols_keep]
 
 
 
