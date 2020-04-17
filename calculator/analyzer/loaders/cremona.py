@@ -124,7 +124,6 @@ def load_cremona(path, lab_tests=True):
         dict_ccs = pickle.load(f)
         ccs = pd.Series(dict_ccs)
 
-
     # Try 3: italian stuff
     italian_map = pd.read_csv('%s/general/icd9_italy_diagnosis.csv' % path, index_col=0, encoding = "ISO-8859-1")
 
@@ -133,6 +132,8 @@ def load_cremona(path, lab_tests=True):
     print("CCS map", ccs['1']) # Example 'Tubercolosis'
 
 
+
+    comorb_df = pd.read_csv('%s/general/comorbidities.csv' % path, index_col=0)
 
 
 
