@@ -2,6 +2,8 @@ import pandas as pd
 import datetime
 import numpy as np
 
+from analyzer.icd9.icd9 import ICD9
+
 # explicitly require this experimental feature
 from sklearn.experimental import enable_iterative_imputer  # noqa
 # now you can import normally from sklearn.impute
@@ -88,7 +90,7 @@ def load_cremona(path, lab_tests=True):
     # 1. Get general data discharge -> Extract diagnosis
     #    (Use R package icd) => TODO!
     # 2. Merge with vitals from ER
-    # 3. Merge with lab tests
+    # 3. Merge with lab tests from ER
     # 4. Add ICU admissions (later)
 
     # Load data
@@ -102,9 +104,7 @@ def load_cremona(path, lab_tests=True):
             discharge_info['Dia4'].isin(list_diagnosis) | \
             discharge_info['Dia5'].isin(list_diagnosis)
 
-
     discharge_data = discharge_info[covid_patients]
-
 
     diagnosis = pd.concat([discharge_data['Principale'],
         discharge_data['Dia1'],
@@ -114,8 +114,25 @@ def load_cremona(path, lab_tests=True):
         discharge_data['Dia5']
         ]).dropna().str.strip().unique()
 
+    icd9_tree = ICD9('./analyzer/icd9/codes.json')
+    icd9_tree.find('480').description
 
-    # Convert
+    # Convert (to export for R processing)
+    #  comorb_df = pd.DataFrame(columns=['id', 'comorb'])
+    #  for i in range(len(discharge_data)):
+    #      d_temp = discharge_data.iloc[i]
+    #      df_temp = pd.DataFrame({'id': [d_temp['NumeroScheda']] * 6,
+    #                              'comorb': [d_temp['Principale'],
+    #                                         d_temp['Dia1'],
+    #                                         d_temp['Dia2'],
+    #                                         d_temp['Dia3'],
+    #                                         d_temp['Dia4'],
+    #                                         d_temp['Dia5']]})
+    #      comorb_df = comorb_df.append(df_temp)
+    #
+    #  comorb_df = comorb_df.dropna().reset_index()
+    #  comorb_df.to_csv('comorb.csv')
+
 
     import ipdb; ipdb.set_trace()
 
