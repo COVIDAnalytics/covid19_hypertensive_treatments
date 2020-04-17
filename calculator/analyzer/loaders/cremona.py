@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime
 import numpy as np
+import pickle
 
 from analyzer.icd9.icd9 import ICD9
 
@@ -114,8 +115,28 @@ def load_cremona(path, lab_tests=True):
         discharge_data['Dia5']
         ]).dropna().str.strip().unique()
 
+    # Try 1: script
     icd9_tree = ICD9('./analyzer/icd9/codes.json')
     icd9_tree.find('480').description
+
+    # Try 2: luca pkl
+    with open('%s/general/dict_ccs.pkl' % path, "rb") as f:
+        dict_ccs = pickle.load(f)
+        ccs = pd.Series(dict_ccs)
+
+
+    # Try 3: italian stuff
+    italian_map = pd.read_csv('%s/general/icd9_italy_diagnosis.csv' % path, index_col=0, encoding = "ISO-8859-1")
+
+    print("Italian map", italian_map.loc['001']) # Example: 'colera'
+    print("id9 map", icd9_tree.find('001').description) # Example 'Chlera'
+    print("CCS map", ccs['1']) # Example 'Tubercolosis'
+
+
+
+
+
+
 
     # Convert (to export for R processing)
     #  comorb_df = pd.DataFrame(columns=['id', 'comorb'])
