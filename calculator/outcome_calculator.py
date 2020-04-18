@@ -1,17 +1,10 @@
 import pandas as pd
-import numpy as np
-#  import matplotlib.pylab as plt
 import os
 
-#Julia
-#  from julia.api import Julia
-#  jl = Julia(compiled_modules=False)
-#  from interpretableai import iai
 
 from sklearn.model_selection import train_test_split
 
 # Other packages
-#  import seaborn as sns
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -39,7 +32,6 @@ X, y = create_dataset(data, prediction = prediction)
 # Split in train and test
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.1,
                                                      random_state=SEED)
-
 
 
 

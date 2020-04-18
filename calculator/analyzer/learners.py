@@ -96,7 +96,7 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
     print('In Sample Misclassification', accTrain_XGB)
     print('Out of Sample Misclassification', accTest_XGB)
 
-    print("Top 10", top_features(bestXGB, X_train))
+    top_features(bestXGB, X_train)
 
     remove_dir(output_path)
     mlflow.sklearn.save_model(bestXGB, output_path,
@@ -132,7 +132,7 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     print('Out of Sample AUC', ofsAUC_RF)
     print('In Sample Misclassification', accTrain_RF)
     print('Out of Sample Misclassification', accTest_RF)
-    print("Top 10", top_features(bestRF, X_train))
+    top_features(bestRF, X_train)
 
     remove_dir(output_path)
     mlflow.sklearn.save_model(bestRF, output_path, serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE)

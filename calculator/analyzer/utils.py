@@ -20,7 +20,11 @@ def top_features(model, X_train, n=20):
 
     varsImpo = varsImpo.sort_values(by='vals',
                                     ascending = False)
-    return varsImpo[:n]
+    varsImpo = varsImpo[:n]
+
+    print("Top %d\n" % n)
+    print(varsImpo)
+    return varsImpo
 
 def export_features_json(X, file_name):
     data = {'numeric': {},

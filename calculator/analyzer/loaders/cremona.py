@@ -10,10 +10,24 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 # now you can import normally from sklearn.impute
 from sklearn.impute import IterativeImputer
 
-# Julia
-from julia.api import Julia
-jl = Julia(compiled_modules=False)
-from interpretableai import iai
+
+def export_comorbidities(df, file_name):
+    #  Convert (to export for R processing)
+    # TODO: Improve this code
+    comorb_df = pd.DataFrame(columns=['id', 'comorb'])
+    for i in range(len(df)):
+        d_temp = df.iloc[i]
+        df_temp = pd.DataFrame({'id': [d_temp['NumeroScheda']] * 6,
+                                'comorb': [d_temp['Principale'],
+                                           d_temp['Dia1'],
+                                           d_temp['Dia2'],
+                                           d_temp['Dia3'],
+                                           d_temp['Dia4'],
+                                           d_temp['Dia5']]})
+        comorb_df = comorb_df.append(df_temp)
+
+    comorb_df = comorb_df.dropna().reset_index()
+    comorb_df.to_csv(file_name)
 
 
 def fix_outcome(outcome):
@@ -48,6 +62,7 @@ def remove_missing(df, nan_threashold=40):
     percent_missing = df.isnull().sum() * 100 / len(df)
     missing_values = pd.DataFrame({'percent_missing': percent_missing})
     df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
+
     df = df[df_features]
 
     imp_mean = IterativeImputer(random_state=0)
@@ -94,10 +109,24 @@ def load_cremona(path, lab_tests=True):
     # 3. Merge with lab tests from ER
     # 4. Add ICU admissions (later)
 
+    # Parameters
+
+    # ICD9 COVID diagnosis Italian codes
+    list_diagnosis = ['4808', '4803', 'V0182', '7982']
+    list_remove_comorbidities = ["Immunizations and screening for infectious disease",
+                                 "Pneumonia (except that caused by tuberculosis or sexually transmitted disease)",
+                                 "Respiratory failure; insufficiency; arrest (adult)",
+                                 "Residual codes; unclassified"]
+
+    # Discharge codes
+    # 1,2,5,6,9 = discharged, 4 = deceased
+    discharge_codes = [1, 2, 4, 5, 6, 9]
+    discharge_code_deceased = 4
+
+
     # Load data
     #-------------------------------------------------------------------------------------
     discharge_info = pd.read_csv('%s/general/discharge_info.csv' % path)
-    list_diagnosis = ['4808', '4803', 'V0182', '7982']  # COVID related
     covid_patients = discharge_info['Principale'].isin(list_diagnosis) | \
             discharge_info['Dia1'].isin(list_diagnosis) | \
             discharge_info['Dia2'].isin(list_diagnosis) | \
@@ -115,25 +144,15 @@ def load_cremona(path, lab_tests=True):
         discharge_info['Dia5']
         ]).dropna().str.strip().unique()
 
-    # # Try 1: script
-    # icd9_tree = ICD9('./analyzer/icd9/codes.json')
-    # icd9_tree.find('480').description
 
-    # Try 2: luca pkl
-    with open('%s/general/dict_ccs.pkl' % path, "rb") as f:
-        dict_ccs = pickle.load(f)
+    # Export comorbidities to process with R
+    export_comorbidities(discharge_info, '%s/general/nosologico_com.csv' % path)
 
-    # # Try 3: italian stuff
-    # italian_map = pd.read_csv('%s/general/icd9_italy_diagnosis.csv' % path, index_col=0, encoding = "ISO-8859-1")
-
-    # print("Italian map", italian_map.loc['001']) # Example: 'colera'
-    # print("id9 map", icd9_tree.find('001').description) # Example 'Chlera'
-    # print("CCS map", ccs['1']) # Example 'Tubercolosis'
-
-
-    #Import the comorbidity csv
+    #Import the comorbidity csv and dictionary from R
     dataset_comorbidities = pd.read_csv('%s/general/comorbidities.csv' % path, index_col="id")
     dataset_comorbidities.drop(dataset_comorbidities.columns[0], axis = 1, inplace = True)
+    with open('%s/general/dict_ccs.pkl' % path, "rb") as f:
+        dict_ccs = pickle.load(f)
 
     #Change the name of the cols from CCS code to comorbidity name
     old_cols = list(dataset_comorbidities.columns)
@@ -142,28 +161,32 @@ def load_cremona(path, lab_tests=True):
 
     # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
     cols_keep = list(dataset_comorbidities.columns[dataset_comorbidities.sum() >10])
-    cols_keep.remove("Immunizations and screening for infectious disease")
-    cols_keep.remove("Pneumonia (except that caused by tuberculosis or sexually transmitted disease)")
-    cols_keep.remove("Respiratory failure; insufficiency; arrest (adult)")
-    cols_keep.remove("Residual codes; unclassified")
+    for e in list_remove_comorbidities:
+        cols_keep.remove(e)
     dataset_comorbidities = dataset_comorbidities[cols_keep]
-    dataset_comorbidities = dataset_comorbidities.astype('int').astype('category') # False and True are transformed to 0 and 1 categories
+    # False and True are transformed to 0 and 1 categories
+    dataset_comorbidities = dataset_comorbidities.astype('int').astype('category')
 
     # Keep only the patients that we have in the comorbidities dataframe
     pat_comorb = dataset_comorbidities.index
     discharge_info = discharge_info[discharge_info.NumeroScheda.isin(pat_comorb)]
 
-    # Keep 1,2,5,6,9 = discharged, 4 = deceased and transform the dependent variable to binary
-    discharge_info = discharge_info[discharge_info['Modalità di dimissione'].isin([1,2,4,5,6,9])]
-    discharge_info['Modalità di dimissione'] = (discharge_info['Modalità di dimissione'] == 4).apply(int) #transform to binary
+    # Keep discharge codes and transform the dependent variable to binary
+    discharge_info = discharge_info[discharge_info['Modalità di dimissione'].isin(discharge_codes)]
+    discharge_info['Modalità di dimissione'] = \
+        (discharge_info['Modalità di dimissione'] == discharge_code_deceased).apply(int) #transform to binary
 
     # Drop Duplicated Observations
     discharge_info.drop_duplicates(['NumeroScheda', 'Modalità di dimissione'], inplace=True)
     discharge_info.drop_duplicates(['NumeroScheda'], inplace=True)
 
-    #Keep only important columns and rename them 
+    #Keep only important columns and rename them
     discharge_info = discharge_info[['NumeroScheda', 'Sesso', 'Età', 'Modalità di dimissione']]
-    discharge_info = discharge_info.rename(columns={'NumeroScheda': 'NOSOLOGICO', 'Sesso': 'sex', 'Età':'age', 'Modalità di dimissione':'outcome'})
+    discharge_info = discharge_info.rename(
+            columns={'NumeroScheda': 'NOSOLOGICO',
+                     'Sesso': 'sex',
+                     'Età':'age',
+                     'Modalità di dimissione':'outcome'})
     discharge_info.NOSOLOGICO = discharge_info.NOSOLOGICO.apply(str)
 
     # Load vitals
@@ -176,15 +199,15 @@ def load_cremona(path, lab_tests=True):
     lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
     lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
     lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(get_lab_dates)
-    
-    
+
+
     # Filter by Nosologico (vitals and anagraphics)
     patients_nosologico = vitals[vitals['NOSOLOGICO'].isin(discharge_info["NOSOLOGICO"])]['NOSOLOGICO'].unique()
     patients_nosologico = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]['NOSOLOGICO'].unique()
     discharge_info = discharge_info[discharge_info['NOSOLOGICO'].isin(patients_nosologico)]
     vitals = vitals[vitals['NOSOLOGICO'].isin(patients_nosologico)]
     lab = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]
-    dataset_comorbidities.index = [str(i) for i in dataset_comorbidities.index] 
+    dataset_comorbidities.index = [str(i) for i in dataset_comorbidities.index]
     dataset_comorbidities = dataset_comorbidities.loc[patients_nosologico]
 
 
@@ -197,12 +220,11 @@ def load_cremona(path, lab_tests=True):
     dataset_anagraphics.loc[:, 'sex'] = dataset_anagraphics.loc[:, 'sex'].astype('category')
     dataset_anagraphics.loc[:, 'outcome'] = dataset_anagraphics.loc[:, 'outcome'].astype('category')
 
-
     # Data with ER vitals
     vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
     if lab_tests:
         vital_signs.remove('SaO2')  # Remove oxygen saturation if we have lab values (it is there)
-    
+
     dataset_vitals = pd.DataFrame(np.nan, columns=vital_signs, index=patients_nosologico)
     for p in patients_nosologico:
         vitals_p = vitals[vitals['NOSOLOGICO'] == p][['NOME_PARAMETRO_VITALE', 'VALORE_PARAMETRO']]
@@ -211,10 +233,10 @@ def load_cremona(path, lab_tests=True):
             vital_value = vitals_p[vitals_p['NOME_PARAMETRO_VITALE'] == vital_name]['VALORE_PARAMETRO']
             vital_value = pd.to_numeric(vital_value).mean()
             dataset_vitals.loc[p, vital_name] = vital_value
-    
+
     # Adjust missing columns
     dataset_vitals = remove_missing(dataset_vitals)
-    
+
     # Rename to English
     dataset_vitals = dataset_vitals.rename(columns={"P. Max": "systolic_blood_pressure",
                                                     "P. Min": "diastolic_blood_pressure",
@@ -222,8 +244,8 @@ def load_cremona(path, lab_tests=True):
                                                     "Temp.": "temperature_celsius",
                                                     "F. Resp.": "respiratory_frequency"
                                                     })
-    
-    
+
+
     # Data with lab results
     lab_features = lab['PRESTAZIONE'].unique().tolist()
     dataset_lab = pd.DataFrame(np.nan, columns=lab_features, index=patients_nosologico)
@@ -233,11 +255,12 @@ def load_cremona(path, lab_tests=True):
             lab_p_name = lab_p[lab_p['PRESTAZIONE'] == lab_name]
             idx = lab_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
             dataset_lab.loc[p, lab_name] = lab_p_name.loc[idx]['VALORE']
-    
-    
+
+
     # Adjust missing columns
     dataset_lab = remove_missing(dataset_lab)
-    dataset_lab = dataset_lab.rename(columns = {'VOLUME CORPUSCOLARE MEDIO': 'Mean Cell Volume',
+    dataset_lab = dataset_lab.rename(columns =
+                                {'VOLUME CORPUSCOLARE MEDIO': 'Mean Cell Volume',
                                 'PIASTRINE': 'Platelets',
                                 'EMATOCRITO': 'Hematocrit (?)',
                                 'ALT': 'Alanine Aminotransferase (ALT)',
@@ -279,12 +302,17 @@ def load_cremona(path, lab_tests=True):
                                 'CONCENTRAZIONE HB MEDIA': 'Mean Corpuscular Hemoglobin Concentration (MCHC)',
                                 'AMILASI NEL SIERO': 'Amylase Serum Level',
                                 'COLINESTERASI': 'Cholinesterase'})
-    
+
+    dataset_lab.drop([c for c in dataset_lab.columns if '?' in c],
+                     axis='columns', inplace=True)
+
+    import ipdb; ipdb.set_trace()
+
     data = {'anagraphics': dataset_anagraphics,
             'comorbidities': dataset_comorbidities,
             'vitals': dataset_vitals,
             'lab': dataset_lab}
-    
+
     return data
 
     # # Convert (to export for R processing)
@@ -299,7 +327,7 @@ def load_cremona(path, lab_tests=True):
     #                                        d_temp['Dia4'],
     #                                        d_temp['Dia5']]})
     #     dataset_comorbidities = dataset_comorbidities.append(df_temp)
-    
+
     # dataset_comorbidities = dataset_comorbidities.dropna().reset_index()
     # dataset_comorbidities.to_csv('comorb.csv')
 
