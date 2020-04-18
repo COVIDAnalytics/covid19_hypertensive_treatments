@@ -35,7 +35,6 @@ data = load_cremona('../data/cremona/')
 
 # Create dataset
 X, y = create_dataset(data, prediction = prediction)
-X = X[X.columns[2:]]
 
 # Split in train and test
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.1,
@@ -45,9 +44,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=
 
 
 # Train trees
-output_path = os.path.join(output_folder, 'trees', folder_name)
-create_dir(output_path)
-oct_scores = train_oct(X_train, y_train, X_test, y_test, output_path, seed=SEED)
+# output_path = os.path.join(output_folder, 'trees', folder_name)
+# create_dir(output_path)
+# oct_scores = train_oct(X_train, y_train, X_test, y_test, output_path, seed=SEED)
 
 
 #PARAMETERS GRID
@@ -79,7 +78,7 @@ param_grid_RF = {
         "min_samples_leaf": [1, 4, 8, 12, 18, 20],
         "min_samples_split": [3, 5, 8, 10, 12, 15],
         "max_depth": [3, 5, 8, 10],
-        "n_estimators": [20, 50, 80, 100, 120, 150, 200],
+        "n_estimators": [20, 50, 80, 100, 120, 150, 200, 400],
 }
 
 #  param_grid_RF = {

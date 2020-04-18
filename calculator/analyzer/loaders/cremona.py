@@ -44,7 +44,7 @@ def get_lab_dates(t):
     return date
 
 
-def remove_missing(df, nan_threashold=35):
+def remove_missing(df, nan_threashold=40):
     percent_missing = df.isnull().sum() * 100 / len(df)
     missing_values = pd.DataFrame({'percent_missing': percent_missing})
     df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
@@ -147,15 +147,15 @@ def load_cremona(path, lab_tests=True):
     cols_keep.remove("Respiratory failure; insufficiency; arrest (adult)")
     cols_keep.remove("Residual codes; unclassified")
     dataset_comorbidities = dataset_comorbidities[cols_keep]
-
+    dataset_comorbidities = dataset_comorbidities.astype('int').astype('category') # False and True are transformed to 0 and 1 categories
 
     # Keep only the patients that we have in the comorbidities dataframe
     pat_comorb = dataset_comorbidities.index
     discharge_info = discharge_info[discharge_info.NumeroScheda.isin(pat_comorb)]
 
-    # Keep 1 = discharged, 4 = deceased and transform the dependent variable to a binary one
-    discharge_info = discharge_info[(discharge_info['Modalità di dimissione'] == 1) | (discharge_info['Modalità di dimissione'] == 4)]
-    discharge_info['Modalità di dimissione'] = (discharge_info['Modalità di dimissione'] == 4).apply(int)
+    # Keep 1,2,5,6,9 = discharged, 4 = deceased and transform the dependent variable to binary
+    discharge_info = discharge_info[discharge_info['Modalità di dimissione'].isin([1,2,4,5,6,9])]
+    discharge_info['Modalità di dimissione'] = (discharge_info['Modalità di dimissione'] == 4).apply(int) #transform to binary
 
     # Drop Duplicated Observations
     discharge_info.drop_duplicates(['NumeroScheda', 'Modalità di dimissione'], inplace=True)
@@ -184,6 +184,8 @@ def load_cremona(path, lab_tests=True):
     discharge_info = discharge_info[discharge_info['NOSOLOGICO'].isin(patients_nosologico)]
     vitals = vitals[vitals['NOSOLOGICO'].isin(patients_nosologico)]
     lab = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]
+    dataset_comorbidities.index = [str(i) for i in dataset_comorbidities.index] 
+    dataset_comorbidities = dataset_comorbidities.loc[patients_nosologico]
 
 
     # Create final dataset
@@ -216,9 +218,10 @@ def load_cremona(path, lab_tests=True):
     # Rename to English
     dataset_vitals = dataset_vitals.rename(columns={"P. Max": "systolic_blood_pressure",
                                                     "P. Min": "diastolic_blood_pressure",
-                                                    #"F. Card.": "cardiac_frequency",
+                                                    "F. Card.": "cardiac_frequency",
                                                     "Temp.": "temperature_celsius",
-                                                    "F. Resp.": "respiratory_frequency"})
+                                                    "F. Resp.": "respiratory_frequency"
+                                                    })
     
     
     # Data with lab results
@@ -250,10 +253,10 @@ def load_cremona(path, lab_tests=True):
                                 'FO2HB': 'FO2HB',
                                 'CTCO2': 'Bicarbonate (CTCO2)',
                                 'HCT': 'Hematocrit Levels (HTC)',
-                                'IONE BICARBONATO STD': "(?)",
+                                'IONE BICARBONATO STD': "IONE BICARBONATO STD (?)",
                                 'BE(ECF)': 'BEECF',
                                 'FHHB': 'FHHB',
-                                'IONE BICARBONATO': "(?)",
+                                'IONE BICARBONATO': "IONE BICARBONATO (?)",
                                 'PO2': 'Partial Pressure of Oxygen (PO2)',
                                 'ECCESSO DI BASI': 'Base Excess (BE)',
                                 'OSSIGENO SATURAZIONE': 'SaO2',
