@@ -3,17 +3,17 @@ import datetime
 import numpy as np
 import pickle
 
-from analyzer.icd9.icd9 import ICD9
+# from analyzer.icd9.icd9 import ICD9
 
 # explicitly require this experimental feature
 from sklearn.experimental import enable_iterative_imputer  # noqa
 # now you can import normally from sklearn.impute
 from sklearn.impute import IterativeImputer
 
-#Julia
-#  from julia.api import Julia
-#  jl = Julia(compiled_modules=False)
-#  from interpretableai import iai
+# Julia
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
+from interpretableai import iai
 
 
 def fix_outcome(outcome):
@@ -105,73 +105,200 @@ def load_cremona(path, lab_tests=True):
             discharge_info['Dia4'].isin(list_diagnosis) | \
             discharge_info['Dia5'].isin(list_diagnosis)
 
-    discharge_data = discharge_info[covid_patients]
+    discharge_info = discharge_info[covid_patients]
 
-    diagnosis = pd.concat([discharge_data['Principale'],
-        discharge_data['Dia1'],
-        discharge_data['Dia2'],
-        discharge_data['Dia3'],
-        discharge_data['Dia4'],
-        discharge_data['Dia5']
+    diagnosis = pd.concat([discharge_info['Principale'],
+        discharge_info['Dia1'],
+        discharge_info['Dia2'],
+        discharge_info['Dia3'],
+        discharge_info['Dia4'],
+        discharge_info['Dia5']
         ]).dropna().str.strip().unique()
 
-    # Try 1: script
-    icd9_tree = ICD9('./analyzer/icd9/codes.json')
-    icd9_tree.find('480').description
+    # # Try 1: script
+    # icd9_tree = ICD9('./analyzer/icd9/codes.json')
+    # icd9_tree.find('480').description
 
     # Try 2: luca pkl
     with open('%s/general/dict_ccs.pkl' % path, "rb") as f:
         dict_ccs = pickle.load(f)
 
-    # Try 3: italian stuff
-    italian_map = pd.read_csv('%s/general/icd9_italy_diagnosis.csv' % path, index_col=0, encoding = "ISO-8859-1")
+    # # Try 3: italian stuff
+    # italian_map = pd.read_csv('%s/general/icd9_italy_diagnosis.csv' % path, index_col=0, encoding = "ISO-8859-1")
 
-    print("Italian map", italian_map.loc['001']) # Example: 'colera'
-    print("id9 map", icd9_tree.find('001').description) # Example 'Chlera'
-    print("CCS map", ccs['1']) # Example 'Tubercolosis'
+    # print("Italian map", italian_map.loc['001']) # Example: 'colera'
+    # print("id9 map", icd9_tree.find('001').description) # Example 'Chlera'
+    # print("CCS map", ccs['1']) # Example 'Tubercolosis'
 
 
     #Import the comorbidity csv
-    comorb_df = pd.read_csv('%s/general/comorbidities.csv' % path, index_col="id")
-    comorb_df.drop(comorb_df.columns[0], axis = 1, inplace = True)
+    dataset_comorbidities = pd.read_csv('%s/general/comorbidities.csv' % path, index_col="id")
+    dataset_comorbidities.drop(dataset_comorbidities.columns[0], axis = 1, inplace = True)
 
     #Change the name of the cols from CCS code to comorbidity name
-    old_cols = list(comorb_df.columns)
+    old_cols = list(dataset_comorbidities.columns)
     new_cols = [dict_ccs[i] for i in old_cols]
-    comorb_df.columns = new_cols
+    dataset_comorbidities.columns = new_cols
 
     # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
-    cols_keep = list(comorb_df.columns[comorb_df.sum() >10])
+    cols_keep = list(dataset_comorbidities.columns[dataset_comorbidities.sum() >10])
     cols_keep.remove("Immunizations and screening for infectious disease")
     cols_keep.remove("Pneumonia (except that caused by tuberculosis or sexually transmitted disease)")
     cols_keep.remove("Respiratory failure; insufficiency; arrest (adult)")
     cols_keep.remove("Residual codes; unclassified")
-    comorb_df = comorb_df[cols_keep]
+    dataset_comorbidities = dataset_comorbidities[cols_keep]
 
 
+    # Keep only the patients that we have in the comorbidities dataframe
+    pat_comorb = dataset_comorbidities.index
+    discharge_info = discharge_info[discharge_info.NumeroScheda.isin(pat_comorb)]
 
-    # Convert (to export for R processing)
-    #  comorb_df = pd.DataFrame(columns=['id', 'comorb'])
-    #  for i in range(len(discharge_data)):
-    #      d_temp = discharge_data.iloc[i]
-    #      df_temp = pd.DataFrame({'id': [d_temp['NumeroScheda']] * 6,
-    #                              'comorb': [d_temp['Principale'],
-    #                                         d_temp['Dia1'],
-    #                                         d_temp['Dia2'],
-    #                                         d_temp['Dia3'],
-    #                                         d_temp['Dia4'],
-    #                                         d_temp['Dia5']]})
-    #      comorb_df = comorb_df.append(df_temp)
-    #
-    #  comorb_df = comorb_df.dropna().reset_index()
-    #  comorb_df.to_csv('comorb.csv')
+    # Keep 1 = discharged, 4 = deceased and transform the dependent variable to a binary one
+    discharge_info = discharge_info[(discharge_info['Modalità di dimissione'] == 1) | (discharge_info['Modalità di dimissione'] == 4)]
+    discharge_info['Modalità di dimissione'] = (discharge_info['Modalità di dimissione'] == 4).apply(int)
+
+    # Drop Duplicated Observations
+    discharge_info.drop_duplicates(['NumeroScheda', 'Modalità di dimissione'], inplace=True)
+    discharge_info.drop_duplicates(['NumeroScheda'], inplace=True)
+
+    #Keep only important columns and rename them 
+    discharge_info = discharge_info[['NumeroScheda', 'Sesso', 'Età', 'Modalità di dimissione']]
+    discharge_info = discharge_info.rename(columns={'NumeroScheda': 'NOSOLOGICO', 'Sesso': 'sex', 'Età':'age', 'Modalità di dimissione':'outcome'})
+    discharge_info.NOSOLOGICO = discharge_info.NOSOLOGICO.apply(str)
+
+    # Load vitals
+    vitals = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
+    vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
+    vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
+
+    # Load lab test
+    lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
+    lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
+    lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
+    lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(get_lab_dates)
+    
+    
+    # Filter by Nosologico (vitals and anagraphics)
+    patients_nosologico = vitals[vitals['NOSOLOGICO'].isin(discharge_info["NOSOLOGICO"])]['NOSOLOGICO'].unique()
+    patients_nosologico = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]['NOSOLOGICO'].unique()
+    discharge_info = discharge_info[discharge_info['NOSOLOGICO'].isin(patients_nosologico)]
+    vitals = vitals[vitals['NOSOLOGICO'].isin(patients_nosologico)]
+    lab = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]
 
 
-    import ipdb; ipdb.set_trace()
+    # Create final dataset
+    #-------------------------------------------------------------------------------------
+    # Anagraphics (translated to english)
+    anagraphics_features = ['sex', 'age', 'outcome']
+    dataset_anagraphics = pd.DataFrame(columns=anagraphics_features, index=patients_nosologico)
+    dataset_anagraphics.loc[:, anagraphics_features] = discharge_info[['NOSOLOGICO'] + anagraphics_features].set_index('NOSOLOGICO')
+    dataset_anagraphics.loc[:, 'sex'] = dataset_anagraphics.loc[:, 'sex'].astype('category')
+    dataset_anagraphics.loc[:, 'outcome'] = dataset_anagraphics.loc[:, 'outcome'].astype('category')
 
 
+    # Data with ER vitals
+    vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
+    if lab_tests:
+        vital_signs.remove('SaO2')  # Remove oxygen saturation if we have lab values (it is there)
+    
+    dataset_vitals = pd.DataFrame(np.nan, columns=vital_signs, index=patients_nosologico)
+    for p in patients_nosologico:
+        vitals_p = vitals[vitals['NOSOLOGICO'] == p][['NOME_PARAMETRO_VITALE', 'VALORE_PARAMETRO']]
+        for vital_name in vital_signs:
+            # Take mean if multiple values
+            vital_value = vitals_p[vitals_p['NOME_PARAMETRO_VITALE'] == vital_name]['VALORE_PARAMETRO']
+            vital_value = pd.to_numeric(vital_value).mean()
+            dataset_vitals.loc[p, vital_name] = vital_value
+    
+    # Adjust missing columns
+    dataset_vitals = remove_missing(dataset_vitals)
+    
+    # Rename to English
+    dataset_vitals = dataset_vitals.rename(columns={"P. Max": "systolic_blood_pressure",
+                                                    "P. Min": "diastolic_blood_pressure",
+                                                    #"F. Card.": "cardiac_frequency",
+                                                    "Temp.": "temperature_celsius",
+                                                    "F. Resp.": "respiratory_frequency"})
+    
+    
+    # Data with lab results
+    lab_features = lab['PRESTAZIONE'].unique().tolist()
+    dataset_lab = pd.DataFrame(np.nan, columns=lab_features, index=patients_nosologico)
+    for p in patients_nosologico:
+        lab_p = lab[lab['NOSOLOGICO'] == p][['DATA_RICHIESTA', 'PRESTAZIONE', 'VALORE']]
+        for lab_name in lab_p['PRESTAZIONE']:
+            lab_p_name = lab_p[lab_p['PRESTAZIONE'] == lab_name]
+            idx = lab_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
+            dataset_lab.loc[p, lab_name] = lab_p_name.loc[idx]['VALORE']
+    
+    
+    # Adjust missing columns
+    dataset_lab = remove_missing(dataset_lab)
+    dataset_lab = dataset_lab.rename(columns = {'VOLUME CORPUSCOLARE MEDIO': 'Mean Cell Volume',
+                                'PIASTRINE': 'Platelets',
+                                'EMATOCRITO': 'Hematocrit (?)',
+                                'ALT': 'Alanine Aminotransferase (ALT)',
+                                'AST': 'Aspartate Aminotransferase (AST)',
+                                'CREATININA SANGUE': 'Creatinine',
+                                'POTASSIEMIA': 'Potassium Blood Level',
+                                'CLORUREMIA': 'Chlorine Blood Level',
+                                'PCR - PROTEINA C REATTIVA': 'C-Reactive Protein (CRP)',
+                                'GLICEMIA': 'Glycemia',
+                                'UREA EMATICA': 'Hematic Urea (?)',
+                                'AZOTO UREICO EMATICO': 'Blood Urea Nitrogen (BUN)',
+                                'ACIDO LATTICO': 'Lactic Acid',
+                                'FO2HB': 'FO2HB',
+                                'CTCO2': 'Bicarbonate (CTCO2)',
+                                'HCT': 'Hematocrit Levels (HTC)',
+                                'IONE BICARBONATO STD': "(?)",
+                                'BE(ECF)': 'BEECF',
+                                'FHHB': 'FHHB',
+                                'IONE BICARBONATO': "(?)",
+                                'PO2': 'Partial Pressure of Oxygen (PO2)',
+                                'ECCESSO DI BASI': 'Base Excess (BE)',
+                                'OSSIGENO SATURAZIONE': 'SaO2',
+                                'PCO2': 'Partial Pressure of Carbon Dioxide (PCO2)',
+                                'PH EMATICO': 'Hematic PH',
+                                'CALCIO IONIZZATO': 'Ionized Calcium',
+                                'CARBOSSIEMOGLOBINA': 'Carboxyhemoglobin',
+                                'METAEMOGLOBINA': 'Methemoglobin',
+                                'SODIEMIA': 'Sodium Levels',
+                                '(PT) TEMPO DI PROTROMBINA': 'Prothrombin Time',
+                                'TEMPO DI PROTROMBINA RATIO': 'Prothrombin Time Ratio',
+                                'CALCEMIA': 'Calcium Levels',
+                                'BILIRUBINA TOTALE': 'Bilurin',
+                                'TEMPO DI TROMBOPLASTINA PARZIALE ATTIVATO': 'Partial Thromboplastin Time Activated (APTT)',
+                                'VALORE DISTRIBUTIVO GLOBULI ROSSI': 'Red Cell Distribution (RDW)',
+                                'LEUCOCITI': 'Leukocytes',
+                                'EMOGLOBINA': 'Hemoglobin',
+                                'CONTENUTO HB MEDIO': 'Mean Corpuscular Hemoglobin (MCH)',
+                                'ERITROCITI': 'Erythrocytes',
+                                'CONCENTRAZIONE HB MEDIA': 'Mean Corpuscular Hemoglobin Concentration (MCHC)',
+                                'AMILASI NEL SIERO': 'Amylase Serum Level',
+                                'COLINESTERASI': 'Cholinesterase'})
+    
+    data = {'anagraphics': dataset_anagraphics,
+            'comorbidities': dataset_comorbidities,
+            'vitals': dataset_vitals,
+            'lab': dataset_lab}
+    
+    return data
 
-
+    # # Convert (to export for R processing)
+    # dataset_comorbidities = pd.DataFrame(columns=['id', 'comorb'])
+    # for i in range(len(discharge_info)):
+    #     d_temp = discharge_info.iloc[i]
+    #     df_temp = pd.DataFrame({'id': [d_temp['NumeroScheda']] * 6,
+    #                             'comorb': [d_temp['Principale'],
+    #                                        d_temp['Dia1'],
+    #                                        d_temp['Dia2'],
+    #                                        d_temp['Dia3'],
+    #                                        d_temp['Dia4'],
+    #                                        d_temp['Dia5']]})
+    #     dataset_comorbidities = dataset_comorbidities.append(df_temp)
+    
+    # dataset_comorbidities = dataset_comorbidities.dropna().reset_index()
+    # dataset_comorbidities.to_csv('comorb.csv')
 
     #  anagraphics = pd.read_csv("%s/anagraphics/anagraphics.csv" % path).dropna(how='all')
     #  anagraphics['NOSOLOGICO']= anagraphics['NOSOLOGICO'].astype(str)
