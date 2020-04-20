@@ -63,6 +63,8 @@ def remove_missing(df, nan_threashold=40):
     missing_values = pd.DataFrame({'percent_missing': percent_missing})
     df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
 
+
+    import ipdb; ipdb.set_trace()
     df = df[df_features]
 
     imp_mean = IterativeImputer(random_state=0)
@@ -234,6 +236,8 @@ def load_cremona(path, lab_tests=True):
             vital_value = pd.to_numeric(vital_value).mean()
             dataset_vitals.loc[p, vital_name] = vital_value
 
+    import ipdb; ipdb.set_trace()
+
     # Adjust missing columns
     dataset_vitals = remove_missing(dataset_vitals)
 
@@ -257,32 +261,39 @@ def load_cremona(path, lab_tests=True):
             dataset_lab.loc[p, lab_name] = lab_p_name.loc[idx]['VALORE']
 
 
+    import ipdb; ipdb.set_trace()
+
+    # Remove duplicate features
+
+
+
+
     # Adjust missing columns
     dataset_lab = remove_missing(dataset_lab)
     dataset_lab = dataset_lab.rename(columns =
-                                {'VOLUME CORPUSCOLARE MEDIO': 'Mean Cell Volume',
+                                {'VOLUME CORPUSCOLARE MEDIO': 'Mean Corpuscular Volume (MCV)',
                                 'PIASTRINE': 'Platelets',
-                                'EMATOCRITO': 'Hematocrit (?)',
+                                'EMATOCRITO': 'Hematocrit (?)', # TOFIX
                                 'ALT': 'Alanine Aminotransferase (ALT)',
                                 'AST': 'Aspartate Aminotransferase (AST)',
-                                'CREATININA SANGUE': 'Creatinine',
+                                'CREATININA SANGUE': 'Blood Creatinine',
                                 'POTASSIEMIA': 'Potassium Blood Level',
                                 'CLORUREMIA': 'Chlorine Blood Level',
                                 'PCR - PROTEINA C REATTIVA': 'C-Reactive Protein (CRP)',
                                 'GLICEMIA': 'Glycemia',
-                                'UREA EMATICA': 'Hematic Urea (?)',
-                                'AZOTO UREICO EMATICO': 'Blood Urea Nitrogen (BUN)',
+                                'UREA EMATICA': 'Hematic Urea (?)',   # TOFIX
+                                'AZOTO UREICO EMATICO': 'Blood Urea Nitrogen (BUN)',  # TOFIX
                                 'ACIDO LATTICO': 'Lactic Acid',
-                                'FO2HB': 'FO2HB',
+                                'FO2HB': 'FO2HB',  # TOFIX Oxygen saturation
                                 'CTCO2': 'Bicarbonate (CTCO2)',
-                                'HCT': 'Hematocrit Levels (HTC)',
+                                'HCT': 'Hematocrit Levels (HCT)',  # TOFIX
                                 'IONE BICARBONATO STD': "IONE BICARBONATO STD (?)",
                                 'BE(ECF)': 'BEECF',
                                 'FHHB': 'FHHB',
                                 'IONE BICARBONATO': "IONE BICARBONATO (?)",
                                 'PO2': 'Partial Pressure of Oxygen (PO2)',
                                 'ECCESSO DI BASI': 'Base Excess (BE)',
-                                'OSSIGENO SATURAZIONE': 'SaO2',
+                                'OSSIGENO SATURAZIONE': 'SaO2',  # TOFIX Oxygen saturation
                                 'PCO2': 'Partial Pressure of Carbon Dioxide (PCO2)',
                                 'PH EMATICO': 'Hematic PH',
                                 'CALCIO IONIZZATO': 'Ionized Calcium',
@@ -303,8 +314,8 @@ def load_cremona(path, lab_tests=True):
                                 'AMILASI NEL SIERO': 'Amylase Serum Level',
                                 'COLINESTERASI': 'Cholinesterase'})
 
-    dataset_lab.drop([c for c in dataset_lab.columns if '?' in c],
-                     axis='columns', inplace=True)
+    #  dataset_lab.drop([c for c in dataset_lab.columns if '?' in c],
+    #                   axis='columns', inplace=True)
 
     import ipdb; ipdb.set_trace()
 
