@@ -2,7 +2,7 @@ def create_dataset(data_dict,
         comorbidities=True,
         vitals=True,
         lab=True,
-        prediction='outcome'):
+        prediction='Outcome'):
 
     data = data_dict['anagraphics']
 
@@ -15,7 +15,7 @@ def create_dataset(data_dict,
     if lab:
         data = data.join(data_dict['lab'])
 
-    X = data.loc[:, data.columns.difference(['outcome', 'icu'])]
+    X = data.loc[:, data.columns.difference(['Outcome', 'ICU'])]
     y = data.loc[:, prediction]
 
     return X, y

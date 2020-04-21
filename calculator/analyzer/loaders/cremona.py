@@ -87,7 +87,9 @@ def clean_lab_features(lab_feat):
                 ('AFRO' not in x) and    # No normalized creatinine
                 ('CAUCAS' not in x) and  # No normalized creatinine
                 ('UREA EMATICA' not in x) and  # We keep BUN directly
-                ('IONE BICARBONATO' != x)]  # We keep standard directly
+                ('IONE BICARBONATO' != x) and  # We keep standard directly
+                ('TEMPO DI PROTROMBINA RATIO' != x) # We keep only Prothrombin Time
+    ]
 
     return features
 
@@ -167,6 +169,10 @@ def load_cremona(path, lab_tests=True):
     # Export comorbidities to process with R
     export_comorbidities(discharge_info, '%s/general/nosologico_com.csv' % path)
 
+    # TODO: Run R command automatically
+    # import subprocess
+    # subprocess.call(['R', '%s/general/R_script.R' % path])
+
     #Import the comorbidity csv and dictionary from R
     dataset_comorbidities = pd.read_csv('%s/general/comorbidities.csv' % path, index_col="id")
     dataset_comorbidities.drop(dataset_comorbidities.columns[0], axis = 1, inplace = True)
@@ -203,9 +209,9 @@ def load_cremona(path, lab_tests=True):
     discharge_info = discharge_info[['NumeroScheda', 'Sesso', 'Età', 'Modalità di dimissione']]
     discharge_info = discharge_info.rename(
             columns={'NumeroScheda': 'NOSOLOGICO',
-                     'Sesso': 'sex',
-                     'Età':'age',
-                     'Modalità di dimissione':'outcome'})
+                     'Sesso': 'Sex',
+                     'Età':'Age',
+                     'Modalità di dimissione':'Outcome'})
     discharge_info.NOSOLOGICO = discharge_info.NOSOLOGICO.apply(str)
 
     # Load vitals
@@ -233,11 +239,11 @@ def load_cremona(path, lab_tests=True):
     # Create final dataset
     #-------------------------------------------------------------------------------------
     # Anagraphics (translated to english)
-    anagraphics_features = ['sex', 'age', 'outcome']
+    anagraphics_features = ['Sex', 'Age', 'Outcome']
     dataset_anagraphics = pd.DataFrame(columns=anagraphics_features, index=patients_nosologico)
     dataset_anagraphics.loc[:, anagraphics_features] = discharge_info[['NOSOLOGICO'] + anagraphics_features].set_index('NOSOLOGICO')
-    dataset_anagraphics.loc[:, 'sex'] = dataset_anagraphics.loc[:, 'sex'].astype('category')
-    dataset_anagraphics.loc[:, 'outcome'] = dataset_anagraphics.loc[:, 'outcome'].astype('category')
+    dataset_anagraphics.loc[:, 'Sex'] = dataset_anagraphics.loc[:, 'Sex'].astype('category')
+    dataset_anagraphics.loc[:, 'Outcome'] = dataset_anagraphics.loc[:, 'Outcome'].astype('category')
 
     # Data with ER vitals
     vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
@@ -314,7 +320,7 @@ def load_cremona(path, lab_tests=True):
 
 
     # Rename dataset laboratory
-    dataset_lab_full = dataset_lab_full.rename({
+    dataset_lab_full = dataset_lab_full.rename(columns={
         'ALT: ALT': 'Alanine Aminotransferase (ALT)',
         'AST: AST': 'Aspartate Aminotransferase (AST)',
         'Creatinina UAR: CREATININA SANGUE': 'Blood Creatinine',
@@ -324,315 +330,42 @@ def load_cremona(path, lab_tests=True):
         'Glucosio ematico: GLICEMIA': 'Glycemia',
         'Azoto ematico UAR: AZOTO UREICO EMATICO': 'Blood Urea Nitrogen (BUN)',
         'Emogasanalisi su sangue arterioso: ACIDO LATTICO': 'ABG: Lactic Acid',
-        'Emogasanalisi su sangue arterioso: FO2HB': 'ABG: FO2HB',
+        'Emogasanalisi su sangue arterioso: FO2HB': 'ABG: FO2Hb',
         'Emogasanalisi su sangue arterioso: CTCO2': 'ABG: CTCO2',
-        'Emogasanalisi su sangue arterioso: HCT': 'ABG: Hematocrit (HCT)'
+        'Emogasanalisi su sangue arterioso: HCT': 'ABG: Hematocrit (HCT)',
         'Emogasanalisi su sangue arterioso: IONE BICARBONATO STD': 'ABG: standard bicarbonate (sHCO3)',
-        'Emogasanalisi su sangue arterioso: BE(ECF)': 'ABG: BE(ecf)', # TOFIX WITH ECCESSO DI BASI
+        'Emogasanalisi su sangue arterioso: BE(ECF)': 'ABG: Base Excess (ecf)',
+        'Emogasanalisi su sangue arterioso: ECCESSO DI BASI': 'ABG: Base Excess',
         'Emogasanalisi su sangue arterioso: FHHB': 'ABG: FHHb',
-        'Emogasanalisi su sangue arterioso: PO2': 'ABG: PO2',
- 'Emogasanalisi su sangue arterioso: ECCESSO DI BASI',
- 'Emogasanalisi su sangue arterioso: OSSIGENO SATURAZIONE',
- 'Emogasanalisi su sangue arterioso: PCO2',
- 'Emogasanalisi su sangue arterioso: PH EMATICO',
- 'Emogasanalisi su sangue arterioso: CALCIO IONIZZATO',
- 'Emogasanalisi su sangue arterioso: CARBOSSIEMOGLOBINA',
- 'Emogasanalisi su sangue arterioso: METAEMOGLOBINA',
- 'Sodio: SODIEMIA',
- 'TEMPO DI PROTROMBINA UAR: (PT) TEMPO DI PROTROMBINA',
- 'TEMPO DI PROTROMBINA UAR: TEMPO DI PROTROMBINA RATIO',
- 'Calcemia: CALCEMIA',
-'BILIRUBINA TOTALE REFLEX: BILIRUBINA TOTALE',
- 'TEMPO DI TROMBOPLASTINA PARZIALE: TEMPO DI TROMBOPLASTINA PARZIALE ATTIVATO',
- 'Amilasi: AMILASI NEL SIERO',
- 'Colinesterasi: COLINESTERASI',
- 'Emocromocitometrico (Urgenze): VOLUME CORPUSCOLARE MEDIO',
- 'Emocromocitometrico (Urgenze): CONCENTRAZIONE HB MEDIA',
- 'Emocromocitometrico (Urgenze): PIASTRINE',
- 'Emocromocitometrico (Urgenze): EMATOCRITO',
- 'Emocromocitometrico (Urgenze): VALORE DISTRIBUTIVO GLOBULI ROSSI',
- 'Emocromocitometrico (Urgenze): LEUCOCITI',
- 'Emocromocitometrico (Urgenze): EMOGLOBINA',
- 'Emocromocitometrico (Urgenze): CONTENUTO HB MEDIO',
- 'Emocromocitometrico (Urgenze): ERITROCITI']
-
-
-
+        'Emogasanalisi su sangue arterioso: PO2': 'ABG: PaO2',
+        'Emogasanalisi su sangue arterioso: OSSIGENO SATURAZIONE': 'ABG: Oxygen Saturation (SaO2)',
+        'Emogasanalisi su sangue arterioso: PCO2': 'ABG: PaCO2',
+        'Emogasanalisi su sangue arterioso: PH EMATICO': 'ABG: pH',
+        'Emogasanalisi su sangue arterioso: CALCIO IONIZZATO': 'ABG: Ionized Calcium',
+        'Emogasanalisi su sangue arterioso: CARBOSSIEMOGLOBINA': 'ABG: COHb',
+        'Emogasanalisi su sangue arterioso: METAEMOGLOBINA': 'ABG: MetHb',
+        'Sodio: SODIEMIA': 'Blood Sodium',
+        'TEMPO DI PROTROMBINA UAR: (PT) TEMPO DI PROTROMBINA': 'Prothrombin Time (PT)',
+        'TEMPO DI TROMBOPLASTINA PARZIALE: TEMPO DI TROMBOPLASTINA PARZIALE ATTIVATO': 'Activated Partial Thromboplastin Time (aPTT)',
+        'Calcemia: CALCEMIA': 'Blood Calcium',
+        'BILIRUBINA TOTALE REFLEX: BILIRUBINA TOTALE': 'Total Bilirubin',
+        'Amilasi: AMILASI NEL SIERO' : 'Blood Amylase',
+        'Colinesterasi: COLINESTERASI': 'Cholinesterase',
+        'Emocromocitometrico (Urgenze): VOLUME CORPUSCOLARE MEDIO': 'CBC: Mean Corpuscular Volume (MCV)',
+        'Emocromocitometrico (Urgenze): CONCENTRAZIONE HB MEDIA': 'CBC: Mean Corpuscular Hemoglobin Concentration (MCHC)',
+        'Emocromocitometrico (Urgenze): PIASTRINE': 'CBC: Platelets',
+        'Emocromocitometrico (Urgenze): EMATOCRITO': 'CBC: Hematocrit',
+        'Emocromocitometrico (Urgenze): VALORE DISTRIBUTIVO GLOBULI ROSSI': 'CBC: Red cell Distribution Width (RDW)',
+        'Emocromocitometrico (Urgenze): LEUCOCITI': 'CBC: Leukocytes',
+        'Emocromocitometrico (Urgenze): EMOGLOBINA': 'CBC: Hemoglobin',
+        'Emocromocitometrico (Urgenze): CONTENUTO HB MEDIO': 'CBC: Mean corpuscular haemoglobin (MCH)',
+        'Emocromocitometrico (Urgenze): ERITROCITI': 'CBC: Erythrocytes'
         })
 
-
-
-
-
-
-    # TODO:
-
-    # 1. Join dataframes
-    # 2. Check missing
-    # 3. Keep only not missing
-    # 4. Check names
-
-
-    #  perc_missing = get_percentages(dataset_lab_tests, missing_type=False)
-    #  perc_missing['text'] = [lab[lab['COD_INTERNO_PRESTAZIONE'] == perc_missing.index[i]]['DESCR_PRESTAZIONE'].values[0] for i in range(len(perc_missing))]
-
-
-
-
-    from IPython import embed; embed()
-
-
-    import ipdb; ipdb.set_trace()
-
-    # Remove duplicate features
-
-
-
-
-    # Adjust missing columns
-    #  dataset_lab = remove_missing(dataset_lab)
-    dataset_lab = dataset_lab.rename(columns =
-                                {'VOLUME CORPUSCOLARE MEDIO': 'Mean Corpuscular Volume (MCV)',
-                                'PIASTRINE': 'Platelets',
-                                'EMATOCRITO': 'Hematocrit (?)', # TOFIX
-                                'ALT': 'Alanine Aminotransferase (ALT)',
-                                'AST': 'Aspartate Aminotransferase (AST)',
-                                'CREATININA SANGUE': 'Blood Creatinine',
-                                'POTASSIEMIA': 'Potassium Blood Level',
-                                'CLORUREMIA': 'Chlorine Blood Level',
-                                'PCR - PROTEINA C REATTIVA': 'C-Reactive Protein (CRP)',
-                                'GLICEMIA': 'Glycemia',
-                                'UREA EMATICA': 'Hematic Urea (?)',   # TOFIX
-                                'AZOTO UREICO EMATICO': 'Blood Urea Nitrogen (BUN)',  # TOFIX
-                                'ACIDO LATTICO': 'Lactic Acid',
-                                'FO2HB': 'FO2HB',  # TOFIX Oxygen saturation
-                                'CTCO2': 'Bicarbonate (CTCO2)',
-                                'HCT': 'Hematocrit Levels (HCT)',  # TOFIX
-                                'IONE BICARBONATO STD': "IONE BICARBONATO STD (?)",
-                                'BE(ECF)': 'BEECF',
-                                'FHHB': 'FHHB',
-                                'IONE BICARBONATO': "IONE BICARBONATO (?)",
-                                'PO2': 'Partial Pressure of Oxygen (PO2)',
-                                'ECCESSO DI BASI': 'Base Excess (BE)',
-                                'OSSIGENO SATURAZIONE': 'SaO2',  # TOFIX Oxygen saturation
-                                'PCO2': 'Partial Pressure of Carbon Dioxide (PCO2)',
-                                'PH EMATICO': 'Hematic PH',
-                                'CALCIO IONIZZATO': 'Ionized Calcium',
-                                'CARBOSSIEMOGLOBINA': 'Carboxyhemoglobin',
-                                'METAEMOGLOBINA': 'Methemoglobin',
-                                'SODIEMIA': 'Sodium Levels',
-                                '(PT) TEMPO DI PROTROMBINA': 'Prothrombin Time',
-                                'TEMPO DI PROTROMBINA RATIO': 'Prothrombin Time Ratio',
-                                'CALCEMIA': 'Calcium Levels',
-                                'BILIRUBINA TOTALE': 'Bilurin',
-                                'TEMPO DI TROMBOPLASTINA PARZIALE ATTIVATO': 'Partial Thromboplastin Time Activated (APTT)',
-                                'VALORE DISTRIBUTIVO GLOBULI ROSSI': 'Red Cell Distribution (RDW)',
-                                'LEUCOCITI': 'Leukocytes',
-                                'EMOGLOBINA': 'Hemoglobin',
-                                'CONTENUTO HB MEDIO': 'Mean Corpuscular Hemoglobin (MCH)',
-                                'ERITROCITI': 'Erythrocytes',
-                                'CONCENTRAZIONE HB MEDIA': 'Mean Corpuscular Hemoglobin Concentration (MCHC)',
-                                'AMILASI NEL SIERO': 'Amylase Serum Level',
-                                'COLINESTERASI': 'Cholinesterase'})
-
-    #  dataset_lab.drop([c for c in dataset_lab.columns if '?' in c],
-    #                   axis='columns', inplace=True)
-
-    import ipdb; ipdb.set_trace()
 
     data = {'anagraphics': dataset_anagraphics,
             'comorbidities': dataset_comorbidities,
             'vitals': dataset_vitals,
-            'lab': dataset_lab}
+            'lab': dataset_lab_full}
 
     return data
-
-    # # Convert (to export for R processing)
-    # dataset_comorbidities = pd.DataFrame(columns=['id', 'comorb'])
-    # for i in range(len(discharge_info)):
-    #     d_temp = discharge_info.iloc[i]
-    #     df_temp = pd.DataFrame({'id': [d_temp['NumeroScheda']] * 6,
-    #                             'comorb': [d_temp['Principale'],
-    #                                        d_temp['Dia1'],
-    #                                        d_temp['Dia2'],
-    #                                        d_temp['Dia3'],
-    #                                        d_temp['Dia4'],
-    #                                        d_temp['Dia5']]})
-    #     dataset_comorbidities = dataset_comorbidities.append(df_temp)
-
-    # dataset_comorbidities = dataset_comorbidities.dropna().reset_index()
-    # dataset_comorbidities.to_csv('comorb.csv')
-
-    #  anagraphics = pd.read_csv("%s/anagraphics/anagraphics.csv" % path).dropna(how='all')
-    #  anagraphics['NOSOLOGICO']= anagraphics['NOSOLOGICO'].astype(str)
-    #
-    #  # Load drugs
-    #  drugs_cremona = pd.read_csv("%s/therapies/drugs_cremona.csv" % path)
-    #  drugs_orgoglio_po = pd.read_csv("%s/therapies/drugs_oglio_po.csv" % path)
-    #  drugs = drugs_cremona.append(drugs_orgoglio_po).dropna(how='all')
-    #
-    #  # Load comorbidities
-    #  comorbidities_data = pd.read_csv('%s/therapies/active_substances_comorbidities.csv' % path)[['Active_substance', 'therapy_for_filtered']]
-    #
-    #  # Load vital signs in ER
-    #  vitals = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
-    #  vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
-    #  vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
-    #
-    #  # Load ICU admissions
-    #  icu = pd.read_csv('%s/icu/icu_transfers.csv' % path)
-    #  icu['NOSOLOGICO']= icu['NOSOLOGICO'].astype(str)
-    #  icu.drop_duplicates(['NOSOLOGICO'], inplace=True)
-    #  idx_icu = icu['DESCR_REP_A'].str.contains('TERAPIA INTENSIVA CR') | icu['DESCR_REP_A'].str.contains('TERAPIA INTENSIVA OP')
-    #  icu = icu.loc[idx_icu]
-    #
-    #  # Load arterial blood gas test
-    #  lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
-    #  lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
-    #  lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
-    #  lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(get_lab_dates)
-    #
-    #
-    #  # Filter and merge
-    #  #-------------------------------------------------------------------------------------
-    #  # Select only covid patients
-    #  anagraphics = anagraphics[anagraphics['ESITO TAMPONE'].str.contains('POSITIVO')]
-    #
-    #  # Pick only people with end date
-    #  anagraphics = anagraphics[anagraphics["DATA DI DIMISSIONE/DECESSO"].notnull()]
-    #
-    #  # Remove patients who have been transferred
-    #  anagraphics = anagraphics[~anagraphics['ESITO'].str.contains('TRASFERITO')]
-    #
-    #  # Create binary outcome
-    #  anagraphics['ESITO'] = anagraphics['ESITO'].apply(fix_outcome)
-    #
-    #  # Drop anagraphics duplicates
-    #  drop_anagraphics_duplicates(anagraphics)
-    #
-    #
-    #  # Filter patients in all datasets
-    #  #-------------------------------------------------------------------------------------
-    #
-    #  # Filter by Codice Fiscale (anagraphics and drugs)
-    #  patients_codice_fiscale = anagraphics[anagraphics["CODICE FISCALE"].isin(drugs["Codice Fiscale"])]['CODICE FISCALE'].unique()
-    #  anagraphics = anagraphics[anagraphics['CODICE FISCALE'].isin(patients_codice_fiscale)]
-    #
-    #  # Filter by Nosologico (vitals and anagraphics)
-    #  patients_nosologico = vitals[vitals['NOSOLOGICO'].isin(anagraphics["NOSOLOGICO"])]['NOSOLOGICO'].unique()
-    #  patients_nosologico = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]['NOSOLOGICO'].unique()
-    #  anagraphics = anagraphics[anagraphics['NOSOLOGICO'].isin(patients_nosologico)]
-    #  vitals = vitals[vitals['NOSOLOGICO'].isin(patients_nosologico)]
-    #  lab = lab[lab['NOSOLOGICO'].isin(patients_nosologico)]
-    #
-    #  # Filter again Codice Fiscale (drugs)
-    #  patients_codice_fiscale = anagraphics['CODICE FISCALE'].unique()
-    #  drugs_covid = drugs[drugs['Codice Fiscale'].isin(patients_codice_fiscale)]
-    #
-    #  assert len(patients_codice_fiscale) == len(patients_nosologico)
-    #  print("Len patients :", len(patients_codice_fiscale))
-    #
-    #
-    #  # Fix swapped dates
-    #  #-------------------------------------------------------------------------------------
-    #  idx_wrong = pd.to_datetime(anagraphics["DATA DI DIMISSIONE/DECESSO"], format='%m/%d/%y') < pd.to_datetime(anagraphics["DATA DI RICOVERO"], format='%m/%d/%y')
-    #  wrong_dates = anagraphics[['DATA DI DIMISSIONE/DECESSO','DATA DI RICOVERO']].loc[idx_wrong]
-    #  anagraphics.loc[idx_wrong, 'DATA DI RICOVERO'] = wrong_dates['DATA DI DIMISSIONE/DECESSO']
-    #  anagraphics.loc[idx_wrong, 'DATA DI DIMISSIONE/DECESSO'] = wrong_dates['DATA DI RICOVERO']
-    #
-    #  # Add codice fiscale to datasets with nosologico
-    #  #-------------------------------------------------------------------------------------
-    #  vitals = vitals.merge(anagraphics[['CODICE FISCALE', 'NOSOLOGICO']], on='NOSOLOGICO')
-    #  vitals.drop(['NOSOLOGICO'], axis='columns', inplace=True)
-    #  lab = lab.merge(anagraphics[['CODICE FISCALE', 'NOSOLOGICO']], on='NOSOLOGICO')
-    #  lab.drop(['NOSOLOGICO'], axis='columns', inplace=True)
-    #
-    #
-    #  # Compute length of stay
-    #  anagraphics['length_of_stay'] = anagraphics["DATA DI DIMISSIONE/DECESSO"].apply(n_days) - anagraphics["DATA DI RICOVERO"].apply(n_days)
-    #  print("Minimum length of stay ", anagraphics['length_of_stay'].min())
-    #  print("Maximum length of stay ", anagraphics['length_of_stay'].max())
-    #
-    #  # Add ICU information to anagraphics
-    #  #-------------------------------------------------------------------------------------
-    #  anagraphics['icu'] = 0
-    #  anagraphics.loc[anagraphics['NOSOLOGICO'].isin(icu['NOSOLOGICO']), 'icu'] = 1
-    #
-    #
-    #  # Create final dataset
-    #  #-------------------------------------------------------------------------------------
-    #  # Anagraphics (translated to english)
-    #  anagraphics_features = ['SESSO', "ETA'", 'ESITO', 'icu']
-    #  dataset_anagraphics = pd.DataFrame(columns=anagraphics_features, index=patients_codice_fiscale)
-    #  dataset_anagraphics.loc[:, anagraphics_features] = anagraphics[['CODICE FISCALE'] + anagraphics_features].set_index('CODICE FISCALE')
-    #  dataset_anagraphics = dataset_anagraphics.rename(columns={"ETA'": "age", "SESSO": "sex", "ESITO": "outcome"})
-    #  dataset_anagraphics.loc[:, 'sex'] = dataset_anagraphics.loc[:, 'sex'].astype('category')
-    #  dataset_anagraphics.loc[:, 'icu'] = dataset_anagraphics.loc[:, 'icu'].astype('category')
-    #  dataset_anagraphics.loc[:, 'outcome'] = dataset_anagraphics.loc[:, 'outcome'].astype('category')
-    #  dataset_anagraphics['outcome'] = dataset_anagraphics['outcome'].cat.rename_categories({'DIMESSO': 'discharged', 'DECEDUTO': 'deceased'})
-    #
-    #  # Comorbidities from drugs
-    #  comorbidities = comorbidities_data['therapy_for_filtered'].dropna().unique().tolist()
-    #  dataset_comorbidities = pd.DataFrame(0, columns=comorbidities, index=patients_codice_fiscale)
-    #  for p in patients_codice_fiscale:
-    #      drugs_p = drugs_covid[drugs_covid['Codice Fiscale'] == p]['Principio Attivo']
-    #      for d in drugs_p:
-    #          if d != 'NESSUN PRINCIPIO ATTIVO':
-    #              comorb_d = comorbidities_data[comorbidities_data['Active_substance'] == d]['therapy_for_filtered']
-    #              if len(comorb_d) != 1:
-    #                  import ipdb; ipdb.set_trace()
-    #                  raise ValueError('Error in dataset. We need only one entry per active substance')
-    #              comorb_d = comorb_d.iloc[0]
-    #              if not pd.isnull(comorb_d):
-    #                  dataset_comorbidities.loc[p, comorb_d] = 1
-    #  for c in comorbidities:  # Drop columns with all zeros
-    #      if dataset_comorbidities[c].sum() == 0:
-    #          dataset_comorbidities.drop(c, axis='columns', inplace=True)
-    #  dataset_comorbidities = dataset_comorbidities.astype('category')
-    #
-    #
-    #  # Data with ER vitals
-    #  vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
-    #  if lab_tests:
-    #      vital_signs.remove('Sa02')  # Remove oxygen saturation if we have lab values (it is there)
-    #
-    #  dataset_vitals = pd.DataFrame(np.nan, columns=vital_signs, index=patients_codice_fiscale)
-    #  for p in patients_codice_fiscale:
-    #      vitals_p = vitals[vitals['CODICE FISCALE'] == p][['NOME_PARAMETRO_VITALE', 'VALORE_PARAMETRO']]
-    #      for vital_name in vital_signs:
-    #          # Take mean if multiple values
-    #          vital_value = vitals_p[vitals_p['NOME_PARAMETRO_VITALE'] == vital_name]['VALORE_PARAMETRO']
-    #          vital_value = pd.to_numeric(vital_value).mean()
-    #          dataset_vitals.loc[p, vital_name] = vital_value
-    #
-    #  # Adjust missing columns
-    #  dataset_vitals = remove_missing(dataset_vitals)
-    #
-    #  # Rename to English
-    #  dataset_vitals = dataset_vitals.rename(columns={"P. Max": "systolic_blood_pressure",
-    #                                                  "P. Min": "diastolic_blood_pressure",
-    #                                                  "F. Card.": "cardiac_frequency",
-    #                                                  "Temp.": "temperature_celsius",
-    #                                                  "F. Resp.": "respiratory_frequency"})
-    #
-    #
-    #  # Data with lab results
-    #  lab_features = lab['PRESTAZIONE'].unique().tolist()
-    #  dataset_lab = pd.DataFrame(np.nan, columns=lab_features, index=patients_codice_fiscale)
-    #  for p in patients_codice_fiscale:
-    #      lab_p = lab[lab['CODICE FISCALE'] == p][['DATA_RICHIESTA', 'PRESTAZIONE', 'VALORE']]
-    #      for lab_name in lab_p['PRESTAZIONE']:
-    #          lab_p_name = lab_p[lab_p['PRESTAZIONE'] == lab_name]
-    #          idx = lab_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
-    #          dataset_lab.loc[p, lab_name] = lab_p_name.loc[idx]['VALORE']
-    #
-    #
-    #  # Adjust missing columns
-    #  dataset_lab = remove_missing(dataset_lab)
-    #
-    #  data = {'anagraphics': dataset_anagraphics,
-    #          'comorbidities': dataset_comorbidities,
-    #          'vitals': dataset_vitals,
-    #          'lab': dataset_lab}
-    #
-    #  return data

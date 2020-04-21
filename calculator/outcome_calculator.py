@@ -12,28 +12,31 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 from analyzer.loaders.cremona import load_cremona
 from analyzer.dataset import create_dataset
-from analyzer.utils import create_dir, export_features_json
+from analyzer.utils import create_dir, export_features_json, plot_correlation
 from analyzer.learners import train_oct
 from analyzer.learners import xgboost_classifier
 from analyzer.learners import rf_classifier
 
 
 SEED = 1
-prediction = 'outcome'
-folder_name = 'cv10_script_complete_tuning_seed' + str(SEED) + '_' + prediction
+prediction = 'Outcome'
+folder_name = 'complete_lab_tests' + str(SEED) + '_' + prediction.lower()
 output_folder = 'predictors/outcome'
+lab_tests = True
 
 # Load cremona data
-data = load_cremona('../data/cremona/')
+data = load_cremona('../data/cremona/', lab_tests=lab_tests)
 
 # Create dataset
-X, y = create_dataset(data, prediction = prediction)
+X, y = create_dataset(data,
+        lab=lab_tests,
+        prediction = prediction)
+
+plot_correlation(X, os.path.join(output_folder, folder_name, 'correlation.pdf'))
 
 # Split in train and test
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.1,
                                                      random_state=SEED)
-
-
 
 # Train trees
 # output_path = os.path.join(output_folder, 'trees', folder_name)
@@ -60,7 +63,7 @@ param_grid_XGB = {
 
 
 
-output_path_XGB = os.path.join(output_folder, 'XGB', folder_name)
+output_path_XGB = os.path.join(output_folder, folder_name, 'XGB')
 xgboost_classifier(X_train, y_train, X_test, y_test, param_grid_XGB, output_path_XGB, seed=SEED)
 
 
@@ -83,5 +86,5 @@ param_grid_RF = {
 #  }
 
 
-output_path_RF = os.path.join(output_folder, 'RF', folder_name)
+output_path_RF = os.path.join(output_folder, folder_name, 'RF')
 rf_classifier(X_train, y_train, X_test, y_test, param_grid_RF, output_path_RF, seed=SEED)
