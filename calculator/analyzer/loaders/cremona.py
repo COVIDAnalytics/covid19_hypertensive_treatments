@@ -354,7 +354,7 @@ def load_cremona(path, lab_tests=True):
         'Emocromocitometrico (Urgenze): VOLUME CORPUSCOLARE MEDIO': 'CBC: Mean Corpuscular Volume (MCV)',
         'Emocromocitometrico (Urgenze): CONCENTRAZIONE HB MEDIA': 'CBC: Mean Corpuscular Hemoglobin Concentration (MCHC)',
         'Emocromocitometrico (Urgenze): PIASTRINE': 'CBC: Platelets',
-        'Emocromocitometrico (Urgenze): EMATOCRITO': 'CBC: Hematocrit',
+        'Emocromocitometrico (Urgenze): EMATOCRITO': 'CBC: Hematocrit (HCT)',
         'Emocromocitometrico (Urgenze): VALORE DISTRIBUTIVO GLOBULI ROSSI': 'CBC: Red cell Distribution Width (RDW)',
         'Emocromocitometrico (Urgenze): LEUCOCITI': 'CBC: Leukocytes',
         'Emocromocitometrico (Urgenze): EMOGLOBINA': 'CBC: Hemoglobin',

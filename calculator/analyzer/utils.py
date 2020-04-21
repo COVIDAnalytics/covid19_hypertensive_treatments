@@ -55,9 +55,9 @@ def plot_correlation(X, file_name):
 
     # Print correlations > 0.25
     upper = X_corr.corr().where(np.triu(np.ones(X_corr.corr().shape), k=1).astype(np.bool))
-    rows, columns = np.where(abs(upper) > 0.25)
+    rows, columns = np.where(abs(upper) > 0.8)
 
-    print("Highest correlations (> 0.25)")
+    print("Highest correlations (> 0.8)")
     print(list(zip(upper.columns[rows], upper.columns[columns])))
 
 
