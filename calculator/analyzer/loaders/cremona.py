@@ -58,21 +58,38 @@ def get_lab_dates(t):
     return date
 
 
-def remove_missing(df, nan_threashold=40):
-    percent_missing = df.isnull().sum() * 100 / len(df)
-    missing_values = pd.DataFrame({'percent_missing': percent_missing})
+def get_percentages(df, missing_type=np.nan):
+    if np.isnan(missing_type):
+        df = df.isnull()  # Check what is NaN
+    elif missing_type is False:
+        df = ~df  # Check what is False
+
+    percent_missing = df.sum() * 100 / len(df)
+    return pd.DataFrame({'percent_missing': percent_missing})
+
+def remove_missing(df, missing_type=np.nan, nan_threashold=40, impute=True):
+    missing_values = get_percentages(df, missing_type)
     df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
 
-
-    import ipdb; ipdb.set_trace()
     df = df[df_features]
 
-    imp_mean = IterativeImputer(random_state=0)
-    imp_mean.fit(df)
-    imputed_df = imp_mean.transform(df)
+    if impute:
+        imp_mean = IterativeImputer(random_state=0)
+        imp_mean.fit(df)
+        imputed_df = imp_mean.transform(df)
+        df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
 
-    return pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
+    return df
 
+def clean_lab_features(lab_feat):
+    features = [x for x in lab_feat
+                if ('NOTA' not in x) and  # Remove notes
+                ('AFRO' not in x) and    # No normalized creatinine
+                ('CAUCAS' not in x) and  # No normalized creatinine
+                ('UREA EMATICA' not in x) and  # We keep BUN directly
+                ('IONE BICARBONATO' != x)]  # We keep standard directly
+
+    return features
 
 def drop_anagraphics_duplicates(anagraphics):
     # Drop duplicates
@@ -236,7 +253,6 @@ def load_cremona(path, lab_tests=True):
             vital_value = pd.to_numeric(vital_value).mean()
             dataset_vitals.loc[p, vital_name] = vital_value
 
-    import ipdb; ipdb.set_trace()
 
     # Adjust missing columns
     dataset_vitals = remove_missing(dataset_vitals)
@@ -250,15 +266,120 @@ def load_cremona(path, lab_tests=True):
                                                     })
 
 
-    # Data with lab results
-    lab_features = lab['PRESTAZIONE'].unique().tolist()
-    dataset_lab = pd.DataFrame(np.nan, columns=lab_features, index=patients_nosologico)
+
+
+    # Remove missing test (groups) with more than 40% nonzeros
+    lab_tests = lab['COD_INTERNO_PRESTAZIONE'].unique().tolist()
+    dataset_lab_tests = pd.DataFrame(False, columns=lab_tests, index=patients_nosologico)
     for p in patients_nosologico:
-        lab_p = lab[lab['NOSOLOGICO'] == p][['DATA_RICHIESTA', 'PRESTAZIONE', 'VALORE']]
-        for lab_name in lab_p['PRESTAZIONE']:
-            lab_p_name = lab_p[lab_p['PRESTAZIONE'] == lab_name]
-            idx = lab_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
-            dataset_lab.loc[p, lab_name] = lab_p_name.loc[idx]['VALORE']
+        for lab_test_name in lab[lab['NOSOLOGICO'] == p]['COD_INTERNO_PRESTAZIONE']:
+            dataset_lab_tests.loc[p, lab_test_name] = True
+
+    # 30% removes tests that are not present and the COVID-19 lab test
+    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threashold=30, impute=False)
+
+    # Data with lab results
+
+    # Filter data entries per test
+    lab_reduced = lab[lab['COD_INTERNO_PRESTAZIONE'].isin(lab_tests_reduced.columns)]
+
+
+    # Create lab features for each exam
+    dataset_lab = {}
+    for lab_test in lab_tests_reduced.columns:
+        # Create dataset
+        lab_test_temp = lab_reduced.loc[lab_reduced['COD_INTERNO_PRESTAZIONE'] == lab_test]
+        lab_test_features = lab_test_temp['PRESTAZIONE'].unique().tolist()
+
+        # Remove unnecessary features
+        lab_test_features = clean_lab_features(lab_test_features)
+
+        # Add name of lab_test
+        test_name = lab[lab['COD_INTERNO_PRESTAZIONE'] == lab_test]['DESCR_PRESTAZIONE'].values[0]
+        lab_test_features_names = [test_name.strip() + ": " + x for x in lab_test_features]
+
+        dataset_lab_test = pd.DataFrame(np.nan, columns=lab_test_features_names, index=patients_nosologico)
+        for p in patients_nosologico:
+            lab_p = lab_test_temp[lab_test_temp['NOSOLOGICO'] == p][['COD_INTERNO_PRESTAZIONE', 'DATA_RICHIESTA', 'PRESTAZIONE', 'VALORE']]
+            for lab_name in lab_test_features:
+                if any(lab_p['PRESTAZIONE'] == lab_name):
+                    lab_p_name = lab_p[lab_p['PRESTAZIONE'] == lab_name]
+                    idx = lab_p_name['DATA_RICHIESTA'].idxmin()  # Pick first date of test if multiple
+                    dataset_lab_test.loc[p, test_name.strip() + ": " + lab_name] = lab_p_name.loc[idx]['VALORE']
+        dataset_lab[lab_test] = dataset_lab_test
+
+    dataset_lab_full = pd.concat([v for _,v in dataset_lab.items()],
+                                 axis=1, sort=True).astype(np.float64)
+    dataset_lab_full = remove_missing(dataset_lab_full)
+
+
+    # Rename dataset laboratory
+    dataset_lab_full = dataset_lab_full.rename({
+        'ALT: ALT': 'Alanine Aminotransferase (ALT)',
+        'AST: AST': 'Aspartate Aminotransferase (AST)',
+        'Creatinina UAR: CREATININA SANGUE': 'Blood Creatinine',
+        'Potassio: POTASSIEMIA': 'Potassium Blood Level',
+        'Cloruremia: CLORUREMIA': 'Chlorine Blood Level',
+        'Proteina C Reattiva: PCR - PROTEINA C REATTIVA': 'C-Reactive Protein (CRP)',
+        'Glucosio ematico: GLICEMIA': 'Glycemia',
+        'Azoto ematico UAR: AZOTO UREICO EMATICO': 'Blood Urea Nitrogen (BUN)',
+        'Emogasanalisi su sangue arterioso: ACIDO LATTICO': 'ABG: Lactic Acid',
+        'Emogasanalisi su sangue arterioso: FO2HB': 'ABG: FO2HB',
+        'Emogasanalisi su sangue arterioso: CTCO2': 'ABG: CTCO2',
+        'Emogasanalisi su sangue arterioso: HCT': 'ABG: Hematocrit (HCT)'
+        'Emogasanalisi su sangue arterioso: IONE BICARBONATO STD': 'ABG: standard bicarbonate (sHCO3)',
+        'Emogasanalisi su sangue arterioso: BE(ECF)': 'ABG: BE(ecf)', # TOFIX WITH ECCESSO DI BASI
+        'Emogasanalisi su sangue arterioso: FHHB': 'ABG: FHHb',
+        'Emogasanalisi su sangue arterioso: PO2': 'ABG: PO2',
+ 'Emogasanalisi su sangue arterioso: ECCESSO DI BASI',
+ 'Emogasanalisi su sangue arterioso: OSSIGENO SATURAZIONE',
+ 'Emogasanalisi su sangue arterioso: PCO2',
+ 'Emogasanalisi su sangue arterioso: PH EMATICO',
+ 'Emogasanalisi su sangue arterioso: CALCIO IONIZZATO',
+ 'Emogasanalisi su sangue arterioso: CARBOSSIEMOGLOBINA',
+ 'Emogasanalisi su sangue arterioso: METAEMOGLOBINA',
+ 'Sodio: SODIEMIA',
+ 'TEMPO DI PROTROMBINA UAR: (PT) TEMPO DI PROTROMBINA',
+ 'TEMPO DI PROTROMBINA UAR: TEMPO DI PROTROMBINA RATIO',
+ 'Calcemia: CALCEMIA',
+'BILIRUBINA TOTALE REFLEX: BILIRUBINA TOTALE',
+ 'TEMPO DI TROMBOPLASTINA PARZIALE: TEMPO DI TROMBOPLASTINA PARZIALE ATTIVATO',
+ 'Amilasi: AMILASI NEL SIERO',
+ 'Colinesterasi: COLINESTERASI',
+ 'Emocromocitometrico (Urgenze): VOLUME CORPUSCOLARE MEDIO',
+ 'Emocromocitometrico (Urgenze): CONCENTRAZIONE HB MEDIA',
+ 'Emocromocitometrico (Urgenze): PIASTRINE',
+ 'Emocromocitometrico (Urgenze): EMATOCRITO',
+ 'Emocromocitometrico (Urgenze): VALORE DISTRIBUTIVO GLOBULI ROSSI',
+ 'Emocromocitometrico (Urgenze): LEUCOCITI',
+ 'Emocromocitometrico (Urgenze): EMOGLOBINA',
+ 'Emocromocitometrico (Urgenze): CONTENUTO HB MEDIO',
+ 'Emocromocitometrico (Urgenze): ERITROCITI']
+
+
+
+        })
+
+
+
+
+
+
+    # TODO:
+
+    # 1. Join dataframes
+    # 2. Check missing
+    # 3. Keep only not missing
+    # 4. Check names
+
+
+    #  perc_missing = get_percentages(dataset_lab_tests, missing_type=False)
+    #  perc_missing['text'] = [lab[lab['COD_INTERNO_PRESTAZIONE'] == perc_missing.index[i]]['DESCR_PRESTAZIONE'].values[0] for i in range(len(perc_missing))]
+
+
+
+
+    from IPython import embed; embed()
 
 
     import ipdb; ipdb.set_trace()
@@ -269,7 +390,7 @@ def load_cremona(path, lab_tests=True):
 
 
     # Adjust missing columns
-    dataset_lab = remove_missing(dataset_lab)
+    #  dataset_lab = remove_missing(dataset_lab)
     dataset_lab = dataset_lab.rename(columns =
                                 {'VOLUME CORPUSCOLARE MEDIO': 'Mean Corpuscular Volume (MCV)',
                                 'PIASTRINE': 'Platelets',
