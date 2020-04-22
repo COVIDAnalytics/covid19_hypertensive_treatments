@@ -125,10 +125,10 @@ def load_cremona(path, lab_tests=True):
 
     # TODO:
     # 1. Get general data discharge -> Extract diagnosis
-    #    (Use R package icd) => TODO!
-    # 2. Merge with vitals from ER
-    # 3. Merge with lab tests from ER
-    # 4. Add ICU admissions (later)
+    #    (Use R package icd) => Done
+    # 2. Merge with vitals from ER => Done
+    # 3. Merge with lab tests from ER => Done
+    # 4. Add ICU admissions => Done
 
     # Parameters
 
@@ -137,7 +137,10 @@ def load_cremona(path, lab_tests=True):
     list_remove_comorbidities = ["Immunizations and screening for infectious disease",
                                  "Pneumonia (except that caused by tuberculosis or sexually transmitted disease)",
                                  "Respiratory failure; insufficiency; arrest (adult)",
-                                 "Residual codes; unclassified"]
+                                 "Residual codes; unclassified",
+                                 "Diabetes mellitus without complication",
+                                 "Diabetes mellitus with complications",
+                                 "Acute and unspecified renal failure"]
 
     # Discharge codes
     # 1,2,5,6,9 = discharged, 4 = deceased
@@ -184,17 +187,18 @@ def load_cremona(path, lab_tests=True):
     new_cols = [dict_ccs[i] for i in old_cols]
     dataset_comorbidities.columns = new_cols
 
-    # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
-    cols_keep = list(dataset_comorbidities.columns[dataset_comorbidities.sum() >10])
-    for e in list_remove_comorbidities:
-        cols_keep.remove(e)
-    dataset_comorbidities = dataset_comorbidities[cols_keep]
+
     # False and True are transformed to 0 and 1 categories
     dataset_comorbidities = dataset_comorbidities.astype('int').astype('category')
 
     # Keep only the patients that we have in the comorbidities dataframe
     pat_comorb = dataset_comorbidities.index
     discharge_info = discharge_info[discharge_info.NumeroScheda.isin(pat_comorb)]
+
+    #Join the two categories of Diabetes
+    dataset_comorbidities["Diabetes"] = np.zeros(len(dataset_comorbidities))
+    dataset_comorbidities["Diabetes"] = ((dataset_comorbidities['Diabetes mellitus without complication'].astype(int) > 0) | \
+        (dataset_comorbidities['Diabetes mellitus with complications'].astype(int) > 0)).astype(int).astype('category')
 
     # Keep discharge codes and transform the dependent variable to binary
     discharge_info = discharge_info[discharge_info['Modalità di dimissione'].isin(discharge_codes)]
@@ -235,6 +239,20 @@ def load_cremona(path, lab_tests=True):
     dataset_comorbidities.index = [str(i) for i in dataset_comorbidities.index]
     dataset_comorbidities = dataset_comorbidities.loc[patients_nosologico]
 
+    # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
+    cols_keep = list(dataset_comorbidities.columns[dataset_comorbidities.sum() >10])
+    for e in list_remove_comorbidities:
+        cols_keep.remove(e)
+    dataset_comorbidities = dataset_comorbidities[cols_keep]
+
+    # Add ICU data
+    icu = pd.read_csv("%s/icu/icu_transfers.csv" %path)
+    icu = icu[['RC_CODNOSO', 'TRASF_TI']]
+    icu = icu.dropna()
+    icu.RC_CODNOSO = icu.RC_CODNOSO.apply(int).apply(str)
+    icu = icu.rename(columns={'RC_CODNOSO':'NOSOLOGICO','TRASF_TI':'ICU'})
+    icu = icu[icu.NOSOLOGICO.isin(patients_nosologico)].set_index("NOSOLOGICO")
+    icu.ICU = icu.ICU.astype(int).astype('category')
 
     # Create final dataset
     #-------------------------------------------------------------------------------------
@@ -244,6 +262,7 @@ def load_cremona(path, lab_tests=True):
     dataset_anagraphics.loc[:, anagraphics_features] = discharge_info[['NOSOLOGICO'] + anagraphics_features].set_index('NOSOLOGICO')
     dataset_anagraphics.loc[:, 'Sex'] = dataset_anagraphics.loc[:, 'Sex'].astype('category')
     dataset_anagraphics.loc[:, 'Outcome'] = dataset_anagraphics.loc[:, 'Outcome'].astype('category')
+    dataset_anagraphics = dataset_anagraphics.join(icu)
 
     # Data with ER vitals
     vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
@@ -264,11 +283,11 @@ def load_cremona(path, lab_tests=True):
     dataset_vitals = remove_missing(dataset_vitals)
 
     # Rename to English
-    dataset_vitals = dataset_vitals.rename(columns={"P. Max": "systolic_blood_pressure",
-                                                    "P. Min": "diastolic_blood_pressure",
-                                                    "F. Card.": "cardiac_frequency",
-                                                    "Temp.": "temperature_celsius",
-                                                    "F. Resp.": "respiratory_frequency"
+    dataset_vitals = dataset_vitals.rename(columns={"P. Max": "Systolic Blood Pressure",
+                                                    "P. Min": "Diastolic Blood Pressure",
+                                                    "F. Card.": "Cardiac Frequency",
+                                                    "Temp.": "Temperature Celsius",
+                                                    "F. Resp.": "Respiratory Frequency"
                                                     })
 
 
