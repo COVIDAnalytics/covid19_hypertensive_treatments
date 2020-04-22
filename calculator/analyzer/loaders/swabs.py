@@ -96,6 +96,11 @@ def clean_lab_features(lab_feat):
 
 def load_swabs(path):
 
+    # Load vitals
+    vitals = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
+    vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
+    vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
+
     # Load lab data
     lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
     lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
@@ -106,6 +111,7 @@ def load_swabs(path):
     covid = lab[lab.COD_INTERNO_PRESTAZIONE == 'COV19']
     covid = covid[covid.VALORE_TESTO.isin(['POSITIVO', 'Negativo', 'Debolmente positivo'])]
     covid.VALORE_TESTO = covid.VALORE_TESTO.isin(['POSITIVO','Debolmente positivo']).astype(int).astype('category')
+    covid = covid[~ covid.NOSOLOGICO.duplicated()] # drop duplicated values
     swab = covid[['NOSOLOGICO', 'VALORE_TESTO']].set_index('NOSOLOGICO')
     swab = swab.rename(columns = {'VALORE_TESTO': 'Swab Result'})
 
@@ -113,6 +119,35 @@ def load_swabs(path):
     covid_pats = covid.NOSOLOGICO
     lab = lab[lab.NOSOLOGICO.isin(covid_pats)]
     lab_tests = lab['COD_INTERNO_PRESTAZIONE'].unique().tolist()
+
+
+    #Keep the vitals of patients with swab
+    covid_pats = list(set(covid_pats).intersection(set(vitals.NOSOLOGICO)))
+    vitals = vitals[vitals.NOSOLOGICO.isin(covid_pats)]
+    swab = swab[swab.index.isin(covid_pats)]
+
+    #Create vitals dataset
+    vital_signs = ['P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
+    dataset_vitals = pd.DataFrame(np.nan, columns=vital_signs, index=covid_pats)
+    for p in covid_pats:
+        vitals_p = vitals[vitals['NOSOLOGICO'] == p][['NOME_PARAMETRO_VITALE', 'VALORE_PARAMETRO']]
+        for vital_name in vital_signs:
+            # Take mean if multiple values
+            vital_value = vitals_p[vitals_p['NOME_PARAMETRO_VITALE'] == vital_name]['VALORE_PARAMETRO']
+            vital_value = pd.to_numeric(vital_value).mean()
+            dataset_vitals.loc[p, vital_name] = vital_value
+
+    # Adjust missing columns
+    dataset_vitals = remove_missing(dataset_vitals)
+
+    # Rename to English
+    dataset_vitals = dataset_vitals.rename(columns={"P. Max": "Systolic Blood Pressure",
+                                                    "P. Min": "Diastolic Blood Pressure",
+                                                    "F. Card.": "Cardiac Frequency",
+                                                    "Temp.": "Temperature Celsius",
+                                                    "F. Resp.": "Respiratory Frequency"
+                                                    })
+
 
     #Unstack the dataset and transform the entries in True/False
     dataset_lab_tests = lab[['NOSOLOGICO', 'COD_INTERNO_PRESTAZIONE', 'VALORE_TESTO']].groupby(['NOSOLOGICO', 'COD_INTERNO_PRESTAZIONE']).count().unstack().notna()
@@ -197,10 +232,9 @@ def load_swabs(path):
         'Emocromocitometrico (Urgenze): ERITROCITI': 'CBC: Erythrocytes'
         })
 
-    dataset_lab_full = dataset_lab_full.join(swab)
 
-    X = dataset_lab_full[dataset_lab_full.columns.difference(['Swab Result'])]
-    y = dataset_lab_full['Swab Result']
+    X = dataset_lab_full.join(dataset_vitals)
+    y = swab
     return X, y
 
 
