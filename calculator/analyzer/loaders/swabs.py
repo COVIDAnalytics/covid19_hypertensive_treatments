@@ -93,7 +93,7 @@ def clean_lab_features(lab_feat):
     return features
 
 
-def load_swabs(path):
+def load_swabs(path, lab_tests):
 
     # Load anagraphics
     anagraphics = pd.read_csv("%s/emergency_room/general.csv" % path)
@@ -122,7 +122,7 @@ def load_swabs(path):
     covid.VALORE_TESTO = covid.VALORE_TESTO.isin(['POSITIVO','Debolmente positivo']).astype(int).astype('category')
     covid = covid[~ covid.NOSOLOGICO.duplicated()] # drop duplicated values
     swab = covid[['NOSOLOGICO', 'VALORE_TESTO']].set_index('NOSOLOGICO')
-    swab = swab.rename(columns = {'VALORE_TESTO': 'Swab Result'})['Swab Result'].astype('category') # Transform the dataframe in a series
+    swab = swab.rename(columns = {'VALORE_TESTO': 'Swab'})['Swab'].astype('category') # Transform the dataframe in a series
 
     # Keep only the patients that have a swab
     covid_pats = covid.NOSOLOGICO
@@ -133,11 +133,16 @@ def load_swabs(path):
     #Keep the vitals of patients with swab
     covid_pats = list(set(covid_pats).intersection(set(vitals.NOSOLOGICO)).intersection(set(anagraphics.NOSOLOGICO)))
     vitals = vitals[vitals['NOSOLOGICO'].isin(covid_pats)]
-    dataset_anagraphics = anagraphics[anagraphics['NOSOLOGICO'].isin(covid_pats)].set_index('NOSOLOGICO')
     swab = swab[swab.index.isin(covid_pats)]
+    anagraphics = anagraphics[anagraphics['NOSOLOGICO'].isin(covid_pats)].set_index('NOSOLOGICO')
+    dataset_anagraphics = anagraphics.join(swab)
+    
 
     #Create vitals dataset
-    vital_signs = ['P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
+    vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
+    if lab_tests:
+        vital_signs.remove('SaO2')  # Remove oxygen saturation if we have lab values (it is there)
+
     dataset_vitals = pd.DataFrame(np.nan, columns=vital_signs, index=covid_pats)
     for p in covid_pats:
         vitals_p = vitals[vitals['NOSOLOGICO'] == p][['NOME_PARAMETRO_VITALE', 'VALORE_PARAMETRO']]
@@ -242,11 +247,10 @@ def load_swabs(path):
         'Emocromocitometrico (Urgenze): ERITROCITI': 'CBC: Erythrocytes'
         })
 
-    data = dataset_anagraphics.join(dataset_vitals)
-    data = data.join(dataset_lab_full)
+    data = {'anagraphics': dataset_anagraphics,
+            'vitals': dataset_vitals,
+            'lab': dataset_lab_full}
 
-    X = data
-    y = swab
-    return X, y
+    return data
 
 

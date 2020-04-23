@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
-
+from analyzer.dataset import create_dataset
 from analyzer.loaders.swabs import load_swabs
 from analyzer.utils import create_dir, export_features_json, plot_correlation
 from analyzer.learners import train_oct
@@ -22,8 +22,18 @@ prediction = 'Swab'
 folder_name = 'swab_prediction_seed' + str(SEED) + '_' + prediction.lower()
 output_folder = 'predictors/swab'
 
+lab_tests = True
+vitals = True
+
 # Load swab data
-X, y = load_swabs('../data/cremona/')
+data = load_swabs('../data/cremona/', lab_tests = lab_tests)
+
+# Create dataset
+X, y = create_dataset(data,
+        comorbidities = False,
+        vitals=vitals,
+        lab=lab_tests,
+        prediction = prediction)
 
 # Split in train and test
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.1,

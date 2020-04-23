@@ -15,7 +15,7 @@ def create_dataset(data_dict,
     if lab:
         data = data.join(data_dict['lab'])
 
-    X = data.loc[:, data.columns.difference(['Outcome', 'ICU'])]
+    X = data.loc[:, data.columns.difference(['Outcome', 'ICU', 'Swab'])]
     y = data.loc[:, prediction]
 
     return X, y
