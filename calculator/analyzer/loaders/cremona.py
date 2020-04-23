@@ -139,8 +139,7 @@ def load_cremona(path, lab_tests=True):
                                  "Respiratory failure; insufficiency; arrest (adult)",
                                  "Residual codes; unclassified",
                                  "Diabetes mellitus without complication",
-                                 "Diabetes mellitus with complications",
-                                 "Acute and unspecified renal failure"]
+                                 "Diabetes mellitus with complications"]
 
     # Discharge codes
     # 1,2,5,6,9 = discharged, 4 = deceased
@@ -263,6 +262,7 @@ def load_cremona(path, lab_tests=True):
     dataset_anagraphics.loc[:, 'Sex'] = dataset_anagraphics.loc[:, 'Sex'].astype('category')
     dataset_anagraphics.loc[:, 'Outcome'] = dataset_anagraphics.loc[:, 'Outcome'].astype('category')
     dataset_anagraphics = dataset_anagraphics.join(icu)
+    dataset_anagraphics.Sex = dataset_anagraphics.Sex.cat.codes.astype('category')
 
     # Data with ER vitals
     vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
@@ -296,6 +296,7 @@ def load_cremona(path, lab_tests=True):
     # Remove missing test (groups) with more than 40% nonzeros
     lab_tests = lab['COD_INTERNO_PRESTAZIONE'].unique().tolist()
     dataset_lab_tests = pd.DataFrame(False, columns=lab_tests, index=patients_nosologico)
+
     for p in patients_nosologico:
         for lab_test_name in lab[lab['NOSOLOGICO'] == p]['COD_INTERNO_PRESTAZIONE']:
             dataset_lab_tests.loc[p, lab_test_name] = True

@@ -23,11 +23,11 @@ def train_oct(X_train, y_train,
         iai.OptimalTreeClassifier(
             random_seed = seed,
         ),
-        max_depth=range(1, 10),
-        minbucket=[10, 15, 20, 25, 30, 35],
+        max_depth=range(3, 10),
+        minbucket=[5, 10, 15, 20, 25, 30, 35],
         ls_num_tree_restarts=200,
     )
-    oct_grid.fit_cv(X_train, y_train, n_folds=10, validation_criterion = 'auc')
+    oct_grid.fit_cv(X_train, y_train, n_folds=5, validation_criterion = 'auc')
     best_learner = oct_grid.get_learner()
     best_learner.write_json('%s/learner.json' % output_path)
     best_learner.write_questionnaire('%s/app.html' % output_path)
@@ -68,8 +68,6 @@ def scores(model, t_X, t_Y, te_X, te_Y):
 #INITIATE 10-FOLD CV
 
 def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, seed = 1):
-    X_train.Sex = X_train.Sex.cat.codes.astype('category')
-    X_test.Sex = X_test.Sex.cat.codes.astype('category')
     y_train = y_train.cat.codes.astype('category')
     y_test = y_test.cat.codes.astype('category')
 
@@ -108,8 +106,7 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
 
 
 def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, seed = 1):
-    X_train.Sex = X_train.Sex.cat.codes.astype('category')
-    X_test.Sex = X_test.Sex.cat.codes.astype('category')
+
     y_train = y_train.cat.codes.astype('category')
     y_test = y_test.cat.codes.astype('category')
 
@@ -138,5 +135,3 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     mlflow.sklearn.save_model(bestRF, output_path, serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE)
 
     return isAUC_RF, ofsAUC_RF, accTrain_RF, accTest_RF
-
-
