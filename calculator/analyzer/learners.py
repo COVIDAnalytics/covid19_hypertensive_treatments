@@ -93,7 +93,7 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
     print('Out of Sample AUC', ofsAUC_XGB)
     print('In Sample Misclassification', accTrain_XGB)
     print('Out of Sample Misclassification', accTest_XGB)
-
+    print(pd.DataFrame(bestXGB.get_params().items(), columns = ['Parameter', 'Value']))
     top_features(bestXGB, X_train)
 
     remove_dir(output_path)
@@ -129,6 +129,7 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     print('Out of Sample AUC', ofsAUC_RF)
     print('In Sample Misclassification', accTrain_RF)
     print('Out of Sample Misclassification', accTest_RF)
+    print(pd.DataFrame(bestRF.get_params().items(), columns = ['Parameter', 'Value']))
     top_features(bestRF, X_train)
 
     remove_dir(output_path)

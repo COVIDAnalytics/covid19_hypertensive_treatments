@@ -39,15 +39,14 @@ def fix_outcome(outcome):
         raise ValueError('Not recognized')
 
 
-def n_days(t):
-    if isinstance(t, str):
-        date = datetime.datetime.strptime(t, '%m/%d/%y')
-        new_year_day = pd.Timestamp(year=date.year, month=1, day=1)
-        day_of_the_year = (date - new_year_day).days + 1
-        return day_of_the_year
-    else:
-        return np.NaN
-
+def get_age(t):
+    
+    try:
+        today = pd.Timestamp(year=2020, month=4, day=1)
+        age = np.round((today - t).days/365)
+        return age
+    except:
+        return np.NaN    
 
 def get_lab_dates(t):
     try:
@@ -96,6 +95,16 @@ def clean_lab_features(lab_feat):
 
 def load_swabs(path):
 
+    # Load anagraphics
+    anagraphics = pd.read_csv("%s/emergency_room/general.csv" % path)
+    anagraphics = anagraphics[['N_SCHEDA_PS', 'PZ_SESSO_PS', "PZ_DATA_NASCITA_PS"]]
+    anagraphics['PZ_DATA_NASCITA_PS'] = pd.to_datetime(anagraphics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
+    anagraphics['Age'] = anagraphics['PZ_DATA_NASCITA_PS'].apply(get_age)
+    anagraphics = anagraphics.drop('PZ_DATA_NASCITA_PS', axis = 1)
+    anagraphics = anagraphics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Sex'})
+    anagraphics['Sex'] = (anagraphics['Sex'] == 'F').astype(int)
+    anagraphics['NOSOLOGICO'] = anagraphics['NOSOLOGICO'].astype(str)
+
     # Load vitals
     vitals = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
     vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
@@ -122,8 +131,9 @@ def load_swabs(path):
 
 
     #Keep the vitals of patients with swab
-    covid_pats = list(set(covid_pats).intersection(set(vitals.NOSOLOGICO)))
-    vitals = vitals[vitals.NOSOLOGICO.isin(covid_pats)]
+    covid_pats = list(set(covid_pats).intersection(set(vitals.NOSOLOGICO)).intersection(set(anagraphics.NOSOLOGICO)))
+    vitals = vitals[vitals['NOSOLOGICO'].isin(covid_pats)]
+    dataset_anagraphics = anagraphics[anagraphics['NOSOLOGICO'].isin(covid_pats)].set_index('NOSOLOGICO')
     swab = swab[swab.index.isin(covid_pats)]
 
     #Create vitals dataset
@@ -232,8 +242,10 @@ def load_swabs(path):
         'Emocromocitometrico (Urgenze): ERITROCITI': 'CBC: Erythrocytes'
         })
 
+    data = dataset_anagraphics.join(dataset_vitals)
+    data = data.join(dataset_lab_full)
 
-    X = dataset_lab_full.join(dataset_vitals)
+    X = data
     y = swab
     return X, y
 
