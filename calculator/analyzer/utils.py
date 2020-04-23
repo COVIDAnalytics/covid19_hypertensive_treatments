@@ -48,6 +48,7 @@ def plot_correlation(X, file_name):
     # Draw the heatmap with the mask and correct aspect ratio
     sns.heatmap(X_corr.corr(), mask=mask, cmap=cmap, center=0,
                 xticklabels=True, yticklabels=True,
+                vmax=1.0, vmin=-1.0,
                 square=True, linewidths=.5, cbar_kws={"shrink": .5})
     create_dir(os.path.dirname(file_name))
     plt.tight_layout()
