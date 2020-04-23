@@ -113,7 +113,7 @@ def load_swabs(path):
     covid.VALORE_TESTO = covid.VALORE_TESTO.isin(['POSITIVO','Debolmente positivo']).astype(int).astype('category')
     covid = covid[~ covid.NOSOLOGICO.duplicated()] # drop duplicated values
     swab = covid[['NOSOLOGICO', 'VALORE_TESTO']].set_index('NOSOLOGICO')
-    swab = swab.rename(columns = {'VALORE_TESTO': 'Swab Result'})
+    swab = swab.rename(columns = {'VALORE_TESTO': 'Swab Result'})['Swab Result'].astype('category') # Transform the dataframe in a series
 
     # Keep only the patients that have a swab
     covid_pats = covid.NOSOLOGICO
