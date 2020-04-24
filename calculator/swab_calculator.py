@@ -40,9 +40,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=
                                                      random_state=SEED)
 
 # Train trees
-output_path = os.path.join(output_folder, folder_name, 'oct')
-create_dir(output_path)
-oct_scores = train_oct(X_train, y_train, X_test, y_test, output_path, seed=SEED)
+# output_path = os.path.join(output_folder, folder_name, 'oct')
+# create_dir(output_path)
+# oct_scores = train_oct(X_train, y_train, X_test, y_test, output_path, seed=SEED)
 
 
 #PARAMETERS GRID

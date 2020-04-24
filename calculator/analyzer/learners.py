@@ -72,15 +72,16 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
     y_test = y_test.cat.codes.astype('category')
 
     XGB = xgb.XGBClassifier()
-    gridsearch = GridSearchCV(estimator = XGB, param_grid = param_grid, cv = 10, n_jobs=-1, verbose = 1)
+    gridsearch = GridSearchCV(estimator = XGB, scoring='roc_auc', param_grid = param_grid, cv = 10, n_jobs=-1, verbose = 1)
     gridsearch.fit(X_train.astype(np.float64),
                    y_train.astype(int),
                    eval_metric="auc")
 
     #RECORD BEST MODEL
-    bestHyp = gridsearch.best_params_
+    bestHypXGB = gridsearch.best_params_
+    print(pd.DataFrame(bestHypXGB.items(), columns = ['Parameter', 'Value']))
+    
     bestXGB = gridsearch.best_estimator_
-
     accTrain_XGB, accTest_XGB, ofs_fpr_XGB, ofs_tpr_XGB, isAUC_XGB, ofsAUC_XGB  = \
             scores(bestXGB,
                    X_train.astype(np.float64),
@@ -111,13 +112,14 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     y_test = y_test.cat.codes.astype('category')
 
     RF = RandomForestClassifier()
-    gridsearch = GridSearchCV(estimator = RF, param_grid = param_grid, n_jobs=-1, cv = 10, verbose = 1)
+    gridsearch = GridSearchCV(estimator = RF, scoring = 'roc_auc', param_grid = param_grid, n_jobs=-1, cv = 10, verbose = 1)
     gridsearch.fit(X_train, y_train)
 
     #RECORD BEST MODEL
     bestHypRF = gridsearch.best_params_
+    print(pd.DataFrame(bestHypRF.items(), columns = ['Parameter', 'Value']))
+    
     bestRF = gridsearch.best_estimator_
-
     accTrain_RF, accTest_RF, ofs_fpr_RF, ofs_tpr_RF, isAUC_RF, ofsAUC_RF  = \
             scores(bestRF,
                    X_train.astype(np.float64),
@@ -129,7 +131,6 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     print('Out of Sample AUC', ofsAUC_RF)
     print('In Sample Misclassification', accTrain_RF)
     print('Out of Sample Misclassification', accTest_RF)
-    print(pd.DataFrame(bestRF.get_params().items(), columns = ['Parameter', 'Value']))
     top_features(bestRF, X_train)
 
     remove_dir(output_path)
