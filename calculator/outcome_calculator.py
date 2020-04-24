@@ -10,7 +10,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 
-from analyzer.loaders.cremona import load_cremona
+import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
 from analyzer.utils import create_dir, export_features_json, plot_correlation
 from analyzer.learners import train_oct
@@ -25,7 +25,7 @@ output_folder = 'predictors/outcome'
 lab_tests = True
 
 # Load cremona data
-data = load_cremona('../data/cremona/', lab_tests=lab_tests)
+data = cremona.load_cremona('../data/cremona/', lab_tests=lab_tests)
 
 # Create dataset
 X, y = create_dataset(data,
@@ -39,9 +39,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=
                                                      random_state=SEED)
 
 # Train trees
-output_path = os.path.join(output_folder, folder_name, 'oct')
-create_dir(output_path)
-oct_scores = train_oct(X_train, y_train, X_test, y_test, output_path, seed=SEED)
+#  output_path = os.path.join(output_folder, folder_name, 'oct')
+#  create_dir(output_path)
+#  oct_scores = train_oct(X_train, y_train, X_test, y_test, output_path, seed=SEED)
 
 
 #PARAMETERS GRID
