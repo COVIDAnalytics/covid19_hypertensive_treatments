@@ -55,10 +55,19 @@ RENAMED_LAB_COLUMNS = {
         'Emocromocitometrico (Urgenze): EMOGLOBINA': 'CBC: Hemoglobin',
         }
 
+VITAL_SIGNS = ['SaO2',
+               'P. Max',
+               #  'P. Min',  # Keep only max because it is more precise
+               'F. Card.',
+               'F. Resp.',
+               'Temp.',
+               'Dolore',
+               'GCS',
+               'STICKGLI']
 
 RENAMED_VITALS_COLUMNS = {
         "P. Max": "Systolic Blood Pressure",
-        "P. Min": "Diastolic Blood Pressure",
+        #  "P. Min": "Diastolic Blood Pressure",
         "F. Card.": "Cardiac Frequency",
         "Temp.": "Temperature Celsius",
         "F. Resp.": "Respiratory Frequency"

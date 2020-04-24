@@ -119,7 +119,7 @@ def load_cremona(path, lab_tests=True):
     dataset_anagraphics.Sex = dataset_anagraphics.Sex.cat.codes.astype('category')
 
     # Data with ER vitals
-    vital_signs = ['SaO2', 'P. Max', 'P. Min', 'F. Card.', 'F. Resp.', 'Temp.', 'Dolore', 'GCS', 'STICKGLI']
+    vital_signs = u.VITAL_SIGNS
     if lab_tests:
         vital_signs.remove('SaO2')  # Remove oxygen saturation if we have lab values (it is there)
 
