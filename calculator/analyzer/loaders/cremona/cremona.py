@@ -189,9 +189,6 @@ def load_cremona(path, lab_tests=True):
     # Rename dataset laboratory
     dataset_lab_full = dataset_lab_full.rename(columns=u.RENAMED_LAB_COLUMNS)
 
-    import ipdb; ipdb.set_trace()
-
-
     data = {'anagraphics': dataset_anagraphics,
             'comorbidities': dataset_comorbidities,
             'vitals': dataset_vitals,

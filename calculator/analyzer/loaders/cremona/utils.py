@@ -53,8 +53,6 @@ RENAMED_LAB_COLUMNS = {
         'Emocromocitometrico (Urgenze): VALORE DISTRIBUTIVO GLOBULI ROSSI': 'CBC: Red cell Distribution Width (RDW)',
         'Emocromocitometrico (Urgenze): LEUCOCITI': 'CBC: Leukocytes',
         'Emocromocitometrico (Urgenze): EMOGLOBINA': 'CBC: Hemoglobin',
-        'Emocromocitometrico (Urgenze): CONTENUTO HB MEDIO': 'CBC: Mean corpuscular haemoglobin (MCH)',
-        'Emocromocitometrico (Urgenze): ERITROCITI': 'CBC: Erythrocytes'
         }
 
 
@@ -76,12 +74,15 @@ LAB_FEATURES_NOT_MATCH = ['IONE BICARBONATO',  # We keep standard directly
                           '(PT) TEMPO DI PROTROMBINA',  # We keep only Prothrombin Time
                           'HCT',  # Remove Hematocrit to keep Hemoglobin
                           'EMATOCRITO', # Remove Hematocrit to keep Hemoglobin
+                          'ERITROCITI',   # Redundant with Hemoglobin
                           'BE(ECF)',  # Remove Base Excess ECF (Keep normal one BE)
                           'CTCO2',  # Redundant with PaCO2
                           'FHHB',  # Redundant with Hemoglobin (also with Hematocrit)
                           'FO2HB',  # Redundant with Hemoglobin
                           'CALCIO IONIZZATO',  # Redundant with Blood Calcium
                           'CONCENTRAZIONE HB MEDIA',  # Redundant with MCV
+                          'CONTENUTO HB MEDIO',  # Redundant with MCV
+                          'CLORUREMIA',  # Redundant with Sodium
                           ]
 
 
