@@ -33,11 +33,11 @@ space_RF  = [Integer(1, 1000, name = "n_estimators"),
           Integer(1, 300, name ='min_samples_leaf'),
           Integer(2, 300, name = 'min_samples_split')]
 
-algorithms = [xgb.XGBClassifier(), RandomForestClassifier()]
+algorithms = [xgb.XGBClassifier, RandomForestClassifier]
 spaces = [space_XGB, space_RF]
 name_params = [name_param_xgb, name_param_rf]
 
-def optimizer(algorithm, space, name_param, X, y):
+def optimizer(algorithm, space, name_param, X, y, n_calls):
 
     @use_named_args(space)
     def objective(**params):
@@ -45,22 +45,22 @@ def optimizer(algorithm, space, name_param, X, y):
         scores = []
 
         for seed in range(1,11):
-            model = copy.deepcopy(algorithm)
+            model = algorithm()
             model.set_params(**params) 
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-            scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 10, n_jobs = -1, scoring="roc_auc")))
+            scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 5, n_jobs = -1, scoring="roc_auc")))
             print("Seed " + str(seed) + ' completed')
 
-        return -np.min(scores)
+        return -np.mean(scores)
 
-    opt_model = gp_minimize(objective, space, n_calls = 100, random_state = 1, verbose = True, n_random_starts = 20, n_jobs = -1)
+    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 20, n_jobs = -1)
     best_params = dict(zip(name_param, opt_model.x))    
-    print('Overall AUC = ', - opt_model.fun)
+    print('Cross-validation AUC = ', - opt_model.fun)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = 1)
     
-    best_model = copy.deepcopy(algorithm)
+    best_model = algorithm()
     best_model.set_params(**best_params)
     best_model.fit(X_train, y_train)
 

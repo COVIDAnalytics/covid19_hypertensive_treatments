@@ -48,7 +48,7 @@ for i in range(len(o.algorithms)):
         space = o.spaces[i]
         name_param = o.name_params[i]
 
-        o.optimizer(algorithm, space, name_param, X, y)
+        best_model = o.optimizer(algorithm, space, name_param, X, y, n_calls = 300)
 
 
 # Train trees
