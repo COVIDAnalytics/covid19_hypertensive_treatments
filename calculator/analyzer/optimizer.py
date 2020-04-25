@@ -44,16 +44,17 @@ def optimizer(algorithm, space, name_param, X, y):
 
         scores = []
 
-        for seed in range(1,11):
+        for seed in range(1,2):
             model = copy.deepcopy(algorithm)
             model.set_params(**params) 
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-            scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 10, n_jobs = -1, scoring="roc_auc", verbose = 1)))
+            scores.append(np.mean(cross_val_score(model, X_train.astype(np.float64), y_train.astype(int), cv = 10, n_jobs = -1, scoring="roc_auc")))
+            print("Seed " + str(seed) + ' completed')
 
         return -np.mean(scores)
 
-    opt_model = gp_minimize(objective, space, n_calls = 1000, random_state = 1)
+    opt_model = gp_minimize(objective, space, n_calls = 300, random_state = 1, verbose = True)
     best_params = dict(zip(name_param, opt_model.x))    
     print('Overall AUC = ', - opt_model.fun)
 
@@ -61,7 +62,7 @@ def optimizer(algorithm, space, name_param, X, y):
     
     best_model = copy.deepcopy(algorithm)
     best_model.set_params(**best_params)
-    best_model.fit(X_train, y_train)
+    best_model.fit(X_train.astype(np.float64), y_train.astype(int))
 
     accTrain_RF, accTest_RF, ofs_fpr_RF, ofs_tpr_RF, isAUC_RF, ofsAUC_RF  = \
             scores(best_model,
