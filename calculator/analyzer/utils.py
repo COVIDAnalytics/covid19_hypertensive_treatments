@@ -62,15 +62,46 @@ def plot_correlation(X, file_name):
     print(list(zip(upper.columns[rows], upper.columns[columns])))
 
 
-def export_features_json(X, file_name):
-    data = {'numeric': {},
-            'categorical': {},
-            'checkboxes': {}}
 
-    import ipdb; ipdb.set_trace()
+# List of well written names for the Cremona data
+comorbidities = ['Multiple Sclerosis',
+             'Acidosis', 'Anaemia', 'Asthma', 'Cancer', 'Chronic Heart Condition', 'Chronic Kidney', 'Chronic Liver', 'Chronic Obstructive Lung',
+        'Diabetes', 'Epilepsy', 'Glaucoma', 'High Triglycerides', 'Hypercholesterolemia', 'Hypertension', 'Leukemia', 'Neutropenia', 'Osteoporosis', 'Parkinson', 'Rickets']
+symptoms = ['Vomit', 'Diarrhea']
+numeric = ['SaO2','Age', 'Cardiac Frequency', 'Diastolic Blood Pressure', 'Respiratory Frequency', 'Systolic Blood Pressure','Temperature Celsius']
+categorical = ["Sex"]
 
 
+def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file_name):
+    data = {'numeric': [],
+            'categorical': [],
+            'checkboxes': [],
+            'multidrop': []}
+
+    for i in range(len(numeric)):
+        data['numeric'].append({"name":numeric[i], 'index' : list(X.columns).index(numeric[i]), "min_val" : np.min(X[numeric[i]]),
+        "max_val" : np.max(X[numeric[i]]), "default" : np.round(np.median(X[numeric[i]]),2), 'explanation' : 'Insert value of ' + numeric[i]})
+
+    for i in range(len(categorical)):
+        data['categorical'].append({"name": categorical[i], 'index' : list(X.columns).index(categorical[i]), "vals" : list(np.unique(X[categorical[i]])),
+        "default" : np.unique(X[categorical[i]])[0], 'explanation' : '' })
+
+    data['checkboxes'].append({'name': "Symptoms", "index": [], "vals" : [], 'explanation': []})
+    data['multidrop'].append({'name': "Comorbidities", "index": [], "vals" : [], 'explanation': []})
+
+    for i in range(len(symptoms)):
+        data['checkboxes'][0]["index"].append(list(X.columns).index(symptoms[i]))
+        data['checkboxes'][0]["vals"].append(symptoms[i])
+    data['checkboxes'][0]["explanation"].append("Select the existing symptoms.")
+
+
+    for i in range(len(comorbidities)):
+        data['multidrop'][0]["index"].append(list(X.columns).index(comorbidities[i]))
+        data['multidrop'][0]["vals"].append(comorbidities[i])
+    data['multidrop'][0]["explanation"].append("Select the existing chronic diseases or conditions.")
 
 
     with open(file_name, 'w') as outfile:
         json.dump(data, outfile)
+
+    return data

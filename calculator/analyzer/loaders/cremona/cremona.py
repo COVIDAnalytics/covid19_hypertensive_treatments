@@ -23,7 +23,7 @@ def load_cremona(path, lab_tests=True):
 
     # TODO: Run R command automatically
     # import subprocess
-    # subprocess.call(['R', '%s/general/R_script.R' % path])
+    # subprocess.call(['R', 'analyzer/loaders/group_comorbidities.R'])
 
     #Import the comorbidity csv and dictionary from R
     dataset_comorbidities = pd.read_csv('%s/general/comorbidities.csv' % path, index_col="id")
