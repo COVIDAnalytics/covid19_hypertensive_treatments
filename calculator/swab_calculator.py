@@ -75,4 +75,3 @@ best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 350)
 
 # output_path_RF = os.path.join(output_folder, folder_name, 'RF')
 # rf_classifier(X_train, y_train, X_test, y_test, param_grid_RF, output_path_RF, seed=SEED)
->>>>>>> eff1e8ec716909d15988d16691da3a374ce192d4
