@@ -44,7 +44,7 @@ def optimizer(algorithm, space, name_param, X, y):
 
         scores = []
 
-        for seed in range(1,2):
+        for seed in range(1,11):
             model = copy.deepcopy(algorithm)
             model.set_params(**params) 
 
@@ -54,7 +54,7 @@ def optimizer(algorithm, space, name_param, X, y):
 
         return -np.mean(scores)
 
-    opt_model = gp_minimize(objective, space, n_calls = 300, random_state = 1, verbose = True, n_random_starts = 20, n_jobs = -1)
+    opt_model = gp_minimize(objective, space, n_calls = 250, random_state = 1, verbose = True, n_random_starts = 20, n_jobs = -1)
     best_params = dict(zip(name_param, opt_model.x))    
     print('Overall AUC = ', - opt_model.fun)
 
@@ -76,3 +76,4 @@ def optimizer(algorithm, space, name_param, X, y):
     print('In Sample Misclassification', accTrain_RF)
     print('Out of Sample Misclassification', accTest_RF)
     top_features(best_model, X_train)
+    return best_model
