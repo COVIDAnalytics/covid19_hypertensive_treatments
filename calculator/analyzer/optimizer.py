@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd 
 
 from sklearn.model_selection import cross_val_score
-from skopt.space import Real, Integer
+from skopt.space import Real, Integer, Categorical
 from skopt.utils import use_named_args
 
 from sklearn.model_selection import train_test_split, GridSearchCV
