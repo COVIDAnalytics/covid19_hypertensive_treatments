@@ -54,7 +54,7 @@ def optimizer(algorithm, space, name_param, X, y):
 
         return -np.mean(scores)
 
-    opt_model = gp_minimize(objective, space, n_calls = 300, random_state = 1, verbose = True)
+    opt_model = gp_minimize(objective, space, n_calls = 300, random_state = 1, verbose = True, n_random_starts = 20, n_jobs = -1)
     best_params = dict(zip(name_param, opt_model.x))    
     print('Overall AUC = ', - opt_model.fun)
 
