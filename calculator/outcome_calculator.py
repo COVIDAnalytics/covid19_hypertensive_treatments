@@ -48,7 +48,7 @@ for i in range(len(o.algorithms)):
         space = o.spaces[i]
         name_param = o.name_params[i]
 
-        best_models.append(o.optimizer(algorithm, space, name_param, X, y, n_calls = 300))
+        best_models.append(o.optimizer(algorithm, space, name_param, X, y, n_calls = 500))
 
 # plot_correlation(X, os.path.join(output_folder, folder_name, 'correlation.pdf'))
 

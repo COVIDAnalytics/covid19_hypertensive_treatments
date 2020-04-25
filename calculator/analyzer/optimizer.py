@@ -50,7 +50,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
             model.set_params(**params) 
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-            scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 5, n_jobs = -1, scoring="roc_auc")))
+            scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 10, n_jobs = -1, scoring="roc_auc")))
             print("Seed " + str(seed) + ' completed')
 
         return -np.mean(scores)
