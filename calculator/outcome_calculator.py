@@ -30,23 +30,14 @@ lab_tests = True
 # Load cremona data
 data = cremona.load_cremona('../data/cremona/', lab_tests=lab_tests)
 
-# Create dataset
 X, y = create_dataset(data,
         lab=lab_tests,
         prediction = prediction)
 
-X = X.astype(np.float64)
-y = y.astype(int)
-
-# Split in train and test
-# X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.1,
-#                                                      random_state=SEED)
 
 best_models = []
 for i in range(len(o.algorithms)):
-        algorithm = o.algorithms[i]
-        space = o.spaces[i]
-        name_param = o.name_params[i]
+        algorithm, space, name_param = o.algorithms[i], o.spaces[i], o.name_params[i]
 
         best_models.append(o.optimizer(algorithm, space, name_param, X, y, n_calls = 300))
 
