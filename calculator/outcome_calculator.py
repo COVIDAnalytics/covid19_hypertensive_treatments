@@ -42,11 +42,13 @@ y = y.astype(int)
 # X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.1,
 #                                                      random_state=SEED)
 
+best_models = []
 for i in range(len(o.algorithms)):
         algorithm = o.algorithms[i]
         space = o.spaces[i]
         name_param = o.name_params[i]
-        best_model = o.optimizer(algorithm, space, name_param, X, y, n_calls = 300)
+
+        best_models.append(o.optimizer(algorithm, space, name_param, X, y, n_calls = 300))
 
 # plot_correlation(X, os.path.join(output_folder, folder_name, 'correlation.pdf'))
 
