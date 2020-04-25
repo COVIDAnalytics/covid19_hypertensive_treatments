@@ -59,22 +59,34 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
     best_params = dict(zip(name_param, opt_model.x))    
     print('Cross-validation AUC = ', - opt_model.fun)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = 1)
-    
-    best_model = algorithm()
-    best_model.set_params(**best_params)
-    best_model.fit(X_train, y_train)
+    inmis = []
+    outmis = []
+    inauc = []
+    outauc = []
 
-    accTrain_RF, accTest_RF, ofs_fpr_RF, ofs_tpr_RF, isAUC_RF, ofsAUC_RF  = \
-            scores(best_model,
-                   X_train,
-                   y_train,
-                   X_test,
-                   y_test)
+    for i in range(1,6):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+        
+        best_model = algorithm()
+        best_model.set_params(**best_params)
+        best_model.fit(X_train, y_train)
 
-    print('In Sample AUC', isAUC_RF)
-    print('Out of Sample AUC', ofsAUC_RF)
-    print('In Sample Misclassification', accTrain_RF)
-    print('Out of Sample Misclassification', accTest_RF)
+        accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC  = \
+                scores(best_model,
+                    X_train,
+                    y_train,
+                    X_test,
+                    y_test)
+        
+        inmis.append(accTrain)
+        outmis.append(accTest)
+        inauc.append(isAUC)
+        outauc.append(ofsAUC)
+
+
+    print('Average In Sample AUC', np.mean(inauc))
+    print('Average Out of Sample AUC', np.mean(outauc))
+    print('Average In Sample Misclassification', np.mean(inmis))
+    print('Average Out of Sample Misclassification', np.mean(outmis))
     top_features(best_model, X_train)
     return best_model
