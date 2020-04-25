@@ -45,7 +45,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
 
         scores = []
 
-        for seed in range(1,11):
+        for seed in range(1,6):
             model = algorithm()
             model.set_params(**params) 
 
