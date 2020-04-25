@@ -21,12 +21,12 @@ name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_s
 
 space_XGB  = [Integer(10, 1000, name="n_estimators"),
           Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
-          Integer(, 40, name='max_depth'),
-          Integer(0, 20, name='min_child_weight'),
-          Real(0, 40, 'uniform',name='gamma'),
-          Real(10**-3, 10**0, "log-uniform", name='colsample_bytree'),
-          Integer(0, 60, name='lambda'),
-          Integer(0, 15, name='alpha')]
+          Integer(1, 40, name='max_depth'),
+          Real(0, 20, 'uniform', name='min_child_weight'),
+          Real(0, 40, 'uniform', name='gamma'),
+          Real(10**-2, 10**0, "log-uniform", name='colsample_bytree'),
+          Real(0, 60, 'uniform', name='lambda'),
+          Real(0, 15, 'uniform', name='alpha')]
 
 space_RF  = [Integer(10, 2000, name = "n_estimators"),
           Integer(1, 40, name='max_depth'),
