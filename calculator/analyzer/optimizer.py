@@ -31,7 +31,7 @@ space_XGB  = [Integer(1, 1000, name="n_estimators"),
 space_RF  = [Integer(1, 1000, name = "n_estimators"),
           Integer(1, 40, name='max_depth'),
           Integer(1, 300, name ='min_samples_leaf'),
-          Integer(1, 300, name = 'min_samples_split')]
+          Integer(2, 300, name = 'min_samples_split')]
 
 algorithms = [xgb.XGBClassifier(), RandomForestClassifier()]
 spaces = [space_XGB, space_RF]
