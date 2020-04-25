@@ -35,9 +35,9 @@ X, y = create_dataset(data,
         prediction = prediction)
 
 
-best_models = []
-for i in range(len(o.algorithms)):
-        algorithm, space, name_param = o.algorithms[i], o.spaces[i], o.name_params[i]
+algorithm = o.algorithms[0]
+space = o.spaces[0]
+name_param = o.name_params[0]
 
-        best_models.append(o.optimizer(algorithm, space, name_param, X, y, n_calls = 300))
+best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 350)
 
