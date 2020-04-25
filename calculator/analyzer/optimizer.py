@@ -46,7 +46,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
         scores = []
 
         for seed in range(1,6):
-            model = algorithm()
+            model = algorithm(n_jobs = -1)
             model.set_params(**params) 
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
@@ -61,7 +61,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = 1)
     
-    best_model = algorithm()
+    best_model = algorithm(n_jobs = -1)
     best_model.set_params(**best_params)
     best_model.fit(X_train, y_train)
 
