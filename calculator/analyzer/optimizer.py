@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd 
 
 from sklearn.model_selection import cross_val_score
-from skopt.space import Real, Integer
+from skopt.space import Real, Integer, Categorical
 from skopt.utils import use_named_args
 
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -17,9 +17,9 @@ from skopt import gp_minimize
 
 
 name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "lambda", "alpha"]
-name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split",]
+name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
 
-space_XGB  = [Integer(1, 1000, name="n_estimators"),
+space_XGB  = [Integer(10, 2000, name="n_estimators"),
           Real(10**-5, 10**0, "log-uniform", name='learning_rate'),
           Integer(1, 40, name='max_depth'),
           Integer(2, 200, name='min_child_weight'),
@@ -28,10 +28,11 @@ space_XGB  = [Integer(1, 1000, name="n_estimators"),
           Integer(0, 200, name='lambda'),
           Integer(0, 200, name='alpha')]
 
-space_RF  = [Integer(1, 1000, name = "n_estimators"),
+space_RF  = [Integer(10, 2000, name = "n_estimators"),
           Integer(1, 40, name='max_depth'),
           Integer(1, 300, name ='min_samples_leaf'),
-          Integer(2, 300, name = 'min_samples_split')]
+          Integer(2, 300, name = 'min_samples_split'),
+          Categorical(['sqrt', 'log2'], name = 'max_features')]
 
 algorithms = [xgb.XGBClassifier, RandomForestClassifier]
 spaces = [space_XGB, space_RF]
