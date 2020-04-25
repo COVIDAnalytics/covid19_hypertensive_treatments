@@ -7,8 +7,6 @@ import pickle
 import analyzer.loaders.cremona.utils as u
 
 
-
-
 def load_cremona(path, lab_tests=True):
 
     # Load data
@@ -144,9 +142,9 @@ def load_cremona(path, lab_tests=True):
     lab_tests = lab['COD_INTERNO_PRESTAZIONE'].unique().tolist()
     dataset_lab_tests = pd.DataFrame(False, columns=lab_tests, index=patients_nosologico)
 
-    for p in patients_nosologico:
-        for lab_test_name in lab[lab['NOSOLOGICO'] == p]['COD_INTERNO_PRESTAZIONE']:
-            dataset_lab_tests.loc[p, lab_test_name] = True
+    #Unstack the dataset and transform the entries in True/False
+    dataset_lab_tests = lab[['NOSOLOGICO', 'COD_INTERNO_PRESTAZIONE', 'VALORE_TESTO']].groupby(['NOSOLOGICO', 'COD_INTERNO_PRESTAZIONE']).count().unstack().notna()
+    dataset_lab_tests.columns = [i[1] for i in dataset_lab_tests.columns] # because of groupby, the columns are a tuple
 
     # 30% removes tests that are not present and the COVID-19 lab test
     lab_tests_reduced = u.remove_missing(dataset_lab_tests, missing_type=False, nan_threashold=30, impute=False)

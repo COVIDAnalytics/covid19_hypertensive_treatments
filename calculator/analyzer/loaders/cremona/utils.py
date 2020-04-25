@@ -125,6 +125,14 @@ def get_lab_dates(t):
 
     return date
 
+def get_age(t):
+    
+    try:
+        today = pd.Timestamp(year=2020, month=4, day=1)
+        age = np.round((today - t).days/365)
+        return age
+    except:
+        return np.NaN    
 
 def get_percentages(df, missing_type=np.nan):
     if np.isnan(missing_type):
