@@ -19,14 +19,14 @@ from skopt import gp_minimize
 name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "lambda", "alpha"]
 name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
 
-space_XGB  = [Integer(10, 1300, name="n_estimators"),
-          Real(10**-5, 10**0, "log-uniform", name='learning_rate'),
-          Integer(1, 40, name='max_depth'),
-          Integer(2, 100, name='min_child_weight'),
-          Real(0, 70, 'uniform',name='gamma'),
+space_XGB  = [Integer(10, 1000, name="n_estimators"),
+          Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
+          Integer(, 40, name='max_depth'),
+          Integer(0, 20, name='min_child_weight'),
+          Real(0, 40, 'uniform',name='gamma'),
           Real(10**-3, 10**0, "log-uniform", name='colsample_bytree'),
-          Integer(0, 50, name='lambda'),
-          Integer(0, 50, name='alpha')]
+          Integer(0, 60, name='lambda'),
+          Integer(0, 15, name='alpha')]
 
 space_RF  = [Integer(10, 2000, name = "n_estimators"),
           Integer(1, 40, name='max_depth'),
