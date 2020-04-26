@@ -265,7 +265,7 @@ def create_dataset_comorbidities(comorbidities, patients):
         cols_keep.remove(e)
     dataset_comorbidities = dataset_comorbidities[cols_keep]
     
-    dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(str)
+    dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(int).apply(str)
 
 
     return dataset_comorbidities.set_index('NOSOLOGICO')

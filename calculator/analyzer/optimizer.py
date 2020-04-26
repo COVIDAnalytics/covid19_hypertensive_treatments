@@ -60,7 +60,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
 
     print('The best parameters are:')
     print('\n')
-    pd.DataFrame(best_params.get_params().items(), columns = ['Parameter', 'Value'])
+    pd.DataFrame(best_params.items(), columns = ['Parameter', 'Value'])
     print('\n')
     print('Cross-validation AUC = ', - opt_model.fun)
 

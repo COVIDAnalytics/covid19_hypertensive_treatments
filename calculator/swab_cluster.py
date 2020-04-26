@@ -81,6 +81,7 @@ X, y = create_dataset(data,
                         swabs_data,
                         prediction = prediction)
 
+print('The number of NaN is ', sum(X.isna().sum()))
 
 algorithm = o.algorithms[0]
 space = o.spaces[0]

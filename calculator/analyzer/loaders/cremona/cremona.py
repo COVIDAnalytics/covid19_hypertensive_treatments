@@ -28,6 +28,7 @@ def load_cremona(path, discharge_data = True, comorbidities_data = True, vitals_
 
     # False and True are transformed to 0 and 1 categories
     comorbidities = comorbidities.astype('int').astype('category')
+    comorbidities['NOSOLOGICO'] = comorbidities['NOSOLOGICO'].apply(str)
     
     # Cleanup discharge information
     discharge_info = u.cleanup_discharge_info(discharge_info)
