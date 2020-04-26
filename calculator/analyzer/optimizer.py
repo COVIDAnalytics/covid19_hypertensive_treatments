@@ -10,9 +10,9 @@ from sklearn.ensemble import RandomForestClassifier
 import mlflow.sklearn
 import xgboost as xgb
 import copy
-from analyzer.learners import scores
+from analyzer.learners import scores, train_and_evaluate
 
-from analyzer.utils import top_features, remove_dir, train_and_evaluate
+from analyzer.utils import top_features, remove_dir
 from skopt import gp_minimize
 
 

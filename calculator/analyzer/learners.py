@@ -1,5 +1,4 @@
 #Julia
-
 import numpy as np
 import pandas as pd
 
@@ -62,8 +61,31 @@ def scores(model, t_X, t_Y, te_X, te_Y):
     ofsAUC = auc(ofs_fpr, ofs_tpr)
     return (accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC)
 
-#DEFINE FUNCTION THAT RETURNS TOP 10 PREDICTORS GIVEN A MODEL
+#DEFINE FUNCTION THAT TRAINS A MODEL AND OUTPUTS THE PERFORMANCES
 
+def train_and_evaluate(algorithm, X, y, seed, best_params):
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+        
+    best_model = algorithm()
+    best_model.set_params(**best_params)
+    best_model.fit(X_train, y_train)
+
+    accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC  = \
+                scores(best_model,
+                    X_train,
+                    y_train,
+                    X_test,
+                    y_test)
+        
+    print('Seed = ', seed)
+    print('In Sample AUC', isAUC)
+    print('Out of Sample AUC', ofsAUC)
+    print('In Sample Misclassification', accTrain)
+    print('Out of Sample Misclassification', accTest)
+    print('\n')
+
+    return best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC
 
 #INITIATE 10-FOLD CV
 

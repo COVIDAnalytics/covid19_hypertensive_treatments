@@ -5,7 +5,6 @@ import datetime
 # explicitly require this experimental feature
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
-from analyzer.learners import scores
 
 # ICD9 COVID diagnosis Italian codes
 LIST_DIAGNOSIS = ['4808', '4803', 'V0182', '7982']
