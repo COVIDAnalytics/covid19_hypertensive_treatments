@@ -20,8 +20,8 @@ from analyzer.learners import rf_classifier
 
 import analyzer.optimizer as o
 
-jobid = os.getenv('SLURM_ARRAY_TASK_ID')
-jobid = int(jobid)
+#jobid = os.getenv('SLURM_ARRAY_TASK_ID')
+#jobid = int(jobid)
 print('Jobid = ', jobid)
 
 SEED = 1

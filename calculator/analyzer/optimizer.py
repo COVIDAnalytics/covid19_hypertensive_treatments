@@ -50,17 +50,27 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
             model.set_params(**params) 
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-            scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 10, n_jobs = -1, scoring="roc_auc")))
+            
+            try:
+                scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 10, n_jobs = -1, scoring="roc_auc")))
+            except:
+                import ipdb; ipdb.set_trace()
+                
             print("Seed " + str(seed) + ' completed')
 
         return -np.mean(scores)
 
-    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 20)
+    try:
+        opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 20)
+
+    except:
+        import ipdb; ipdb.set_trace()
+
     best_params = dict(zip(name_param, opt_model.x)) 
 
     print('The best parameters are:')
     print('\n')
-    pd.DataFrame(best_params.items(), columns = ['Parameter', 'Value'])
+    print(pd.DataFrame(best_params.items(), columns = ['Parameter', 'Value']))
     print('\n')
     print('Cross-validation AUC = ', - opt_model.fun)
 
