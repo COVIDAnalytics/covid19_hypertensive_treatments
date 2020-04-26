@@ -55,7 +55,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
 
         return -np.mean(scores)
 
-    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 20, n_jobs = -1)
+    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 20)
     best_params = dict(zip(name_param, opt_model.x)) 
 
     print('The best parameters are:')

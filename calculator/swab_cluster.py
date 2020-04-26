@@ -86,7 +86,7 @@ algorithm = o.algorithms[0]
 space = o.spaces[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 500)
+best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 400)
 
 
 # Train trees
