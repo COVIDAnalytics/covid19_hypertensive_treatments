@@ -38,7 +38,7 @@ if jobid == 0:
     lab_tests = True
     anagraphics_data = False
     swabs_data = False
-    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
     print(name_datasets[mask])
 
 elif jobid == 1:
@@ -48,7 +48,7 @@ elif jobid == 1:
     lab_tests = True
     anagraphics_data = False
     swabs_data = False
-    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
     print(name_datasets[mask])
 
 
@@ -59,7 +59,7 @@ elif jobid == 2:
     lab_tests = True
     anagraphics_data = False
     swabs_data = False
-    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
     print(name_datasets[mask])
 
 elif jobid == 3:
@@ -69,7 +69,7 @@ elif jobid == 3:
     lab_tests = True
     anagraphics_data = False
     swabs_data = False
-    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
     print(name_datasets[mask])
 
 elif jobid == 4:
@@ -79,7 +79,7 @@ elif jobid == 4:
     lab_tests = False
     anagraphics_data = False
     swabs_data = False
-    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
     print(name_datasets[mask])
 
 # Load cremona data
