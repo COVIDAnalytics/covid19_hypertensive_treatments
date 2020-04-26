@@ -19,11 +19,29 @@ from skopt import gp_minimize
 name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "lambda", "alpha"]
 name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
 
-
 algorithms = [xgb.XGBClassifier, RandomForestClassifier]
 name_params = [name_param_xgb, name_param_rf]
 
-def optimizer(algorithm, space, name_param, X, y, n_calls):
+def optimizer(algorithm, name_param, X, y, n_calls = 500, name_algo = 'xgboost'):
+
+    if name_algo == 'xgboost':
+        n_features = len(X.columns)
+        space  = [Integer(10, 1300, name="n_estimators"),
+                    Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
+                    Integer(1, n_features, name='max_depth'),
+                    Real(10**-4, 20, 'uniform', name='min_child_weight'),
+                    Real(10**-4, 40, 'uniform', name='gamma'),
+                    Real(10**-4, 10**0, "log-uniform", name='colsample_bytree'),
+                    Real(10**-4, 60, 'uniform', name='lambda'),
+                    Real(10**-4, 30, 'uniform', name='alpha')]
+
+    elif name_algo == 'rf':
+        n_features = len(X.columns)
+        space  = [Integer(10, 2000, name = "n_estimators"),
+                    Integer(1, n_features, name='max_depth'),
+                    Real(1, 200, 'uniform', name ='min_samples_leaf'),
+                    Real(2, 200, 'uniform', name = 'min_samples_split'),
+                    Categorical(['sqrt', 'log2'], name = 'max_features')]
 
     @use_named_args(space)
     def objective(**params):
@@ -35,8 +53,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
             model.set_params(**params) 
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-            scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 10, n_jobs = -1, scoring="roc_auc")))               
-            print("Seed " + str(seed) + ' completed')
+            scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 10, n_jobs = -1, scoring="roc_auc")))
 
         return -np.mean(scores)
 
