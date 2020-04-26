@@ -47,8 +47,28 @@ X, y = create_dataset(data,
                         prediction = prediction)
 
 
+
+n_features = len(X.columns)
+
+space_XGB  = [Integer(10, 1300, name="n_estimators"),
+          Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
+          Integer(1, n_features, name='max_depth'),
+          Real(10**-4, 20, 'uniform', name='min_child_weight'),
+          Real(10**-4, 40, 'uniform', name='gamma'),
+          Real(10**-3, 10**0, "log-uniform", name='colsample_bytree'),
+          Real(10**-4, 60, 'uniform', name='lambda'),
+          Real(10**-4, 30, 'uniform', name='alpha')]
+
+space_RF  = [Integer(10, 2000, name = "n_estimators"),
+          Integer(1, 40, name='max_depth'),
+          Integer(1, 300, name ='min_samples_leaf'),
+          Integer(2, 300, name = 'min_samples_split'),
+          Categorical(['sqrt', 'log2'], name = 'max_features')]
+
+spaces = [space_XGB, space_RF]
+
 algorithm = o.algorithms[0]
-space = o.spaces[0]
+space = spaces[0]
 name_param = o.name_params[0]
 
 best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 500)
