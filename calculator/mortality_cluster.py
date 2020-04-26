@@ -22,7 +22,9 @@ import analyzer.optimizer as o
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
 jobid = int(jobid)
+print('Jobid = ', jobid)
 
+SEED = 1
 prediction = 'Outcome'
 folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower()
 output_folder = 'predictors/outcome'
