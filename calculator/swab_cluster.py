@@ -65,25 +65,6 @@ elif jobid == 2:
     mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
     print(name_datasets[mask])
 
-elif jobid == 3:
-    discharge_data = False
-    comorbidities_data = False
-    vitals_data = True
-    lab_tests = True
-    anagraphics_data = False
-    swabs_data = True
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
-    print(name_datasets[mask])
-
-elif jobid == 4:
-    discharge_data = False
-    comorbidities_data = False
-    vitals_data = False
-    lab_tests = True
-    anagraphics_data = False
-    swabs_data = True
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
-    print(name_datasets[mask])
 
 
 
