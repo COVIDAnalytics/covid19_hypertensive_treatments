@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
 from analyzer.loaders.cremona.swabs import load_swabs
 from analyzer.utils import create_dir, export_features_json, plot_correlation
