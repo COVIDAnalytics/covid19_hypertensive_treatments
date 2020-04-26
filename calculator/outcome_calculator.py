@@ -25,19 +25,31 @@ SEED = 1
 prediction = 'Outcome'
 folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower()
 output_folder = 'predictors/outcome'
+
+discharge_data = True
+comorbidities_data = True
+vitals_data = True
 lab_tests = True
+anagraphics_data = False
+swabs_data = False
+icu_data = False
 
 # Load cremona data
-data = cremona.load_cremona('../data/cremona/', lab_tests=lab_tests)
+data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
 
 X, y = create_dataset(data,
-        lab=lab_tests,
-        prediction = prediction)
+                        discharge_data, 
+                        comorbidities_data, 
+                        vitals_data, 
+                        lab_tests, 
+                        anagraphics_data, 
+                        swabs_data,
+                        prediction = prediction)
 
 
 algorithm = o.algorithms[0]
 space = o.spaces[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 350)
+best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 500)
 

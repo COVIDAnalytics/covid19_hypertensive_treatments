@@ -9,7 +9,6 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
-import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
 from analyzer.loaders.cremona.swabs import load_swabs
 from analyzer.utils import create_dir, export_features_json, plot_correlation
@@ -19,18 +18,67 @@ from analyzer.learners import rf_classifier
 
 import analyzer.optimizer as o
 
-SEED = 1
+
+jobid = os.getenv('SLURM_ARRAY_TASK_ID')
+jobid = int(jobid)
+
+
 prediction = 'Swab'
 folder_name = 'swab_prediction_seed' + str(SEED) + '_' + prediction.lower()
 output_folder = 'predictors/swab'
 
-discharge_data = False
-comorbidities_data = False
-vitals_data = True
-lab_tests = True
-anagraphics_data = True
-swabs_data = True
-icu_data = False
+if jobid == 0:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = True
+    lab_tests = True
+    anagraphics_data = True
+    swabs_data = True
+    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    print(name_datasets[mask])
+
+elif jobid == 1:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = True
+    lab_tests = False
+    anagraphics_data = True
+    swabs_data = True
+    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    print(name_datasets[mask])
+
+
+elif jobid == 2:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = False
+    lab_tests = True
+    anagraphics_data = True
+    swabs_data = True
+    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    print(name_datasets[mask])
+
+elif jobid == 3:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = True
+    lab_tests = True
+    anagraphics_data = False
+    swabs_data = True
+    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    print(name_datasets[mask])
+
+elif jobid == 4:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = False
+    lab_tests = True
+    anagraphics_data = False
+    swabs_data = True
+    mask = np.asarray(discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+    print(name_datasets[mask])
+
+
 
 # Load cremona data
 data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)

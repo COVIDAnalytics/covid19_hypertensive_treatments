@@ -160,6 +160,18 @@ def remove_missing(df, missing_type=np.nan, nan_threashold=40, impute=True):
 
     return df
 
+def cleanup_anagraphics(anagraphics):
+
+    anagraphics = anagraphics[['N_SCHEDA_PS', 'PZ_SESSO_PS', "PZ_DATA_NASCITA_PS"]]
+    anagraphics['PZ_DATA_NASCITA_PS'] = pd.to_datetime(anagraphics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
+    anagraphics['Age'] = anagraphics['PZ_DATA_NASCITA_PS'].apply(get_age)
+    anagraphics = anagraphics.drop('PZ_DATA_NASCITA_PS', axis = 1)
+    anagraphics = anagraphics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Sex'})
+    anagraphics['Sex'] = (anagraphics['Sex'] == 'F').astype(int)
+    anagraphics['NOSOLOGICO'] = anagraphics['NOSOLOGICO'].astype(str)    
+
+    return anagraphics
+
 
 def create_vitals_dataset(vitals, patients, lab_tests=True):
     vital_signs = VITAL_SIGNS
@@ -252,12 +264,14 @@ def create_dataset_comorbidities(comorbidities, patients):
     for e in LIST_REMOVE_COMORBIDITIES:
         cols_keep.remove(e)
     dataset_comorbidities = dataset_comorbidities[cols_keep]
+    
+    dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(str)
 
 
     return dataset_comorbidities.set_index('NOSOLOGICO')
 
 
-def create_dataset_anagraphics(anagraphics, patients, icu=None):
+def create_dataset_discharge(anagraphics, patients, icu=None):
 
     dataset_anagraphics = pd.DataFrame(columns=ANAGRAPHICS_FEATURES, index=patients)
     dataset_anagraphics.loc[:, ANAGRAPHICS_FEATURES] = anagraphics[['NOSOLOGICO'] + ANAGRAPHICS_FEATURES].set_index('NOSOLOGICO')
@@ -266,7 +280,8 @@ def create_dataset_anagraphics(anagraphics, patients, icu=None):
     dataset_anagraphics.loc[:, 'Outcome'] = dataset_anagraphics.loc[:, 'Outcome'].astype('category')
 
     if icu is not None:
-        dataset_anagraphics = dataset_anagraphics.join(icu)
+        dataset_anagraphics = dataset_anagraphics.join(icu.set_index('NOSOLOGICO'))
+
 
     return dataset_anagraphics
 
@@ -303,6 +318,7 @@ def cleanup_discharge_info(discharge_info):
 
 
 
+
 def filter_patients(datasets):
 
     patients = datasets[0]['NOSOLOGICO'].astype(np.int64)
@@ -318,3 +334,15 @@ def filter_patients(datasets):
 
     return patients
 
+
+def get_swabs(lab):
+
+    covid = lab[lab.COD_INTERNO_PRESTAZIONE == 'COV19']
+    covid = covid[covid.VALORE_TESTO.isin(['POSITIVO', 'Negativo', 'Debolmente positivo'])]
+    covid.VALORE_TESTO = covid.VALORE_TESTO.isin(['POSITIVO','Debolmente positivo']).astype(int).astype('category')
+    covid = covid[~ covid.NOSOLOGICO.duplicated()] # drop duplicated values
+    swab = covid[['NOSOLOGICO', 'VALORE_TESTO']]
+    swab = swab.rename(columns = {'VALORE_TESTO': 'Swab'})
+    swab['Swab'] = swab['Swab'].astype('int')
+
+    return swab

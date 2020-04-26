@@ -19,14 +19,14 @@ from skopt import gp_minimize
 name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "lambda", "alpha"]
 name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
 
-space_XGB  = [Integer(10, 1000, name="n_estimators"),
+space_XGB  = [Integer(10, 1300, name="n_estimators"),
           Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
-          Integer(1, 40, name='max_depth'),
+          Integer(1, 50, name='max_depth'),
           Real(0, 20, 'uniform', name='min_child_weight'),
           Real(0, 40, 'uniform', name='gamma'),
-          Real(10**-2, 10**0, "log-uniform", name='colsample_bytree'),
+          Real(10**-3, 10**0, "log-uniform", name='colsample_bytree'),
           Real(0, 60, 'uniform', name='lambda'),
-          Real(0, 15, 'uniform', name='alpha')]
+          Real(0, 30, 'uniform', name='alpha')]
 
 space_RF  = [Integer(10, 2000, name = "n_estimators"),
           Integer(1, 40, name='max_depth'),
@@ -45,7 +45,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
 
         scores = []
 
-        for seed in range(1,6):
+        for seed in range(1,11):
             model = algorithm()
             model.set_params(**params) 
 
@@ -56,7 +56,12 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
         return -np.mean(scores)
 
     opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 20, n_jobs = -1)
-    best_params = dict(zip(name_param, opt_model.x))    
+    best_params = dict(zip(name_param, opt_model.x)) 
+
+    print('The best parameters are:')
+    print('\n')
+    pd.DataFrame(best_params.get_params().items(), columns = ['Parameter', 'Value'])
+    print('\n')
     print('Cross-validation AUC = ', - opt_model.fun)
 
     inmis = []
@@ -82,11 +87,18 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
         outmis.append(accTest)
         inauc.append(isAUC)
         outauc.append(ofsAUC)
-
+        
+        print('Seed = ', seed)
+        print('In Sample AUC', isAUC)
+        print('Out of Sample AUC', ofsAUC)
+        print('In Sample Misclassification', accTrain)
+        print('Out of Sample Misclassification', accTest)
+        print('\n')
 
     print('Average In Sample AUC', np.mean(inauc))
     print('Average Out of Sample AUC', np.mean(outauc))
     print('Average In Sample Misclassification', np.mean(inmis))
     print('Average Out of Sample Misclassification', np.mean(outmis))
     top_features(best_model, X_train)
+    
     return best_model
