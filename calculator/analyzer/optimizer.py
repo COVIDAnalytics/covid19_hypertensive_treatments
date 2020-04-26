@@ -12,7 +12,7 @@ import xgboost as xgb
 import copy
 from analyzer.learners import scores
 
-from analyzer.utils import top_features, remove_dir
+from analyzer.utils import top_features, remove_dir, train_and_evaluate
 from skopt import gp_minimize
 
 

@@ -349,26 +349,3 @@ def get_swabs(lab):
 
     return swab
 
-def train_and_evaluate(algorithm, X, y, seed, best_params):
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-        
-    best_model = algorithm()
-    best_model.set_params(**best_params)
-    best_model.fit(X_train, y_train)
-
-    accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC  = \
-                scores(best_model,
-                    X_train,
-                    y_train,
-                    X_test,
-                    y_test)
-        
-    print('Seed = ', seed)
-    print('In Sample AUC', isAUC)
-    print('Out of Sample AUC', ofsAUC)
-    print('In Sample Misclassification', accTrain)
-    print('Out of Sample Misclassification', accTest)
-    print('\n')
-
-    return best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC
