@@ -69,7 +69,7 @@ def optimizer(algorithm, space, name_param, X, y, n_calls):
     inauc = []
     outauc = []
 
-    for seed in range(1,6):
+    for seed in range(1,11):
         X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
         
         best_model = algorithm()
