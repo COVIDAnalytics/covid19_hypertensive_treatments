@@ -72,31 +72,12 @@ def optimizer(algorithm, name_param, X, y, n_calls = 500, name_algo = 'xgboost')
     outauc = []
 
     for seed in range(1,11):
-        X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-        
-        best_model = algorithm()
-        best_model.set_params(**best_params)
-        best_model.fit(X_train, y_train)
-
-        accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC  = \
-                scores(best_model,
-                    X_train,
-                    y_train,
-                    X_test,
-                    y_test)
-        
+        best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC = train_and_evaluate(algorithm, X, y, seed, best_params)
         inmis.append(accTrain)
         outmis.append(accTest)
         inauc.append(isAUC)
         outauc.append(ofsAUC)
         
-        print('Seed = ', seed)
-        print('In Sample AUC', isAUC)
-        print('Out of Sample AUC', ofsAUC)
-        print('In Sample Misclassification', accTrain)
-        print('Out of Sample Misclassification', accTest)
-        print('\n')
-
     print('Average In Sample AUC', np.mean(inauc))
     print('Average Out of Sample AUC', np.mean(outauc))
     print('Average In Sample Misclassification', np.mean(inmis))

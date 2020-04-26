@@ -5,7 +5,7 @@ import datetime
 # explicitly require this experimental feature
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
-
+from analyzer.learners import scores
 
 # ICD9 COVID diagnosis Italian codes
 LIST_DIAGNOSIS = ['4808', '4803', 'V0182', '7982']
@@ -14,7 +14,9 @@ LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease
                              "Respiratory failure; insufficiency; arrest (adult)",
                              "Residual codes; unclassified",
                              "Diabetes mellitus without complication",
-                             "Diabetes mellitus with complications"]
+                             "Diabetes mellitus with complications", 
+                             "Influenza", 
+                             "Acute and unspecified renal failure"]
 
 # Discharge codes
 # 1,2,5,6,9 = discharged, 4 = deceased
@@ -346,3 +348,27 @@ def get_swabs(lab):
     swab['Swab'] = swab['Swab'].astype('int')
 
     return swab
+
+def train_and_evaluate(algorithm, X, y, seed, best_params):
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+        
+    best_model = algorithm()
+    best_model.set_params(**best_params)
+    best_model.fit(X_train, y_train)
+
+    accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC  = \
+                scores(best_model,
+                    X_train,
+                    y_train,
+                    X_test,
+                    y_test)
+        
+    print('Seed = ', seed)
+    print('In Sample AUC', isAUC)
+    print('Out of Sample AUC', ofsAUC)
+    print('In Sample Misclassification', accTrain)
+    print('Out of Sample Misclassification', accTest)
+    print('\n')
+
+    return best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC

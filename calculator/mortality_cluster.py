@@ -85,7 +85,6 @@ X, y = create_dataset(data,
                         prediction = prediction)
 
 algorithm = o.algorithms[0]
-space = spaces[0]
 name_param = o.name_params[0]
 
 best_xgb = o.optimizer(algorithm, name_param, X, y, n_calls = 400, name_algo = 'xgboost')
