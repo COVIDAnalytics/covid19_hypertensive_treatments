@@ -87,5 +87,5 @@ X, y = create_dataset(data,
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, n_calls = 400, name_algo = 'xgboost')
+best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 20, n_calls = 500, name_algo = 'xgboost')
 

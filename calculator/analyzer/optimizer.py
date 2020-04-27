@@ -22,7 +22,7 @@ name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_s
 algorithms = [xgb.XGBClassifier, RandomForestClassifier]
 name_params = [name_param_xgb, name_param_rf]
 
-def optimizer(algorithm, name_param, X, y, n_calls = 500, name_algo = 'xgboost'):
+def optimizer(algorithm, name_param, X, y, seed_len = 10, n_calls = 500, name_algo = 'xgboost'):
 
     if name_algo == 'xgboost':
         n_features = len(X.columns)
@@ -48,7 +48,7 @@ def optimizer(algorithm, name_param, X, y, n_calls = 500, name_algo = 'xgboost')
 
         scores = []
 
-        for seed in range(1,11):
+        for seed in range(1,seed_len + 1):
             model = algorithm()
             model.set_params(**params) 
 
@@ -71,7 +71,7 @@ def optimizer(algorithm, name_param, X, y, n_calls = 500, name_algo = 'xgboost')
     inauc = []
     outauc = []
 
-    for seed in range(1,11):
+    for seed in range(1, seed_len + 1):
         best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC = train_and_evaluate(algorithm, X, y, seed, best_params)
         inmis.append(accTrain)
         outmis.append(accTest)
@@ -82,6 +82,6 @@ def optimizer(algorithm, name_param, X, y, n_calls = 500, name_algo = 'xgboost')
     print('Average Out of Sample AUC', np.mean(outauc))
     print('Average In Sample Misclassification', np.mean(inmis))
     print('Average Out of Sample Misclassification', np.mean(outmis))
-    top_features(best_model, X_train)
+    top_features(best_model, X)
     
     return best_model
