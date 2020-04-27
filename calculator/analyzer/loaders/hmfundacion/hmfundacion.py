@@ -14,11 +14,77 @@ import pickle
 import analyzer.loaders.hmfundacion.utils as u
 
 
+def load_fundacionhm(path, lab_tests=True):
+    
+    #path = '../../../Dropbox (Personal)/COVID_clinical/covid19_hmfoundation'
+    
+    # Load admission info
+    admission = pd.read_csv('%s/admissions.csv' % path, sep=';' , encoding= 'unicode_escape')
+    
+    #Create dataset with relevant information and patients for which we know the outcome
+    dataset_admissions = create_dataset_admissions(admission)
+    
+    #Demographic information
+    dataset_demographics = create_dataset_demographics(admission)
+    
+    #Vital values
+    dataset_vitals = create_vitals_dataset(admission)
+    
+    
+    
+    
+    
+    
+
+    # Load vitals
+    vitals = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
+    vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
+    vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
+
+    # Load lab test
+    lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
+    lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
+    lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
+    lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(u.get_lab_dates)
+
+    # Load ICU data
+    icu = pd.read_csv("%s/icu/icu_transfers.csv" %path)
+    icu = icu[['RC_CODNOSO', 'TRASF_TI']]
+    icu = icu.dropna()
+    icu.RC_CODNOSO = icu.RC_CODNOSO.apply(int).apply(str)
+    icu = icu.rename(columns={'RC_CODNOSO':'NOSOLOGICO','TRASF_TI':'ICU'})
+    icu.ICU = icu.ICU.astype(int).astype('category')
+
+    # Filter patients common to all datasets
+    patients = u.filter_patients([discharge_info, comorbidities,
+                                  vitals, icu, lab])
+
+    
+    
+    # Filter patients common to all datasets
+    patients = u.filter_patients([discharge_info, comorbidities,
+                                  vitals, icu, lab])
+
+    # Create final dataset
+    dataset_anagraphics = u.create_dataset_anagraphics(discharge_info, patients, icu=icu)
+    dataset_comorbidities = u.create_dataset_comorbidities(comorbidities, patients)
+    dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=lab_tests)
+    dataset_lab = u.create_lab_dataset(lab, patients)
+
+    data = {'demographics': dataset_demographics,
+            'comorbidities': dataset_comorbidities,
+            'vitals': dataset_vitals,
+            'lab': dataset_lab}
+
+    return data
+
+
 path = '../../../Dropbox (Personal)/COVID_clinical/covid19_hmfoundation'
 
 ### Admissions File
 # Load admission info
 admission = pd.read_csv('%s/admissions.csv' % path, sep=';' , encoding= 'unicode_escape')
+
 #Maybe we can include 'Traslado a un Centro Sociosanitario'
 admission = admission.rename(columns={'EDAD/AGE':'Age','SEXO/SEX':'Sex',
                                       'DIAG ING/INPAT':'DIAG_TYPE',
@@ -39,7 +105,7 @@ death_dict = {'Fallecimiento': 1,'Domicilio': 0}
 admission.death = [death_dict[item] for item in admission.death] 
 
 #Dictionary for the gender 
-gender = {'MALE': 1,'FEMALE': 2} 
+gender = {'MALE': 0,'FEMALE': 1} 
 admission.Sex = [gender[item] for item in admission.Sex] 
 
 #Dictionary for the vitas at admission
