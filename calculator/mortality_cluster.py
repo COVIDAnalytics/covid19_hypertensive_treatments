@@ -65,7 +65,7 @@ elif jobid == 2:
 elif jobid == 3:
     discharge_data = True
     comorbidities_data = True
-    vitals_data = False
+    vitals_data = True
     lab_tests = False
     anagraphics_data = False
     swabs_data = False
