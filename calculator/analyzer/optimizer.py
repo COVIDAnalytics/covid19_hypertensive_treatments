@@ -15,6 +15,8 @@ from analyzer.learners import scores, train_and_evaluate
 from analyzer.utils import top_features, remove_dir
 from skopt import gp_minimize
 
+def performance(l):
+    return np.mean(l), np.median(l), np.min(l), np.max(l), np.round(np.std(l),2)
 
 name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "lambda", "alpha"]
 name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
@@ -78,10 +80,10 @@ def optimizer(algorithm, name_param, X, y, seed_len = 10, n_calls = 500, name_al
         inauc.append(isAUC)
         outauc.append(ofsAUC)
         
-    print('Average In Sample AUC', np.mean(inauc))
-    print('Average Out of Sample AUC', np.mean(outauc))
-    print('Average In Sample Misclassification', np.mean(inmis))
-    print('Average Out of Sample Misclassification', np.mean(outmis))
+    print('Average, Median, Min, Max, Std In Sample AUC', performance(inauc))
+    print('Average, Median, Min, Max, Std Out of Sample AUC', performance(outauc))
+    print('Average, Median, Min, Max, Std In Sample Misclassification', performance(inmis))
+    print('Average, Median, Min, Max, Std Out of Sample Misclassification', performance(outmis))
     top_features(best_model, X)
     
     return best_model
