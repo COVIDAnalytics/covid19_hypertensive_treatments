@@ -18,7 +18,6 @@ from analyzer.learners import rf_classifier
 
 import analyzer.optimizer as o
 
-
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
 jobid = int(jobid)
 
@@ -75,6 +74,30 @@ X, y = create_dataset(data,
                         anagraphics_data, 
                         swabs_data,
                         prediction = prediction)
+
+cols = ['C-Reactive Protein (CRP)',
+ 'Blood Calcium',
+ 'CBC: Leukocytes',
+ 'Aspartate Aminotransferase (AST)',
+ 'ABG: PaO2',
+ 'Age',
+ 'Prothrombin Time (INR)',
+ 'CBC: Hemoglobin',
+ 'ABG: pH',
+ 'Cholinesterase',
+ 'Respiratory Frequency',
+ 'Blood Urea Nitrogen (BUN)',
+ 'ABG: MetHb',
+ 'Temperature Celsius',
+ 'Total Bilirubin',
+ 'Systolic Blood Pressure',
+ 'CBC: Mean Corpuscular Volume (MCV)',
+ 'Glycemia',
+ 'Cardiac Frequency',
+ 'Sex']
+
+if jobid == 0:
+    X = X[cols]
 
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
