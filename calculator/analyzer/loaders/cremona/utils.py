@@ -13,8 +13,8 @@ LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease
                              "Respiratory failure; insufficiency; arrest (adult)",
                              "Residual codes; unclassified",
                              "Diabetes mellitus without complication",
-                             "Diabetes mellitus with complications", 
-                             "Influenza", 
+                             "Diabetes mellitus with complications",
+                             "Influenza",
                              "Acute and unspecified renal failure"]
 
 # Discharge codes
@@ -147,9 +147,9 @@ def get_percentages(df, missing_type=np.nan):
     return pd.DataFrame({'percent_missing': percent_missing})
 
 
-def remove_missing(df, missing_type=np.nan, nan_threashold=40, impute=True):
+def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=True):
     missing_values = get_percentages(df, missing_type)
-    df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
+    df_features = missing_values[missing_values['percent_missing'] < nan_threshold].index.tolist()
 
     df = df[df_features]
 
@@ -169,7 +169,7 @@ def cleanup_anagraphics(anagraphics):
     anagraphics = anagraphics.drop('PZ_DATA_NASCITA_PS', axis = 1)
     anagraphics = anagraphics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Sex'})
     anagraphics['Sex'] = (anagraphics['Sex'] == 'F').astype(int)
-    anagraphics['NOSOLOGICO'] = anagraphics['NOSOLOGICO'].astype(str)    
+    anagraphics['NOSOLOGICO'] = anagraphics['NOSOLOGICO'].astype(str)
 
     return anagraphics
 
@@ -208,7 +208,7 @@ def create_lab_dataset(lab, patients):
     dataset_lab_tests.columns = [i[1] for i in dataset_lab_tests.columns] # because of groupby, the columns are a tuple
 
     # 30% removes tests that are not present and the COVID-19 lab test
-    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threashold=30, impute=False)
+    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threshold=30, impute=False)
 
     # Filter data entries per test
     lab_reduced = lab[lab['COD_INTERNO_PRESTAZIONE'].isin(lab_tests_reduced.columns)]
@@ -265,7 +265,7 @@ def create_dataset_comorbidities(comorbidities, patients):
     for e in LIST_REMOVE_COMORBIDITIES:
         cols_keep.remove(e)
     dataset_comorbidities = dataset_comorbidities[cols_keep]
-    
+
     dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(int).apply(str)
 
 
