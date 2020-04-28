@@ -208,8 +208,9 @@ def create_lab_dataset(labs, dataset_admissions):
     #df4 = pd.merge(df1, df2, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['PATIENT.ID','FECHA_PETICION.LAB_DATE'])
     df3 = df3.drop(columns=['PATIENT.ID','FECHA_PETICION.LAB_DATE'])
     
-    dataset_lab_full = df3[LAB_FEATURES]
-    dataset_lab_full = pd.DataFrame(dataset_lab_full.groupby(['PATIENT ID'], as_index=False).sum())   
+    dataset_lab_full = df3[LAB_FEATURES]    
+    dataset_lab_full = pd.DataFrame(dataset_lab_full.groupby(['PATIENT ID'], as_index=False).first())
+    
     return dataset_lab_full
 
 
@@ -262,7 +263,7 @@ def create_dataset_comorbidities(comorb_long, icd_category, dataset_admissions):
     comorb_descr = comorb_descr.rename(columns = lambda x: x.replace('GROUP_HCUP_', ''))
     
     #Let's combine the diabetes columns to one
-    comorb_descr['Diabetes'] = comorb_descr['Diabetes mellitus with complications'] + comorb_descr['Diabetes mellitus without complication'] 
+    comorb_descr['Diabetes'] = comorb_descr[["Diabetes mellitus with complications", "Diabetes mellitus without complication"]].max(axis=1)
     
     #Drop the other two columns
     comorb_descr = comorb_descr.drop(columns=['Diabetes mellitus with complications', 'Diabetes mellitus without complication'])
