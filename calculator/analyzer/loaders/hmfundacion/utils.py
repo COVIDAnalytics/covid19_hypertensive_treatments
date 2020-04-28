@@ -33,12 +33,12 @@ ADMISSION_COLUMNS = ['PATIENT ID','death','DIAG_TYPE','Date_Admission','Date_Eme
 
 RENAMED_LAB_MEASUREMENTS = {'BT -- BILIRRUBINA TOTAL                                                               ':'Total Bilirubin',
                             'GOT -- GOT (AST)':'Aspartate Aminotransferase (AST)',
-                            'LIN% -- Linfocitos %':'CBC: Leukocytes',
+                            'LEUC -- Leucocitos':'CBC: Leukocytes',
                             'HGB -- Hemoglobina':'CBC: Hemoglobin',
                             'VCM -- Volumen Corpuscular Medio':'CBC: Mean Corpuscular Volume (MCV)',
                             'GPT -- GPT (ALT)':'Alanine Aminotransferase (ALT)',
                             'NA -- SODIO':'Blood Sodium',
-                            'LIN -- Linfocitos':'CBC: Leukocytes2',
+                            'LIN -- Linfocitos':'CBC: Lymphocytes',
                             'INR -- INR':'Prothrombin Time (INR)',
                             'K -- POTASIO':'Potassium Blood Level',                            
                             'COL -- COLESTEROL TOTAL':'Cholinesterase',
@@ -58,7 +58,6 @@ RENAMED_LAB_MEASUREMENTS = {'BT -- BILIRRUBINA TOTAL                            
                             'LAC -- LACTATO':'ABG: Lactic Acid', 
                             # '':'ABG: COHb',
                             'BE(b) -- BE(b)':'ABG: Base Excess',
-                            'LEUC -- Leucocitos':'CBC: Leukocytes3',
                             'LEUORS -- Leucocitos':'CBC: Leukocytes4',                           
                             'DD -- DIMERO D':'D-Dimer',
                             'GLU -- GLUCOSA':'Glycemia'}
