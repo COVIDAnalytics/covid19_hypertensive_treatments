@@ -155,6 +155,6 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     top_features(bestRF, X_train)
 
     remove_dir(output_path)
-    mlflow.sklearn.save_model(bestRF, output_path, serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_PICKLE)
+    mlflow.sklearn.save_model(bestRF, output_path, serialization_format='pickle')
 
     return isAUC_RF, ofsAUC_RF, accTrain_RF, accTest_RF

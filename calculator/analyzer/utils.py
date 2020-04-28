@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pylab as plt
 import seaborn as sns
 import numpy as np
+import pickle
 
 def create_dir(path):
     if os.path.exists(path):
@@ -103,3 +104,12 @@ def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file
         json.dump(data, outfile)
 
     return data
+
+
+def export_model_imp_json(model, imp, json, path):
+    exp = {'model': model,
+    'imputer': imp,
+    'json': json}
+    with open(path, 'wb') as handle:
+        pickle.dump(exp, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    return exp

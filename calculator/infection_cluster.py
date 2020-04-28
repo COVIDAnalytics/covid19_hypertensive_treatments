@@ -51,17 +51,6 @@ elif jobid == 1:
     mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
     print(name_datasets[mask])
 
-
-elif jobid == 2:
-    discharge_data = False
-    comorbidities_data = False
-    vitals_data = False
-    lab_tests = True
-    anagraphics_data = True
-    swabs_data = True
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
-    print(name_datasets[mask])
-
 # Load cremona data
 data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
 
@@ -74,6 +63,13 @@ X, y = create_dataset(data,
                         anagraphics_data, 
                         swabs_data,
                         prediction = prediction)
+
+
+def change(x):
+    if x > 92:
+        return 1
+    else:
+        return 0
 
 cols = ['C-Reactive Protein (CRP)',
  'Blood Calcium',
@@ -98,6 +94,9 @@ cols = ['C-Reactive Protein (CRP)',
 
 if jobid == 0:
     X = X[cols]
+
+if jobid == 1:
+    X.SaO2 = X.SaO2.apply(change)
 
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
