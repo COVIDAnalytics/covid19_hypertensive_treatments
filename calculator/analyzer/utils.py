@@ -111,5 +111,5 @@ def export_model_imp_json(model, imp, json, path):
     'imputer': imp,
     'json': json}
     with open(path, 'wb') as handle:
-        pickle.dump(exp, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(exp, handle, protocol=4)
     return exp

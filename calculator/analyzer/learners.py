@@ -120,7 +120,7 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
 
     remove_dir(output_path)
     mlflow.sklearn.save_model(bestXGB, output_path,
-        serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_PICKLE)
+        serialization_format=['pickle'])
 
 
     return isAUC_XGB, ofsAUC_XGB, accTrain_XGB, accTest_XGB
