@@ -9,26 +9,26 @@ from sklearn.impute import IterativeImputer
 RENAMED_ADMISSION_COLUMNS = {
     'EDAD/AGE':'Age','SEXO/SEX':'Sex',
     'DIAG ING/INPAT':'DIAG_TYPE',
-    'MOTIVO_ALTA/DESTINY_DISCHARGE_ING':'death',
+    'MOTIVO_ALTA/DESTINY_DISCHARGE_ING':'Outcome',
     'F_INGRESO/ADMISSION_D_ING/INPAT':'Date_Admission',
     'F_INGRESO/ADMISSION_DATE_URG/EMERG':'Date_Emergency',
     'TEMP_PRIMERA/FIRST_URG/EMERG':'Temperature Celsius',
     'FC/HR_PRIMERA/FIRST_URG/EMERG':'Cardiac Frequency',
     'GLU_PRIMERA/FIRST_URG/EMERG':'Glycemia',
-    'SAT_02_PRIMERA/FIRST_URG/EMERG':'ABG: Oxygen Saturation (SaO2)',
+    'SAT_02_PRIMERA/FIRST_URG/EMERG':'SaO2',
     'TA_MAX_PRIMERA/FIRST/EMERG_URG':'Systolic Blood Pressure'}
 
 VITAL_COLUMNS ={
     'PATIENT ID',
     'Temperature Celsius',
     'Cardiac Frequency',
-    'ABG: Oxygen Saturation (SaO2)',
+    'SaO2',
     'Systolic Blood Pressure'
     }
 
 DEMOGRAPHICS_COLUMNS={'PATIENT ID','Sex','Age'}
 
-ADMISSION_COLUMNS = ['PATIENT ID','death','DIAG_TYPE','Date_Admission','Date_Emergency']
+ADMISSION_COLUMNS = ['PATIENT ID','Outcome','DIAG_TYPE','Date_Admission','Date_Emergency']
 
 
 RENAMED_LAB_MEASUREMENTS = {'BT -- BILIRRUBINA TOTAL                                                               ':'Total Bilirubin',
@@ -42,6 +42,8 @@ RENAMED_LAB_MEASUREMENTS = {'BT -- BILIRRUBINA TOTAL                            
                             'INR -- INR':'Prothrombin Time (INR)',
                             'K -- POTASIO':'Potassium Blood Level',                            
                             'COL -- COLESTEROL TOTAL':'Cholinesterase',
+                            '':'ABG: Oxygen Saturation (SaO2)a',
+                            '':'ABG: Oxygen Saturation (SaO2)b',                            
                             # '':'CBC: Red cell Distribution Width (RDW) '
                             'PLAQ -- Recuento de plaquetas':'CBC: Platelets',
                             'PCR -- PROTEINA C REACTIVA':'C-Reactive Protein (CRP)',
@@ -69,7 +71,7 @@ LAB_METRICS = ['Total Bilirubin','Aspartate Aminotransferase (AST)',
               'CBC: Platelets','C-Reactive Protein (CRP)','Urea','Blood Creatinine',
               'Blood Calcium','Blood Amylase','Activated Partial Thromboplastin Time (aPTT)',
               'ABG: standard bicarbonate (sHCO3)','ABG: pH','ABG: PaO2','ABG: PaCO2','ABG: Lactic Acid',
-              'ABG: Base Excess','D-Dimer','Glycemia']
+              'ABG: Base Excess','D-Dimer','Glycemia','ABG: Oxygen Saturation (SaO2)a','ABG: Oxygen Saturation (SaO2)b']
 
 LAB_COLS = ['PATIENT.ID','FECHA_PETICION.LAB_DATE','DETERMINACION.ITEM_LAB','RESULTADO.VAL_RESULT']
 
@@ -80,7 +82,7 @@ LAB_FEATURES = ['PATIENT ID', 'Total Bilirubin','Aspartate Aminotransferase (AST
               'CBC: Platelets','C-Reactive Protein (CRP)','Blood Creatinine',
               'Blood Calcium','Blood Amylase','ABG: standard bicarbonate (sHCO3)',
               'ABG: pH','ABG: PaO2','ABG: PaCO2','ABG: Lactic Acid',
-              'ABG: Base Excess','D-Dimer','Glycemia','Blood Urea Nitrogen (BUN)']
+              'ABG: Base Excess','D-Dimer','Glycemia','Blood Urea Nitrogen (BUN)','ABG: Oxygen Saturation (SaO2)']
 
 HCUP_LIST = [49,50,87,90,95,146]
 
@@ -171,7 +173,7 @@ def create_vitals_dataset(admission):
     #Reformatting the vital values at the emergency department
     admission['Temperature Celsius'] = admission['Temperature Celsius'].replace('0',np.nan).str.replace(',','.').astype(float)
     admission['Cardiac Frequency']=admission['Cardiac Frequency'].replace(0,np.nan)
-    admission['SaO2']=admission['ABG: Oxygen Saturation (SaO2)'].replace(0,np.nan)
+    admission['SaO2']=admission['SaO2'].replace(0,np.nan)
     admission['Glycemia']=admission['Glycemia'].replace(0,np.nan)
     admission['Systolic Blood Pressure']=admission['Systolic Blood Pressure'].replace(0,np.nan)
 

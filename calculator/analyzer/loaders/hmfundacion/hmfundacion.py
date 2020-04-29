@@ -61,6 +61,11 @@ def load_fundacionhm(path, discharge_data = True, comorbidities_data = True, vit
     patients = u.filter_patients([dataset_admissions, dataset_demographics,dataset_vitals,
                                   dataset_labs, dataset_comorbidities, dataset_extra])
     
+    
+    name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'extras'])
+    dataset_array = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data])
+
+    
     datasets = []
 
     # Create final dataset
