@@ -43,7 +43,7 @@ RENAMED_LAB_MEASUREMENTS = {'BT -- BILIRRUBINA TOTAL                            
                             'K -- POTASIO':'Potassium Blood Level',                            
                             'COL -- COLESTEROL TOTAL':'Cholinesterase',
                             # '':'CBC: Red cell Distribution Width (RDW) '
-                            'VPM -- Volumen plaquetar medio':'CBC: Platelets',
+                            'PLAQ -- Recuento de plaquetas':'CBC: Platelets',
                             'PCR -- PROTEINA C REACTIVA':'C-Reactive Protein (CRP)',
                             'U -- UREA':'Urea',
                             'CREA -- CREATININA':'Blood Creatinine',
