@@ -262,8 +262,10 @@ def create_dataset_comorbidities(comorbidities, patients):
     # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
     cols_keep = list(dataset_comorbidities.columns[dataset_comorbidities.sum() >10])
 
-    for e in LIST_REMOVE_COMORBIDITIES:
+    for e in set(LIST_REMOVE_COMORBIDITIES).intersection(cols_keep):
         cols_keep.remove(e)
+    dataset_comorbidities = dataset_comorbidities[cols_keep]
+
     dataset_comorbidities = dataset_comorbidities[cols_keep]
 
     dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(int).apply(str)
