@@ -9,13 +9,35 @@ from sklearn.impute import IterativeImputer
 # ICD9 COVID diagnosis Italian codes
 LIST_DIAGNOSIS = ['4808', '4803', 'V0182', '7982']
 LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease",
-                             "Pneumonia (except that caused by tuberculosis or sexually transmitted disease)",
+                             "Pneumonia (except that caused by tuberculosis or Genderually transmitted disease)",
                              "Respiratory failure; insufficiency; arrest (adult)",
                              "Residual codes; unclassified",
                              "Diabetes mellitus without complication",
                              "Diabetes mellitus with complications",
                              "Influenza",
                              "Acute and unspecified renal failure"]
+
+SWAB_WITH_LAB_COLUMNS = ['C-Reactive Protein (CRP)',
+                        'Blood Calcium',
+                        'CBC: Leukocytes',
+                        'Aspartate Aminotransferase (AST)',
+                        'ABG: PaO2',
+                        'Age',
+                        'Prothrombin Time (INR)',
+                        'CBC: Hemoglobin',
+                        'ABG: pH',
+                        'Cholinesterase',
+                        'Respiratory Frequency',
+                        'Blood Urea Nitrogen (BUN)',
+                        'ABG: MetHb',
+                        'Body Temperature',
+                        'Total Bilirubin',
+                        'Systolic Blood Pressure',
+                        'CBC: Mean Corpuscular Volume (MCV)',
+                        'Glycemia',
+                        'Cardiac Frequency',
+                        'Gender']
+
 
 # Discharge codes
 # 1,2,5,6,9 = discharged, 4 = deceased
@@ -24,7 +46,7 @@ DISCHARGE_CODE_RELEASED = 4
 
 DIAGNOSIS_COLUMNS = ['Dia1', 'Dia2', 'Dia3', 'Dia4', 'Dia5']
 
-ANAGRAPHICS_FEATURES = ['Sex', 'Age', 'Outcome']
+DEMOGRAPHICS_FEATURES = ['Gender', 'Age', 'Outcome']
 
 
 RENAMED_LAB_COLUMNS = {
@@ -72,7 +94,7 @@ RENAMED_VITALS_COLUMNS = {
         "P. Max": "Systolic Blood Pressure",
         #  "P. Min": "Diastolic Blood Pressure",
         "F. Card.": "Cardiac Frequency",
-        "Temp.": "Temperature Celsius",
+        "Temp.": "Body Temperature",
         "F. Resp.": "Respiratory Frequency"
         }
 
@@ -147,7 +169,7 @@ def get_percentages(df, missing_type=np.nan):
     return pd.DataFrame({'percent_missing': percent_missing})
 
 
-def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=True):
+def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
     missing_values = get_percentages(df, missing_type)
     df_features = missing_values[missing_values['percent_missing'] < nan_threshold].index.tolist()
 
@@ -161,21 +183,21 @@ def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=True):
 
     return df
 
-def cleanup_anagraphics(anagraphics):
+def cleanup_demographics(demographics):
 
-    anagraphics = anagraphics[['N_SCHEDA_PS', 'PZ_SESSO_PS', "PZ_DATA_NASCITA_PS"]]
-    anagraphics['PZ_DATA_NASCITA_PS'] = pd.to_datetime(anagraphics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
-    anagraphics['Age'] = anagraphics['PZ_DATA_NASCITA_PS'].apply(get_age)
-    anagraphics = anagraphics.drop('PZ_DATA_NASCITA_PS', axis = 1)
-    anagraphics = anagraphics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Sex'})
-    anagraphics['Sex'] = (anagraphics['Sex'] == 'F').astype(int)
-    anagraphics['NOSOLOGICO'] = anagraphics['NOSOLOGICO'].astype(str)
+    demographics = demographics[['N_SCHEDA_PS', 'PZ_SESSO_PS', "PZ_DATA_NASCITA_PS"]]
+    demographics['PZ_DATA_NASCITA_PS'] = pd.to_datetime(demographics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
+    demographics['Age'] = demographics['PZ_DATA_NASCITA_PS'].apply(get_age)
+    demographics = demographics.drop('PZ_DATA_NASCITA_PS', axis = 1)
+    demographics = demographics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Gender'})
+    demographics['Gender'] = (demographics['Gender'] == 'F').astype(int)
+    demographics['NOSOLOGICO'] = demographics['NOSOLOGICO'].astype(str)
 
-    return anagraphics
+    return demographics
 
 
 def create_vitals_dataset(vitals, patients, lab_tests=True):
-    vital_signs = VITAL_SIGNS
+    vital_signs = VITAL_SIGNS.copy()
     if lab_tests:
         vital_signs.remove('SaO2')  # Remove oxygen saturation if we have lab values (it is there)
 
@@ -187,6 +209,8 @@ def create_vitals_dataset(vitals, patients, lab_tests=True):
             vital_value = vitals_p[vitals_p['NOME_PARAMETRO_VITALE'] == vital_name]['VALORE_PARAMETRO']
             vital_value = pd.to_numeric(vital_value).mean()
             dataset_vitals.loc[p, vital_name] = vital_value
+            
+    dataset_vitals['Temp.'] = fahrenheit_covert(dataset_vitals['Temp.'])
 
     # Adjust missing columns
     dataset_vitals = remove_missing(dataset_vitals)
@@ -262,8 +286,10 @@ def create_dataset_comorbidities(comorbidities, patients):
     # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
     cols_keep = list(dataset_comorbidities.columns[dataset_comorbidities.sum() >10])
 
-    for e in LIST_REMOVE_COMORBIDITIES:
+    for e in set(LIST_REMOVE_COMORBIDITIES).intersection(cols_keep):
         cols_keep.remove(e)
+    dataset_comorbidities = dataset_comorbidities[cols_keep]
+
     dataset_comorbidities = dataset_comorbidities[cols_keep]
 
     dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(int).apply(str)
@@ -272,19 +298,19 @@ def create_dataset_comorbidities(comorbidities, patients):
     return dataset_comorbidities.set_index('NOSOLOGICO')
 
 
-def create_dataset_discharge(anagraphics, patients, icu=None):
+def create_dataset_discharge(demographics, patients, icu=None):
 
-    dataset_anagraphics = pd.DataFrame(columns=ANAGRAPHICS_FEATURES, index=patients)
-    dataset_anagraphics.loc[:, ANAGRAPHICS_FEATURES] = anagraphics[['NOSOLOGICO'] + ANAGRAPHICS_FEATURES].set_index('NOSOLOGICO')
-    dataset_anagraphics.loc[:, 'Sex'] = dataset_anagraphics.loc[:, 'Sex'].astype('category')
-    dataset_anagraphics.Sex = dataset_anagraphics.Sex.cat.codes.astype('category')
-    dataset_anagraphics.loc[:, 'Outcome'] = dataset_anagraphics.loc[:, 'Outcome'].astype('category')
+    dataset_demographics = pd.DataFrame(columns=DEMOGRAPHICS_FEATURES, index=patients)
+    dataset_demographics.loc[:, DEMOGRAPHICS_FEATURES] = demographics[['NOSOLOGICO'] + DEMOGRAPHICS_FEATURES].set_index('NOSOLOGICO')
+    dataset_demographics.loc[:, 'Gender'] = dataset_demographics.loc[:, 'Gender'].astype('category')
+    dataset_demographics.Gender = dataset_demographics.Gender.cat.codes.astype('category')
+    dataset_demographics.loc[:, 'Outcome'] = dataset_demographics.loc[:, 'Outcome'].astype('category')
 
     if icu is not None:
-        dataset_anagraphics = dataset_anagraphics.join(icu.set_index('NOSOLOGICO'))
+        dataset_demographics = dataset_demographics.join(icu.set_index('NOSOLOGICO'))
 
 
-    return dataset_anagraphics
+    return dataset_demographics
 
 
 def cleanup_discharge_info(discharge_info):
@@ -310,7 +336,7 @@ def cleanup_discharge_info(discharge_info):
     discharge_info = discharge_info[['NumeroScheda', 'Sesso', 'Età', 'Modalità di dimissione']]
     discharge_info = discharge_info.rename(
             columns={'NumeroScheda': 'NOSOLOGICO',
-                     'Sesso': 'Sex',
+                     'Sesso': 'Gender',
                      'Età':'Age',
                      'Modalità di dimissione':'Outcome'})
     discharge_info.NOSOLOGICO = discharge_info.NOSOLOGICO.apply(str)
@@ -318,7 +344,9 @@ def cleanup_discharge_info(discharge_info):
     return discharge_info
 
 
-
+def fahrenheit_covert(temp_celsius):    
+    temp_fahrenheit = ((temp_celsius * 9)/5)+ 32
+    return temp_fahrenheit
 
 def filter_patients(datasets):
 
@@ -347,4 +375,3 @@ def get_swabs(lab):
     swab['Swab'] = swab['Swab'].astype('int')
 
     return swab
-

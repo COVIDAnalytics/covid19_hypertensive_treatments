@@ -5,15 +5,15 @@ def create_dataset(data_dict, discharge_data = True,
                         comorbidities_data = True, 
                         vitals_data = True, 
                         lab_tests=True, 
-                        anagraphics_data = False, 
+                        demographics_data = False, 
                         swabs_data = False,
                         prediction='Outcome'):
 
     if discharge_data:
         data = data_dict['discharge']
     
-    if anagraphics_data:
-        data = data_dict['anagraphics']
+    if demographics_data:
+        data = data_dict['demographics']
 
     if comorbidities_data:
         data = data.join(data_dict['comorbidities'])

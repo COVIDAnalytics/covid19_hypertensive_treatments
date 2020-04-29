@@ -54,7 +54,7 @@ def load_cremona(path, discharge_data = True, comorbidities_data = True, vitals_
 
     # Load demographics
     demographics = pd.read_csv("%s/emergency_room/general.csv" % path)
-    demographics = u.cleanup_anagraphics(demographics)
+    demographics = u.cleanup_demographics(demographics)
 
     # Load Swab
     swabs = u.get_swabs(lab)

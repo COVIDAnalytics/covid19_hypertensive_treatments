@@ -40,8 +40,12 @@ def load_fundacionhm(path, discharge_data = True, comorbidities_data = True, vit
     #Read in the dataset
     labs = pd.read_csv('%s/labs.csv' % path, encoding= 'unicode_escape')
     #Get the values
-    dataset_labs = u.create_lab_dataset(labs, dataset_admissions)
-    
+    dataset_labs = u.create_lab_dataset(labs, dataset_admissions, dataset_vitals)
+
+    if lab_tests:
+        dataset_vitals.drop('SaO2', axis=1)  # Remove oxygen saturation if we have lab values (it is there)
+
+
     #Comorbidities
     
     # Read all comorbidities from both the emergency and inpatient files
@@ -61,11 +65,20 @@ def load_fundacionhm(path, discharge_data = True, comorbidities_data = True, vit
     patients = u.filter_patients([dataset_admissions, dataset_demographics,dataset_vitals,
                                   dataset_labs, dataset_comorbidities, dataset_extra])
     
+    dataset_admissions.drop(['Date_Admission', 'Date_Emergency'], axis=1, inplace=True)
+    
     
     name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'extras'])
     dataset_array = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data])
 
-    
+    # Set index
+    dataset_admissions.set_index('PATIENT ID', inplace=True)
+    dataset_comorbidities.set_index('PATIENT ID', inplace=True)
+    dataset_vitals.set_index('PATIENT ID', inplace=True)
+    dataset_labs.set_index('PATIENT ID', inplace=True)
+    dataset_demographics.set_index('PATIENT ID', inplace=True)
+    dataset_extra.set_index('PATIENT ID', inplace=True)
+
     datasets = []
 
     # Create final dataset

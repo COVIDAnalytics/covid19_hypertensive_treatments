@@ -7,12 +7,12 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 
 RENAMED_ADMISSION_COLUMNS = {
-    'EDAD/AGE':'Age','SEXO/SEX':'Sex',
+    'EDAD/AGE':'Age','SEXO/SEX':'Gender',
     'DIAG ING/INPAT':'DIAG_TYPE',
     'MOTIVO_ALTA/DESTINY_DISCHARGE_ING':'Outcome',
     'F_INGRESO/ADMISSION_D_ING/INPAT':'Date_Admission',
     'F_INGRESO/ADMISSION_DATE_URG/EMERG':'Date_Emergency',
-    'TEMP_PRIMERA/FIRST_URG/EMERG':'Temperature Celsius',
+    'TEMP_PRIMERA/FIRST_URG/EMERG':'Body Temperature',
     'FC/HR_PRIMERA/FIRST_URG/EMERG':'Cardiac Frequency',
     'GLU_PRIMERA/FIRST_URG/EMERG':'Glycemia',
     'SAT_02_PRIMERA/FIRST_URG/EMERG':'SaO2',
@@ -20,15 +20,15 @@ RENAMED_ADMISSION_COLUMNS = {
 
 VITAL_COLUMNS ={
     'PATIENT ID',
-    'Temperature Celsius',
+    'Body Temperature',
     'Cardiac Frequency',
     'SaO2',
     'Systolic Blood Pressure'
     }
 
-DEMOGRAPHICS_COLUMNS={'PATIENT ID','Sex','Age'}
+DEMOGRAPHICS_COLUMNS={'PATIENT ID','Gender','Age'}
 
-ADMISSION_COLUMNS = ['PATIENT ID','Outcome','DIAG_TYPE','Date_Admission','Date_Emergency']
+ADMISSION_COLUMNS = ['PATIENT ID','Outcome','Date_Admission','Date_Emergency']
 
 
 RENAMED_LAB_MEASUREMENTS = {'BT -- BILIRRUBINA TOTAL                                                               ':'Total Bilirubin',
@@ -42,8 +42,8 @@ RENAMED_LAB_MEASUREMENTS = {'BT -- BILIRRUBINA TOTAL                            
                             'INR -- INR':'Prothrombin Time (INR)',
                             'K -- POTASIO':'Potassium Blood Level',                            
                             'COL -- COLESTEROL TOTAL':'Cholinesterase',
-                            '':'ABG: Oxygen Saturation (SaO2)a',
-                            '':'ABG: Oxygen Saturation (SaO2)b',                            
+                            'SO2C -- sO2c (Saturación de oxígeno)':'ABG: Oxygen Saturation (SaO2)a',
+                            'SO2CV -- sO2c (Saturación de oxígeno)':'ABG: Oxygen Saturation (SaO2)b',                            
                             # '':'CBC: Red cell Distribution Width (RDW) '
                             'PLAQ -- Recuento de plaquetas':'CBC: Platelets',
                             'PCR -- PROTEINA C REACTIVA':'C-Reactive Protein (CRP)',
@@ -141,10 +141,10 @@ def create_dataset_admissions(admission):
     
     #Limit to only patients for whom we know the outcome
     types = ['Fallecimiento', 'Domicilio']
-    admission = admission.loc[admission['death'].isin(types)]
+    admission = admission.loc[admission['Outcome'].isin(types)]
     #Dictionary for the outcome
     death_dict = {'Fallecimiento': 1,'Domicilio': 0} 
-    admission.death = [death_dict[item] for item in admission.death] 
+    admission.Outcome = [death_dict[item] for item in admission.Outcome] 
     
     #Convert to Dates the appropriate information
     admission['Date_Emergency']= pd.to_datetime(admission['Date_Emergency']).dt.date 
@@ -161,7 +161,7 @@ def create_dataset_demographics(admission):
 
     #Dictionary for the gender 
     gender = {'MALE': 0,'FEMALE': 1} 
-    admission.Sex = [gender[item] for item in admission.Sex] 
+    admission.Gender = [gender[item] for item in admission.Gender] 
     
     df2 = admission[DEMOGRAPHICS_COLUMNS]
     return df2
@@ -171,17 +171,20 @@ def create_vitals_dataset(admission):
     #Rename the columns for the admission
     admission = admission.rename(columns=RENAMED_ADMISSION_COLUMNS)
     #Reformatting the vital values at the emergency department
-    admission['Temperature Celsius'] = admission['Temperature Celsius'].replace('0',np.nan).str.replace(',','.').astype(float)
+    admission['Body Temperature'] = admission['Body Temperature'].replace('0',np.nan).str.replace(',','.').astype(float)
+    #Convert to Fahrenheit    
+    admission['Body Temperature'] = fahrenheit_covert(admission['Body Temperature'])
+    
     admission['Cardiac Frequency']=admission['Cardiac Frequency'].replace(0,np.nan)
     admission['SaO2']=admission['SaO2'].replace(0,np.nan)
     admission['Glycemia']=admission['Glycemia'].replace(0,np.nan)
     admission['Systolic Blood Pressure']=admission['Systolic Blood Pressure'].replace(0,np.nan)
-
+    
     df3 = admission[VITAL_COLUMNS]
     return df3
 
 
-def create_lab_dataset(labs, dataset_admissions):
+def create_lab_dataset(labs, dataset_admissions, dataset_vitals):
     
     labs['DETERMINACION.ITEM_LAB'] = labs['DETERMINACION.ITEM_LAB'].replace(RENAMED_LAB_MEASUREMENTS)
     
@@ -204,6 +207,16 @@ def create_lab_dataset(labs, dataset_admissions):
     df2['Blood Urea Nitrogen (BUN)'] = df2['Urea']/2.14
     #Drop Urea
     df2 = df2.drop(columns=['Urea'])
+    
+    #Oxygen levels
+    df2['ABG: Oxygen Saturation (SaO2)'] = df2['ABG: Oxygen Saturation (SaO2)a']
+    
+    for (index_label, row_series) in df2.iterrows():
+        if np.isnan(df2['ABG: Oxygen Saturation (SaO2)'].iloc[index_label]) and dataset_vitals['PATIENT ID'].isin([row_series['PATIENT.ID']]).any():
+            df2['ABG: Oxygen Saturation (SaO2)'].iloc[index_label] = dataset_vitals[dataset_vitals['PATIENT ID']==row_series['PATIENT.ID']]['SaO2'].iloc[0]
+
+    df2 = df2.drop(columns=['ABG: Oxygen Saturation (SaO2)a','ABG: Oxygen Saturation (SaO2)b'])
+
     
     #Merge the two dataframes admissions and labs together.
     df3 = pd.merge(dataset_admissions, df2, how='inner', left_on=['PATIENT ID','Date_Emergency'], right_on=['PATIENT.ID','FECHA_PETICION.LAB_DATE'])
@@ -298,4 +311,8 @@ def filter_patients(datasets):
     for d in datasets:
         d.drop(d[~d['PATIENT ID'].astype(np.int64).isin(patients)].index, inplace=True)
     return patients
+
+def fahrenheit_covert(temp_celsius):    
+    temp_fahrenheit = ((temp_celsius * 9)/5)+ 32
+    return temp_fahrenheit
 
