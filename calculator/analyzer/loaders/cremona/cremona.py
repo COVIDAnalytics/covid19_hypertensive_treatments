@@ -7,7 +7,7 @@ import pickle
 import analyzer.loaders.cremona.utils as u
 
 
-def load_cremona(path, lab_tests=True):
+def load_cremona(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, anagraphics_data = False, swabs_data = False):
 
     # Load discharge info
     discharge_info = pd.read_csv('%s/general/discharge_info.csv' % path)
@@ -28,6 +28,8 @@ def load_cremona(path, lab_tests=True):
 
     # False and True are transformed to 0 and 1 categories
     comorbidities = comorbidities.astype('int').astype('category')
+    comorbidities['NOSOLOGICO'] = comorbidities['NOSOLOGICO'].apply(str)
+    
     # Cleanup discharge information
     discharge_info = u.cleanup_discharge_info(discharge_info)
 
@@ -50,19 +52,47 @@ def load_cremona(path, lab_tests=True):
     icu = icu.rename(columns={'RC_CODNOSO':'NOSOLOGICO','TRASF_TI':'ICU'})
     icu.ICU = icu.ICU.astype(int).astype('category')
 
+    # Load anagraphics
+    anagraphics = pd.read_csv("%s/emergency_room/general.csv" % path)
+    anagraphics = u.cleanup_anagraphics(anagraphics)
+
+    # Load Swab
+    swabs = u.get_swabs(lab)
+    
+    name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'anagraphics', 'swab'])
+    list_datasets = np.asarray([discharge_info, comorbidities, vitals, lab, anagraphics, swabs])
+    dataset_array = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+
     # Filter patients common to all datasets
-    patients = u.filter_patients([discharge_info, comorbidities,
-                                  vitals, icu, lab])
+    patients = u.filter_patients(list_datasets[dataset_array])
+
+    datasets = []
 
     # Create final dataset
-    dataset_anagraphics = u.create_dataset_anagraphics(discharge_info, patients, icu=icu)
-    dataset_comorbidities = u.create_dataset_comorbidities(comorbidities, patients)
-    dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=lab_tests)
-    dataset_lab = u.create_lab_dataset(lab, patients)
+    if discharge_data:
+        dataset_discharge = u.create_dataset_discharge(discharge_info, patients, icu=icu)
+        datasets.append(dataset_discharge)
+    
+    if comorbidities_data:
+        dataset_comorbidities = u.create_dataset_comorbidities(comorbidities, patients)
+        datasets.append(dataset_comorbidities)
+    
+    if vitals_data:
+        dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=lab_tests)
+        datasets.append(dataset_vitals)
+    
+    if lab_tests:
+        dataset_lab = u.create_lab_dataset(lab, patients)
+        datasets.append(dataset_lab)
 
-    data = {'anagraphics': dataset_anagraphics,
-            'comorbidities': dataset_comorbidities,
-            'vitals': dataset_vitals,
-            'lab': dataset_lab}
+    if anagraphics_data:
+        datasets.append(anagraphics.set_index('NOSOLOGICO'))
+
+    if swabs_data:
+        datasets.append(swabs.set_index('NOSOLOGICO'))
+
+    datasets = np.asarray(datasets)
+
+    data = dict(zip(name_datasets[dataset_array], datasets))
 
     return data

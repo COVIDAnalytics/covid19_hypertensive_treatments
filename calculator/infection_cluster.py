@@ -9,8 +9,8 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
-from analyzer.loaders.cremona.swabs import load_swabs
 from analyzer.utils import create_dir, export_features_json, plot_correlation
 from analyzer.learners import train_oct
 from analyzer.learners import xgboost_classifier
@@ -18,30 +18,90 @@ from analyzer.learners import rf_classifier
 
 import analyzer.optimizer as o
 
+jobid = os.getenv('SLURM_ARRAY_TASK_ID')
+jobid = int(jobid)
+
+print('Jobid = ', jobid)
+
 SEED = 1
+
 prediction = 'Swab'
 folder_name = 'swab_prediction_seed' + str(SEED) + '_' + prediction.lower()
 output_folder = 'predictors/swab'
 
-lab_tests = True
-vitals = True
+name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'anagraphics', 'swab'])
 
-# Load swab data
-data = load_swabs('../data/cremona/', lab_tests = lab_tests)
+if jobid == 0:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = True
+    lab_tests = True
+    anagraphics_data = True
+    swabs_data = True
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+    print(name_datasets[mask])
+
+elif jobid == 1:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = True
+    lab_tests = False
+    anagraphics_data = True
+    swabs_data = True
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+    print(name_datasets[mask])
+
+# Load cremona data
+data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
 
 # Create dataset
 X, y = create_dataset(data,
-        comorbidities = False,
-        vitals=vitals,
-        lab=lab_tests,
-        prediction = prediction)
+                        discharge_data, 
+                        comorbidities_data, 
+                        vitals_data, 
+                        lab_tests, 
+                        anagraphics_data, 
+                        swabs_data,
+                        prediction = prediction)
 
+
+def change(x):
+    if x > 92:
+        return 1
+    else:
+        return 0
+
+cols = ['C-Reactive Protein (CRP)',
+ 'Blood Calcium',
+ 'CBC: Leukocytes',
+ 'Aspartate Aminotransferase (AST)',
+ 'ABG: PaO2',
+ 'Age',
+ 'Prothrombin Time (INR)',
+ 'CBC: Hemoglobin',
+ 'ABG: pH',
+ 'Cholinesterase',
+ 'Respiratory Frequency',
+ 'Blood Urea Nitrogen (BUN)',
+ 'ABG: MetHb',
+ 'Temperature Celsius',
+ 'Total Bilirubin',
+ 'Systolic Blood Pressure',
+ 'CBC: Mean Corpuscular Volume (MCV)',
+ 'Glycemia',
+ 'Cardiac Frequency',
+ 'Sex']
+
+if jobid == 0:
+    X = X[cols]
+
+if jobid == 1:
+    X.SaO2 = X.SaO2.apply(change)
 
 algorithm = o.algorithms[0]
-space = o.spaces[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 350)
+best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 500, name_algo = 'xgboost')
 
 
 # Train trees
@@ -75,4 +135,3 @@ best_xgb = o.optimizer(algorithm, space, name_param, X, y, n_calls = 350)
 
 # output_path_RF = os.path.join(output_folder, folder_name, 'RF')
 # rf_classifier(X_train, y_train, X_test, y_test, param_grid_RF, output_path_RF, seed=SEED)
->>>>>>> eff1e8ec716909d15988d16691da3a374ce192d4

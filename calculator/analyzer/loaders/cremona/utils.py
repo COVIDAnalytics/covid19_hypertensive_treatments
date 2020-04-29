@@ -6,7 +6,6 @@ import datetime
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 
-
 # ICD9 COVID diagnosis Italian codes
 LIST_DIAGNOSIS = ['4808', '4803', 'V0182', '7982']
 LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease",
@@ -14,7 +13,9 @@ LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease
                              "Respiratory failure; insufficiency; arrest (adult)",
                              "Residual codes; unclassified",
                              "Diabetes mellitus without complication",
-                             "Diabetes mellitus with complications"]
+                             "Diabetes mellitus with complications",
+                             "Influenza",
+                             "Acute and unspecified renal failure"]
 
 # Discharge codes
 # 1,2,5,6,9 = discharged, 4 = deceased
@@ -146,9 +147,9 @@ def get_percentages(df, missing_type=np.nan):
     return pd.DataFrame({'percent_missing': percent_missing})
 
 
-def remove_missing(df, missing_type=np.nan, nan_threashold=40, impute=True):
+def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=True):
     missing_values = get_percentages(df, missing_type)
-    df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
+    df_features = missing_values[missing_values['percent_missing'] < nan_threshold].index.tolist()
 
     df = df[df_features]
 
@@ -159,6 +160,18 @@ def remove_missing(df, missing_type=np.nan, nan_threashold=40, impute=True):
         df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
 
     return df
+
+def cleanup_anagraphics(anagraphics):
+
+    anagraphics = anagraphics[['N_SCHEDA_PS', 'PZ_SESSO_PS', "PZ_DATA_NASCITA_PS"]]
+    anagraphics['PZ_DATA_NASCITA_PS'] = pd.to_datetime(anagraphics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
+    anagraphics['Age'] = anagraphics['PZ_DATA_NASCITA_PS'].apply(get_age)
+    anagraphics = anagraphics.drop('PZ_DATA_NASCITA_PS', axis = 1)
+    anagraphics = anagraphics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Sex'})
+    anagraphics['Sex'] = (anagraphics['Sex'] == 'F').astype(int)
+    anagraphics['NOSOLOGICO'] = anagraphics['NOSOLOGICO'].astype(str)
+
+    return anagraphics
 
 
 def create_vitals_dataset(vitals, patients, lab_tests=True):
@@ -195,7 +208,7 @@ def create_lab_dataset(lab, patients):
     dataset_lab_tests.columns = [i[1] for i in dataset_lab_tests.columns] # because of groupby, the columns are a tuple
 
     # 30% removes tests that are not present and the COVID-19 lab test
-    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threashold=30, impute=False)
+    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threshold=30, impute=False)
 
     # Filter data entries per test
     lab_reduced = lab[lab['COD_INTERNO_PRESTAZIONE'].isin(lab_tests_reduced.columns)]
@@ -253,11 +266,13 @@ def create_dataset_comorbidities(comorbidities, patients):
         cols_keep.remove(e)
     dataset_comorbidities = dataset_comorbidities[cols_keep]
 
+    dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(int).apply(str)
+
 
     return dataset_comorbidities.set_index('NOSOLOGICO')
 
 
-def create_dataset_anagraphics(anagraphics, patients, icu=None):
+def create_dataset_discharge(anagraphics, patients, icu=None):
 
     dataset_anagraphics = pd.DataFrame(columns=ANAGRAPHICS_FEATURES, index=patients)
     dataset_anagraphics.loc[:, ANAGRAPHICS_FEATURES] = anagraphics[['NOSOLOGICO'] + ANAGRAPHICS_FEATURES].set_index('NOSOLOGICO')
@@ -266,7 +281,8 @@ def create_dataset_anagraphics(anagraphics, patients, icu=None):
     dataset_anagraphics.loc[:, 'Outcome'] = dataset_anagraphics.loc[:, 'Outcome'].astype('category')
 
     if icu is not None:
-        dataset_anagraphics = dataset_anagraphics.join(icu)
+        dataset_anagraphics = dataset_anagraphics.join(icu.set_index('NOSOLOGICO'))
+
 
     return dataset_anagraphics
 
@@ -303,6 +319,7 @@ def cleanup_discharge_info(discharge_info):
 
 
 
+
 def filter_patients(datasets):
 
     patients = datasets[0]['NOSOLOGICO'].astype(np.int64)
@@ -317,4 +334,17 @@ def filter_patients(datasets):
         d.drop(d[~d['NOSOLOGICO'].astype(np.int64).isin(patients)].index, inplace=True)
 
     return patients
+
+
+def get_swabs(lab):
+
+    covid = lab[lab.COD_INTERNO_PRESTAZIONE == 'COV19']
+    covid = covid[covid.VALORE_TESTO.isin(['POSITIVO', 'Negativo', 'Debolmente positivo'])]
+    covid.VALORE_TESTO = covid.VALORE_TESTO.isin(['POSITIVO','Debolmente positivo']).astype(int).astype('category')
+    covid = covid[~ covid.NOSOLOGICO.duplicated()] # drop duplicated values
+    swab = covid[['NOSOLOGICO', 'VALORE_TESTO']]
+    swab = swab.rename(columns = {'VALORE_TESTO': 'Swab'})
+    swab['Swab'] = swab['Swab'].astype('int')
+
+    return swab
 
