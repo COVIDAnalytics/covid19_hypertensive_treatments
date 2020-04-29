@@ -68,4 +68,5 @@ def load_fundacionhm(path, lab_tests=True):
             'lab': dataset_labs,
             'extra':dataset_extra}
 
+
     return data
