@@ -15,7 +15,7 @@ import analyzer.loaders.hmfundacion.utils as u
 
 #path = '../../../Dropbox (Personal)/COVID_clinical/covid19_hmfoundation'
 
-def load_fundacionhm(path, lab_tests=True):
+def load_fundacionhm(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, demographics_data = False, extra_data = False):
         
     # Load admission info
     admission = pd.read_csv('%s/admissions.csv' % path, sep=';' , encoding= 'unicode_escape')
@@ -60,13 +60,30 @@ def load_fundacionhm(path, lab_tests=True):
     # Filter patients common to all datasets
     patients = u.filter_patients([dataset_admissions, dataset_demographics,dataset_vitals,
                                   dataset_labs, dataset_comorbidities, dataset_extra])
+    
+    datasets = []
 
-    data = {'admissions': dataset_admissions,
-            'demographics': dataset_demographics,
-            'comorbidities': dataset_comorbidities,
-            'vitals': dataset_vitals,
-            'lab': dataset_labs,
-            'extra':dataset_extra}
+    # Create final dataset
+    if discharge_data:
+        datasets.append(dataset_admissions)
+    
+    if comorbidities_data:
+        datasets.append(dataset_comorbidities)
+    
+    if vitals_data:
+        datasets.append(dataset_vitals)
+    
+    if lab_tests:
+        datasets.append(dataset_labs)
 
+    if demographics_data:
+        datasets.append(dataset_demographics)
+
+    if extra_data:
+        datasets.append(dataset_extra)
+
+    datasets = np.asarray(datasets)
+
+    data = dict(zip(name_datasets[dataset_array], datasets))
 
     return data

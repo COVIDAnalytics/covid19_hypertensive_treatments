@@ -11,6 +11,8 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 import analyzer.loaders.cremona as cremona
+import analyzer.loaders.hmfundacion as hmfundacion
+
 from analyzer.dataset import create_dataset
 from analyzer.utils import create_dir, export_features_json, plot_correlation
 from analyzer.learners import train_oct
@@ -72,14 +74,19 @@ discharge_data = True
 comorbidities_data = True
 vitals_data = True
 lab_tests = True
-anagraphics_data = False
+demographics_data = False
 swabs_data = False
 icu_data = False
+extra_data = True
 
 X_spain, y_spain = load_spanish_data()
 
 # Load cremona data
-data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
+
+#Load spanish data
+data = hmfundacion.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data)
+
 
 X_cremona, y_cremona = create_dataset(data,
                                       discharge_data,
