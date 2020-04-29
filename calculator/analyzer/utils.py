@@ -6,6 +6,14 @@ import matplotlib.pylab as plt
 import seaborn as sns
 import numpy as np
 import pickle
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import IterativeImputer
+
+def change_SaO2(x):
+    if x > 92:
+        return 1
+    else:
+        return 0
 
 def create_dir(path):
     if os.path.exists(path):
@@ -69,6 +77,13 @@ comorbidities = ['Multiple Sclerosis',
 symptoms = ['Vomit', 'Diarrhea']
 numeric = ['SaO2','Age', 'Cardiac Frequency', 'Diastolic Blood Pressure', 'Respiratory Frequency', 'Systolic Blood Pressure','Temperature Celsius']
 categorical = ["Sex"]
+
+def impute_missing(df):
+    imp_mean = IterativeImputer(random_state=0)
+    imp_mean.fit(df)
+    imputed_df = imp_mean.transform(df)
+    df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
+    return df
 
 
 def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file_name):

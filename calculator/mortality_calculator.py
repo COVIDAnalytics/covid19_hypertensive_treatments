@@ -72,21 +72,21 @@ discharge_data = True
 comorbidities_data = True
 vitals_data = True
 lab_tests = True
-anagraphics_data = False
+demographics_data = False
 swabs_data = False
 icu_data = False
 
 X_spain, y_spain = load_spanish_data()
 
 # Load cremona data
-data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
 
 X_cremona, y_cremona = create_dataset(data,
                                       discharge_data,
                                       comorbidities_data,
                                       vitals_data,
                                       lab_tests,
-                                      anagraphics_data,
+                                      demographics_data,
                                       swabs_data,
                                       prediction = prediction)
 

@@ -17,6 +17,28 @@ LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease
                              "Influenza",
                              "Acute and unspecified renal failure"]
 
+SWAB_WITH_LAB_COLUMNS = ['C-Reactive Protein (CRP)',
+                        'Blood Calcium',
+                        'CBC: Leukocytes',
+                        'Aspartate Aminotransferase (AST)',
+                        'ABG: PaO2',
+                        'Age',
+                        'Prothrombin Time (INR)',
+                        'CBC: Hemoglobin',
+                        'ABG: pH',
+                        'Cholinesterase',
+                        'Respiratory Frequency',
+                        'Blood Urea Nitrogen (BUN)',
+                        'ABG: MetHb',
+                        'Temperature Celsius',
+                        'Total Bilirubin',
+                        'Systolic Blood Pressure',
+                        'CBC: Mean Corpuscular Volume (MCV)',
+                        'Glycemia',
+                        'Cardiac Frequency',
+                        'Sex']
+
+
 # Discharge codes
 # 1,2,5,6,9 = discharged, 4 = deceased
 DISCHARGE_CODES = [1, 2, 4, 5, 6, 9]
@@ -24,7 +46,7 @@ DISCHARGE_CODE_RELEASED = 4
 
 DIAGNOSIS_COLUMNS = ['Dia1', 'Dia2', 'Dia3', 'Dia4', 'Dia5']
 
-ANAGRAPHICS_FEATURES = ['Sex', 'Age', 'Outcome']
+DEMOGRAPHICS_FEATURES = ['Sex', 'Age', 'Outcome']
 
 
 RENAMED_LAB_COLUMNS = {
@@ -147,7 +169,7 @@ def get_percentages(df, missing_type=np.nan):
     return pd.DataFrame({'percent_missing': percent_missing})
 
 
-def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=True):
+def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
     missing_values = get_percentages(df, missing_type)
     df_features = missing_values[missing_values['percent_missing'] < nan_threshold].index.tolist()
 
@@ -161,17 +183,17 @@ def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=True):
 
     return df
 
-def cleanup_anagraphics(anagraphics):
+def cleanup_demographics(demographics):
 
-    anagraphics = anagraphics[['N_SCHEDA_PS', 'PZ_SESSO_PS', "PZ_DATA_NASCITA_PS"]]
-    anagraphics['PZ_DATA_NASCITA_PS'] = pd.to_datetime(anagraphics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
-    anagraphics['Age'] = anagraphics['PZ_DATA_NASCITA_PS'].apply(get_age)
-    anagraphics = anagraphics.drop('PZ_DATA_NASCITA_PS', axis = 1)
-    anagraphics = anagraphics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Sex'})
-    anagraphics['Sex'] = (anagraphics['Sex'] == 'F').astype(int)
-    anagraphics['NOSOLOGICO'] = anagraphics['NOSOLOGICO'].astype(str)
+    demographics = demographics[['N_SCHEDA_PS', 'PZ_SESSO_PS', "PZ_DATA_NASCITA_PS"]]
+    demographics['PZ_DATA_NASCITA_PS'] = pd.to_datetime(demographics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
+    demographics['Age'] = demographics['PZ_DATA_NASCITA_PS'].apply(get_age)
+    demographics = demographics.drop('PZ_DATA_NASCITA_PS', axis = 1)
+    demographics = demographics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Sex'})
+    demographics['Sex'] = (demographics['Sex'] == 'F').astype(int)
+    demographics['NOSOLOGICO'] = demographics['NOSOLOGICO'].astype(str)
 
-    return anagraphics
+    return demographics
 
 
 def create_vitals_dataset(vitals, patients, lab_tests=True):
@@ -274,19 +296,19 @@ def create_dataset_comorbidities(comorbidities, patients):
     return dataset_comorbidities.set_index('NOSOLOGICO')
 
 
-def create_dataset_discharge(anagraphics, patients, icu=None):
+def create_dataset_discharge(demographics, patients, icu=None):
 
-    dataset_anagraphics = pd.DataFrame(columns=ANAGRAPHICS_FEATURES, index=patients)
-    dataset_anagraphics.loc[:, ANAGRAPHICS_FEATURES] = anagraphics[['NOSOLOGICO'] + ANAGRAPHICS_FEATURES].set_index('NOSOLOGICO')
-    dataset_anagraphics.loc[:, 'Sex'] = dataset_anagraphics.loc[:, 'Sex'].astype('category')
-    dataset_anagraphics.Sex = dataset_anagraphics.Sex.cat.codes.astype('category')
-    dataset_anagraphics.loc[:, 'Outcome'] = dataset_anagraphics.loc[:, 'Outcome'].astype('category')
+    dataset_demographics = pd.DataFrame(columns=DEMOGRAPHICS_FEATURES, index=patients)
+    dataset_demographics.loc[:, DEMOGRAPHICS_FEATURES] = demographics[['NOSOLOGICO'] + DEMOGRAPHICS_FEATURES].set_index('NOSOLOGICO')
+    dataset_demographics.loc[:, 'Sex'] = dataset_demographics.loc[:, 'Sex'].astype('category')
+    dataset_demographics.Sex = dataset_demographics.Sex.cat.codes.astype('category')
+    dataset_demographics.loc[:, 'Outcome'] = dataset_demographics.loc[:, 'Outcome'].astype('category')
 
     if icu is not None:
-        dataset_anagraphics = dataset_anagraphics.join(icu.set_index('NOSOLOGICO'))
+        dataset_demographics = dataset_demographics.join(icu.set_index('NOSOLOGICO'))
 
 
-    return dataset_anagraphics
+    return dataset_demographics
 
 
 def cleanup_discharge_info(discharge_info):
