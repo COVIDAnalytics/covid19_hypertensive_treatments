@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import mlflow.sklearn
 import xgboost as xgb
 
-from analyzer.utils import top_features, remove_dir
+from analyzer.utils import top_features, remove_dir, impute_missing
 
 def train_oct(X_train, y_train,
               X_test, y_test,
@@ -17,6 +17,9 @@ def train_oct(X_train, y_train,
     from julia.api import Julia
     jl = Julia(compiled_modules=False)
     from interpretableai import iai
+
+    X_train = impute_missing(X_train)
+    X_test = impute_missing(X_test)
 
     oct_grid = iai.GridSearch(
         iai.OptimalTreeClassifier(
@@ -47,6 +50,8 @@ def train_oct(X_train, y_train,
 
 #DEFINE FUNCTION THAT COMPUTES ACCURACY, TPR, FPR, AND AUC for GIVEN MODEL
 def scores(model, t_X, t_Y, te_X, te_Y):
+    t_X = impute_missing(t_X)
+    te_X = impute_missing(te_X)
 
     # misclassification accuracies
     accTrain = np.round(sum(model.predict(t_X) == t_Y)/len(t_Y),2)
@@ -66,7 +71,9 @@ def scores(model, t_X, t_Y, te_X, te_Y):
 def train_and_evaluate(algorithm, X, y, seed, best_params):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-        
+    X_train = impute_missing(X_train)
+    X_test = impute_missing(X_test)
+
     best_model = algorithm()
     best_model.set_params(**best_params)
     best_model.fit(X_train, y_train)
@@ -92,6 +99,8 @@ def train_and_evaluate(algorithm, X, y, seed, best_params):
 def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, seed = 1):
     y_train = y_train.cat.codes.astype('category')
     y_test = y_test.cat.codes.astype('category')
+    X_train = impute_missing(X_train)
+    X_test = impute_missing(X_test)
 
     XGB = xgb.XGBClassifier()
     gridsearch = GridSearchCV(estimator = XGB, scoring='roc_auc', param_grid = param_grid, cv = 10, n_jobs=-1, verbose = 1)
@@ -128,9 +137,10 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
 
 
 def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, seed = 1):
-
     y_train = y_train.cat.codes.astype('category')
     y_test = y_test.cat.codes.astype('category')
+    X_train = impute_missing(X_train)
+    X_test = impute_missing(X_test)
 
     RF = RandomForestClassifier()
     gridsearch = GridSearchCV(estimator = RF, scoring = 'roc_auc', param_grid = param_grid, n_jobs=-1, cv = 10, verbose = 1)

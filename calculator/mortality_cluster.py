@@ -28,16 +28,16 @@ prediction = 'Outcome'
 folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower()
 output_folder = 'predictors/outcome'
 
-name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'anagraphics', 'swab'])
+name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
 
 if jobid == 0:
     discharge_data = True
     comorbidities_data = True
     vitals_data = True
     lab_tests = True
-    anagraphics_data = False
+    demographics_data = False
     swabs_data = False
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
     print(name_datasets[mask])
 
 elif jobid == 1:
@@ -45,9 +45,9 @@ elif jobid == 1:
     comorbidities_data = True
     vitals_data = True
     lab_tests = False
-    anagraphics_data = False
+    demographics_data = False
     swabs_data = False
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
     print(name_datasets[mask])
 
 
@@ -94,14 +94,14 @@ def load_spanish_data():
 X_spain, y_spain = load_spanish_data()
 
 # Load cremona data
-data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
 
 X_cremona, y_cremona = create_dataset(data,
                                       discharge_data,
                                       comorbidities_data,
                                       vitals_data,
                                       lab_tests,
-                                      anagraphics_data,
+                                      demographics_data,
                                       swabs_data,
                                       prediction = prediction)
 

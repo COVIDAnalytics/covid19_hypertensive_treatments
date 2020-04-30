@@ -9,9 +9,10 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
-from analyzer.utils import create_dir, export_features_json, plot_correlation
+from analyzer.utils import create_dir, export_features_json, plot_correlation, change_SaO2
 from analyzer.learners import train_oct
 from analyzer.learners import xgboost_classifier
 from analyzer.learners import rf_classifier
@@ -29,16 +30,16 @@ prediction = 'Swab'
 folder_name = 'swab_prediction_seed' + str(SEED) + '_' + prediction.lower()
 output_folder = 'predictors/swab'
 
-name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'anagraphics', 'swab'])
+name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
 
 if jobid == 0:
     discharge_data = False
     comorbidities_data = False
     vitals_data = True
     lab_tests = True
-    anagraphics_data = True
+    demographics_data = True
     swabs_data = True
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
     print(name_datasets[mask])
 
 elif jobid == 1:
@@ -46,13 +47,13 @@ elif jobid == 1:
     comorbidities_data = False
     vitals_data = True
     lab_tests = False
-    anagraphics_data = True
+    demographics_data = True
     swabs_data = True
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
     print(name_datasets[mask])
 
 # Load cremona data
-data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
 
 # Create dataset
 X, y = create_dataset(data,
@@ -60,43 +61,15 @@ X, y = create_dataset(data,
                         comorbidities_data, 
                         vitals_data, 
                         lab_tests, 
-                        anagraphics_data, 
+                        demographics_data, 
                         swabs_data,
                         prediction = prediction)
 
-
-def change(x):
-    if x > 92:
-        return 1
-    else:
-        return 0
-
-cols = ['C-Reactive Protein (CRP)',
- 'Blood Calcium',
- 'CBC: Leukocytes',
- 'Aspartate Aminotransferase (AST)',
- 'ABG: PaO2',
- 'Age',
- 'Prothrombin Time (INR)',
- 'CBC: Hemoglobin',
- 'ABG: pH',
- 'Cholinesterase',
- 'Respiratory Frequency',
- 'Blood Urea Nitrogen (BUN)',
- 'ABG: MetHb',
- 'Temperature Celsius',
- 'Total Bilirubin',
- 'Systolic Blood Pressure',
- 'CBC: Mean Corpuscular Volume (MCV)',
- 'Glycemia',
- 'Cardiac Frequency',
- 'Sex']
-
 if jobid == 0:
-    X = X[cols]
+    X = X[u.SWAB_WITH_LAB_COLUMNS]
 
 if jobid == 1:
-    X.SaO2 = X.SaO2.apply(change)
+    X['SaO2'] = X['SaO2'].apply(change_SaO2)
 
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
