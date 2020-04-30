@@ -9,10 +9,11 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+import analyzer.dataset as ds
 import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
-
+from analyzer.utils import store_json, change_SaO2
 import analyzer.optimizer as o
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
@@ -60,6 +61,8 @@ X, y = create_dataset(data,
                         demographics_data, 
                         swabs_data,
                         prediction = prediction)
+
+X, bounds_dict = ds.filter_outliers(X)
 
 if jobid == 0:
     X = X[u.SWAB_WITH_LAB_COLUMNS]
