@@ -298,19 +298,20 @@ def create_dataset_comorbidities(comorbidities, patients):
     return dataset_comorbidities.set_index('NOSOLOGICO')
 
 
-def create_dataset_discharge(demographics, patients, icu=None):
+def create_dataset_discharge(discharge, patients, icu=None):
 
-    dataset_demographics = pd.DataFrame(columns=DEMOGRAPHICS_FEATURES, index=patients)
-    dataset_demographics.loc[:, DEMOGRAPHICS_FEATURES] = demographics[['NOSOLOGICO'] + DEMOGRAPHICS_FEATURES].set_index('NOSOLOGICO')
-    dataset_demographics.loc[:, 'Gender'] = dataset_demographics.loc[:, 'Gender'].astype('category')
-    dataset_demographics.Gender = dataset_demographics.Gender.cat.codes.astype('category')
-    dataset_demographics.loc[:, 'Outcome'] = dataset_demographics.loc[:, 'Outcome'].astype('category')
+    dataset_discharge = pd.DataFrame(columns=DEMOGRAPHICS_FEATURES, index=patients)
+    dataset_discharge.loc[:, DEMOGRAPHICS_FEATURES] = discharge[['NOSOLOGICO'] + DEMOGRAPHICS_FEATURES].set_index('NOSOLOGICO')
+    #dataset_discharge.loc[:, 'Gender'] = dataset_discharge.loc[:, 'Gender'].astype('category')
+    #dataset_discharge.Gender = dataset_discharge.Gender.cat.codes.astype('category')
+    dataset_discharge = dataset_discharge[['Outcome']]
+    dataset_discharge.loc[:, 'Outcome'] = dataset_discharge.loc[:, 'Outcome'].astype('category')
 
     if icu is not None:
-        dataset_demographics = dataset_demographics.join(icu.set_index('NOSOLOGICO'))
+        dataset_discharge = dataset_discharge.join(icu.set_index('NOSOLOGICO'))
 
 
-    return dataset_demographics
+    return dataset_discharge
 
 
 def cleanup_discharge_info(discharge_info):

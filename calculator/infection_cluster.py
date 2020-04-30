@@ -9,12 +9,9 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
-from analyzer.utils import create_dir, export_features_json, plot_correlation
-from analyzer.learners import train_oct
-from analyzer.learners import xgboost_classifier
-from analyzer.learners import rf_classifier
 
 import analyzer.optimizer as o
 
@@ -71,29 +68,8 @@ def change(x):
     else:
         return 0
 
-cols = ['C-Reactive Protein (CRP)',
- 'Blood Calcium',
- 'CBC: Leukocytes',
- 'Aspartate Aminotransferase (AST)',
- 'ABG: PaO2',
- 'Age',
- 'Prothrombin Time (INR)',
- 'CBC: Hemoglobin',
- 'ABG: pH',
- 'Cholinesterase',
- 'Respiratory Frequency',
- 'Blood Urea Nitrogen (BUN)',
- 'ABG: MetHb',
- 'Temperature Celsius',
- 'Total Bilirubin',
- 'Systolic Blood Pressure',
- 'CBC: Mean Corpuscular Volume (MCV)',
- 'Glycemia',
- 'Cardiac Frequency',
- 'Sex']
-
 if jobid == 0:
-    X = X[cols]
+    X = X[u.SWAB_WITH_LAB_COLUMNS]
 
 if jobid == 1:
     X.SaO2 = X.SaO2.apply(change)
