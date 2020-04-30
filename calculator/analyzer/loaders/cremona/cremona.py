@@ -48,7 +48,7 @@ def load_cremona(path, discharge_data = True, comorbidities_data = True, vitals_
     swabs = u.get_swabs(lab)
     
     name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
-    list_datasets = np.asarray([discharge_info, comorb_long, vitals, lab, demographics, swabs])
+    list_datasets = np.asarray([discharge_info, comorbidities, vitals, lab, demographics, swabs])
     dataset_array = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
 
     # Filter patients common to all datasets
