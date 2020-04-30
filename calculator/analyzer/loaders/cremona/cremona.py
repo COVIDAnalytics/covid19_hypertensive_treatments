@@ -12,24 +12,12 @@ def load_cremona(path, discharge_data = True, comorbidities_data = True, vitals_
     # Load discharge info
     discharge_info = pd.read_csv('%s/general/discharge_info.csv' % path)
 
-    # Export comorbidities to process with R
-    u.export_comorbidities(discharge_info, '%s/general/patient_comorbidity.csv' % path)
-    # TODO: Run R command automatically
-    # import subprocess
-    # subprocess.call(['R', 'analyzer/loaders/group_comorbidities.R'])
-    #Import the comorbidity csv and dictionary from R
-    comorbidities = pd.read_csv('%s/general/comorbidities.csv' % path)
-    comorbidities.drop("Unnamed: 0", axis = 1, inplace = True)
-    comorbidities = comorbidities.rename(columns={"id": "NOSOLOGICO"})
-    ccs_map = pd.read_csv('./analyzer/ccs_map.csv', index_col=0, header=None, squeeze=True)
+    comorb_long = u.comorbidities_long(discharge_info)
+    comorb_long.drop(["index"], axis = 1, inplace = True)
+    comorb_long.rename(columns={'comorb':'DIAGNOSIS_CODE',
+                                'id':'NOSOLOGICO'}, inplace = True)
+    comorb_long['NOSOLOGICO'] = comorb_long['NOSOLOGICO'].apply(str)
 
-    #Change the name of the cols from CCS code to comorbidity name
-    comorbidities.columns = ['NOSOLOGICO'] + [ccs_map.loc[i] for i in list(comorbidities.columns[1:].astype(np.int64))]
-
-    # False and True are transformed to 0 and 1 categories
-    comorbidities = comorbidities.astype('int').astype('category')
-    comorbidities['NOSOLOGICO'] = comorbidities['NOSOLOGICO'].apply(str)
-    
     # Cleanup discharge information
     discharge_info = u.cleanup_discharge_info(discharge_info)
 
@@ -74,8 +62,8 @@ def load_cremona(path, discharge_data = True, comorbidities_data = True, vitals_
         datasets.append(dataset_discharge)
     
     if comorbidities_data:
-        dataset_comorbidities = u.create_dataset_comorbidities(comorbidities, patients)
-        datasets.append(dataset_comorbidities)
+        dataset_comorbidities= u.create_dataset_comorbidities(comorb_long, 9, patients)
+        datasets.append(dataset_comorbidities.set_index('NOSOLOGICO'))
     
     if vitals_data:
         dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=lab_tests)

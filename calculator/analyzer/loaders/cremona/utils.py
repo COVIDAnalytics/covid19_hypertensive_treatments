@@ -45,7 +45,6 @@ DISCHARGE_CODES = [1, 2, 4, 5, 6, 9]
 DISCHARGE_CODE_RELEASED = 4
 
 DIAGNOSIS_COLUMNS = ['Dia1', 'Dia2', 'Dia3', 'Dia4', 'Dia5']
-
 DEMOGRAPHICS_FEATURES = ['Gender', 'Age', 'Outcome']
 
 
@@ -120,6 +119,9 @@ LAB_FEATURES_NOT_MATCH = ['IONE BICARBONATO',  # We keep standard directly
                           ]
 
 
+HCUP_LIST = [49,50,87,90,95,146]
+
+
 def clean_lab_features(lab_feat):
     features = [x for x in lab_feat
                 if all(s not in x for s in LAB_FEATURES_NOT_CONTAIN) and
@@ -141,6 +143,21 @@ def export_comorbidities(df, file_name):
     comorb_df = comorb_df.dropna().reset_index()
     comorb_df.to_csv(file_name)
 
+
+def comorbidities_long(df):
+    #  Convert (to export for R processing)
+    # TODO: Improve this code
+    comorb_df = pd.DataFrame(columns=['id', 'comorb'])
+    for i in range(len(df)):
+        d_temp = df.iloc[i]
+        df_temp = pd.DataFrame({'id': [d_temp['NumeroScheda']] * 6,
+                                'comorb': [d_temp['Principale']] + \
+                                    [d_temp[d] for d in DIAGNOSIS_COLUMNS]})
+        comorb_df = comorb_df.append(df_temp)
+
+    comorb_df = comorb_df.dropna().reset_index()
+    return comorb_df
+    
 
 def get_lab_dates(t):
     try:

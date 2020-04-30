@@ -54,13 +54,14 @@ X_spain, y_spain =   create_dataset(data_spain,
                                       vitals_data,
                                       lab_tests,
                                       demographics_data,
-                                      swabs_data,
+                                      extra_data,
                                       prediction = prediction)
-
 
 # Merge dataset
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
+
+X, bounds_dict = filter_outliers(X)
 
 # Shuffle
 np.random.seed(SEED)
