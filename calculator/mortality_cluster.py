@@ -94,4 +94,4 @@ if jobid == 1:
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 10, n_calls = 400, name_algo = 'xgboost')
+best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 400, name_algo = 'xgboost')
