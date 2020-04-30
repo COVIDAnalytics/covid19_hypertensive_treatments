@@ -49,9 +49,10 @@ def filter_outliers(df_X, filter_lb = 0.1, filter_ub = 99.9):
             'min_val': lb,
             'max_val': ub,
             'default': med})
-        # v = sum((lb > df_X[col]) | (df_X[col] > ub))
-        # print(col+': '+ "LB = "+str(lb)+", UB = "+str(ub)+" (Filter = "+str(v)+")")
+        outlier_inds = (lb > df_X[col]) | (df_X[col] > ub)
+        v = sum(outlier_inds)
+        print(col+': '+ "LB = "+str(lb)+", UB = "+str(ub)+" (Filter = "+str(v)+")")
         
-        df_X[(lb > df_X[col]) | (df_X[col] > ub)] = np.nan
+        df_X[col][outlier_inds] = np.nan
     
     return df_X, bounds_dict

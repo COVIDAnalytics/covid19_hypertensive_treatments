@@ -11,7 +11,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 import analyzer.loaders.cremona as cremona
-from analyzer.dataset import create_dataset
+from analyzer.dataset import create_dataset, filter_outliers
 from analyzer.utils import create_dir, export_features_json, plot_correlation
 from analyzer.learners import train_oct
 from analyzer.learners import xgboost_classifier
@@ -90,10 +90,11 @@ X_cremona, y_cremona = create_dataset(data,
                                       swabs_data,
                                       prediction = prediction)
 
-
 # Merge dataset
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
+
+X, bounds_dict = filter_outliers(X)
 
 # Shuffle
 np.random.seed(SEED)

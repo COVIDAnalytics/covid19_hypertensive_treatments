@@ -120,6 +120,9 @@ LAB_FEATURES_NOT_MATCH = ['IONE BICARBONATO',  # We keep standard directly
                           ]
 
 
+HCUP_LIST = [49,50,87,90,95,146]
+
+
 def clean_lab_features(lab_feat):
     features = [x for x in lab_feat
                 if all(s not in x for s in LAB_FEATURES_NOT_CONTAIN) and
@@ -141,6 +144,21 @@ def export_comorbidities(df, file_name):
     comorb_df = comorb_df.dropna().reset_index()
     comorb_df.to_csv(file_name)
 
+
+def comorbidities_long(df):
+    #  Convert (to export for R processing)
+    # TODO: Improve this code
+    comorb_df = pd.DataFrame(columns=['id', 'comorb'])
+    for i in range(len(df)):
+        d_temp = df.iloc[i]
+        df_temp = pd.DataFrame({'id': [d_temp['NumeroScheda']] * 6,
+                                'comorb': [d_temp['Principale']] + \
+                                    [d_temp[d] for d in DIAGNOSIS_COLUMNS]})
+        comorb_df = comorb_df.append(df_temp)
+
+    comorb_df = comorb_df.dropna().reset_index()
+    return comorb_df
+    
 
 def get_lab_dates(t):
     try:
@@ -270,30 +288,38 @@ def create_lab_dataset(lab, patients):
 
     return dataset_lab_full
 
-def create_dataset_comorbidities(comorbidities, patients):
+def create_dataset_comorbidities(comorb_long, icd_category, patients):
+    
+     #Load the diagnoses dict
+    if icd_category == 9:
+        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd9.csv') 
+    else:
+        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd10.csv') 
+        
+    #The codes that are not mapped are mostly procedure codes or codes that are not of interest
+    icd_descr = pd.merge(comorb_long, icd_dict, how='inner', left_on=['DIAGNOSIS_CODE'], right_on=['DIAGNOSIS_CODE'])
+    
+    #Create a list with the categories that we want
+    comorb_descr = icd_descr.loc[icd_descr['HCUP_ORDER'].isin(HCUP_LIST)]
+    
+    #Limit only to the HCUP Description and drop the duplicates
+    comorb_descr = comorb_descr[['NOSOLOGICO','GROUP_HCUP']].drop_duplicates()
+    
+    #Convert from long to wide format
+    comorb_descr = pd.get_dummies(comorb_descr, columns=['GROUP_HCUP'], prefix=['GROUP_HCUP'])
+    
+    #Now we will remove the GROUP_HCUP_ from the name of each column
+    comorb_descr = comorb_descr.rename(columns = lambda x: x.replace('GROUP_HCUP_', ''))
+    
+    #Let's combine the diabetes columns to one
+    comorb_descr['Diabetes'] = comorb_descr[["Diabetes mellitus with complications", "Diabetes mellitus without complication"]].max(axis=1)
+    
+    #Drop the other two columns
+    comorb_descr = comorb_descr.drop(columns=['Diabetes mellitus with complications', 'Diabetes mellitus without complication'])
+    
+    dataset_comorbidities = pd.DataFrame(comorb_descr.groupby(['NOSOLOGICO'], as_index=False).max())
 
-    # False and True are transformed to 0 and 1 categories
-    dataset_comorbidities = comorbidities.astype('int').astype('category')
-
-    #Join the two categories of Diabetes
-    dataset_comorbidities["Diabetes"] = np.zeros(len(dataset_comorbidities))
-    dataset_comorbidities["Diabetes"] = ((dataset_comorbidities['Diabetes mellitus without complication'].astype(int) > 0) | \
-        (dataset_comorbidities['Diabetes mellitus with complications'].astype(int) > 0)).astype(int).astype('category')
-    #  dataset_comorbidities.index = [str(i) for i in comorbidities.index]
-
-    # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
-    cols_keep = list(dataset_comorbidities.columns[dataset_comorbidities.sum() >10])
-
-    for e in set(LIST_REMOVE_COMORBIDITIES).intersection(cols_keep):
-        cols_keep.remove(e)
-    dataset_comorbidities = dataset_comorbidities[cols_keep]
-
-    dataset_comorbidities = dataset_comorbidities[cols_keep]
-
-    dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(int).apply(str)
-
-
-    return dataset_comorbidities.set_index('NOSOLOGICO')
+    return dataset_comorbidities
 
 
 def create_dataset_discharge(demographics, patients, icu=None):
