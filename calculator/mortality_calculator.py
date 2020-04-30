@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
 
@@ -29,7 +30,7 @@ lab_tests = True
 demographics_data = True
 swabs_data = False
 icu_data = False
-extra_data = True
+extra_data = False
 
 # Load cremona data
 data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)

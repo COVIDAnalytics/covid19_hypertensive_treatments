@@ -289,45 +289,53 @@ def create_lab_dataset(lab, patients):
 
     return dataset_lab_full
 
-def create_dataset_comorbidities(comorbidities, patients):
+def create_dataset_comorbidities(comorb_long, icd_category, patients):
 
-    # False and True are transformed to 0 and 1 categories
-    dataset_comorbidities = comorbidities.astype('int').astype('category')
+     #Load the diagnoses dict
+    if icd_category == 9:
+        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd9.csv') 
+    else:
+        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd10.csv') 
 
-    #Join the two categories of Diabetes
-    dataset_comorbidities["Diabetes"] = np.zeros(len(dataset_comorbidities))
-    dataset_comorbidities["Diabetes"] = ((dataset_comorbidities['Diabetes mellitus without complication'].astype(int) > 0) | \
-        (dataset_comorbidities['Diabetes mellitus with complications'].astype(int) > 0)).astype(int).astype('category')
-    #  dataset_comorbidities.index = [str(i) for i in comorbidities.index]
+    #The codes that are not mapped are mostly procedure codes or codes that are not of interest
+    icd_descr = pd.merge(comorb_long, icd_dict, how='inner', left_on=['DIAGNOSIS_CODE'], right_on=['DIAGNOSIS_CODE'])
 
-    # Keep only the comorbidities that appear more than 10 times and remove pneumonia ones
-    cols_keep = list(dataset_comorbidities.columns[dataset_comorbidities.sum() >10])
+    #Create a list with the categories that we want
+    comorb_descr = icd_descr.loc[icd_descr['HCUP_ORDER'].isin(HCUP_LIST)]
 
-    for e in set(LIST_REMOVE_COMORBIDITIES).intersection(cols_keep):
-        cols_keep.remove(e)
-    dataset_comorbidities = dataset_comorbidities[cols_keep]
+    #Limit only to the HCUP Description and drop the duplicates
+    comorb_descr = comorb_descr[['NOSOLOGICO','GROUP_HCUP']].drop_duplicates()
 
-    dataset_comorbidities = dataset_comorbidities[cols_keep]
+    #Convert from long to wide format
+    comorb_descr = pd.get_dummies(comorb_descr, columns=['GROUP_HCUP'], prefix=['GROUP_HCUP'])
 
-    dataset_comorbidities['NOSOLOGICO'] = dataset_comorbidities['NOSOLOGICO'].apply(int).apply(str)
+    #Now we will remove the GROUP_HCUP_ from the name of each column
+    comorb_descr = comorb_descr.rename(columns = lambda x: x.replace('GROUP_HCUP_', ''))
 
+    #Let's combine the diabetes columns to one
+    comorb_descr['Diabetes'] = comorb_descr[["Diabetes mellitus with complications", "Diabetes mellitus without complication"]].max(axis=1)
 
-    return dataset_comorbidities.set_index('NOSOLOGICO')
+    #Drop the other two columns
+    comorb_descr = comorb_descr.drop(columns=['Diabetes mellitus with complications', 'Diabetes mellitus without complication'])
 
+    dataset_comorbidities = pd.DataFrame(comorb_descr.groupby(['NOSOLOGICO'], as_index=False).max())
 
-def create_dataset_discharge(demographics, patients, icu=None):
+    return dataset_comorbidities
 
-    dataset_demographics = pd.DataFrame(columns=DEMOGRAPHICS_FEATURES, index=patients)
-    dataset_demographics.loc[:, DEMOGRAPHICS_FEATURES] = demographics[['NOSOLOGICO'] + DEMOGRAPHICS_FEATURES].set_index('NOSOLOGICO')
-    dataset_demographics.loc[:, 'Gender'] = dataset_demographics.loc[:, 'Gender'].astype('category')
-    dataset_demographics.Gender = dataset_demographics.Gender.cat.codes.astype('category')
-    dataset_demographics.loc[:, 'Outcome'] = dataset_demographics.loc[:, 'Outcome'].astype('category')
+def create_dataset_discharge(discharge, patients, icu=None):
+
+    dataset_discharge = pd.DataFrame(columns=DEMOGRAPHICS_FEATURES, index=patients)
+    dataset_discharge.loc[:, DEMOGRAPHICS_FEATURES] = discharge[['NOSOLOGICO'] + DEMOGRAPHICS_FEATURES].set_index('NOSOLOGICO')
+    #dataset_discharge.loc[:, 'Gender'] = dataset_discharge.loc[:, 'Gender'].astype('category')
+    #dataset_discharge.Gender = dataset_discharge.Gender.cat.codes.astype('category')
+    dataset_discharge = dataset_discharge[['Outcome']]
+    dataset_discharge.loc[:, 'Outcome'] = dataset_discharge.loc[:, 'Outcome'].astype('category')
 
     if icu is not None:
-        dataset_demographics = dataset_demographics.join(icu.set_index('NOSOLOGICO'))
+        dataset_discharge = dataset_discharge.join(icu.set_index('NOSOLOGICO'))
 
 
-    return dataset_demographics
+    return dataset_discharge
 
 
 def cleanup_discharge_info(discharge_info):

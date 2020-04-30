@@ -119,7 +119,7 @@ def get_percentages(df, missing_type=np.nan):
     return pd.DataFrame({'percent_missing': percent_missing})
 
 
-def remove_missing(df, missing_type=np.nan, nan_threashold=40, impute=True):
+def remove_missing(df, missing_type=np.nan, nan_threashold=40, impute=False):
     missing_values = get_percentages(df, missing_type)
     df_features = missing_values[missing_values['percent_missing'] < nan_threashold].index.tolist()
 

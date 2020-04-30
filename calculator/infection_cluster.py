@@ -12,10 +12,6 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
-from analyzer.utils import create_dir, export_features_json, plot_correlation, change_SaO2
-from analyzer.learners import train_oct
-from analyzer.learners import xgboost_classifier
-from analyzer.learners import rf_classifier
 
 import analyzer.optimizer as o
 

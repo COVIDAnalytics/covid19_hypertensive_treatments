@@ -9,12 +9,12 @@ def create_dataset(data_dict, discharge_data = True,
                         swabs_data = False,
                         prediction='Outcome'):
 
-    if discharge_data:
-        data = data_dict['discharge']
-    
     if demographics_data:
         data = data_dict['demographics']
-
+    
+    if discharge_data:
+        data = data.join(data_dict['discharge'])
+    
     if comorbidities_data:
         data = data.join(data_dict['comorbidities'])
 
