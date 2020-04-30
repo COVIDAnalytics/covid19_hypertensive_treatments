@@ -14,6 +14,7 @@ import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
 
 from analyzer.dataset import create_dataset
+from analyzer.utils import change_SaO2
 
 import analyzer.optimizer as o
 
@@ -86,7 +87,7 @@ X = X.loc[idx]
 y = y.loc[idx]
 
 if jobid == 1:
-    X.SaO2 = X.SaO2.apply(change)
+    X.SaO2 = X.SaO2.apply(change_SaO2)
 
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]

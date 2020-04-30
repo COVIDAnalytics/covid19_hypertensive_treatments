@@ -6,6 +6,8 @@ import datetime
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 
+from analyzer.utils import remove_missing
+
 # ICD9 COVID diagnosis Italian codes
 LIST_DIAGNOSIS = ['4808', '4803', 'V0182', '7982']
 LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease",
@@ -157,7 +159,7 @@ def comorbidities_long(df):
 
     comorb_df = comorb_df.dropna().reset_index()
     return comorb_df
-    
+
 
 def get_lab_dates(t):
     try:
@@ -176,29 +178,6 @@ def get_age(t):
     except:
         return np.NaN
 
-def get_percentages(df, missing_type=np.nan):
-    if np.isnan(missing_type):
-        df = df.isnull()  # Check what is NaN
-    elif missing_type is False:
-        df = ~df  # Check what is False
-
-    percent_missing = df.sum() * 100 / len(df)
-    return pd.DataFrame({'percent_missing': percent_missing})
-
-
-def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
-    missing_values = get_percentages(df, missing_type)
-    df_features = missing_values[missing_values['percent_missing'] < nan_threshold].index.tolist()
-
-    df = df[df_features]
-
-    if impute:
-        imp_mean = IterativeImputer(random_state=0)
-        imp_mean.fit(df)
-        imputed_df = imp_mean.transform(df)
-        df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
-
-    return df
 
 def cleanup_demographics(demographics):
 
@@ -226,7 +205,7 @@ def create_vitals_dataset(vitals, patients, lab_tests=True):
             vital_value = vitals_p[vitals_p['NOME_PARAMETRO_VITALE'] == vital_name]['VALORE_PARAMETRO']
             vital_value = pd.to_numeric(vital_value).mean()
             dataset_vitals.loc[p, vital_name] = vital_value
-            
+
     dataset_vitals['Temp.'] = fahrenheit_covert(dataset_vitals['Temp.'])
 
     # Adjust missing columns
@@ -293,9 +272,9 @@ def create_dataset_comorbidities(comorb_long, icd_category, patients):
 
      #Load the diagnoses dict
     if icd_category == 9:
-        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd9.csv') 
+        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd9.csv')
     else:
-        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd10.csv') 
+        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd10.csv')
 
     #The codes that are not mapped are mostly procedure codes or codes that are not of interest
     icd_descr = pd.merge(comorb_long, icd_dict, how='inner', left_on=['DIAGNOSIS_CODE'], right_on=['DIAGNOSIS_CODE'])
@@ -369,7 +348,7 @@ def cleanup_discharge_info(discharge_info):
     return discharge_info
 
 
-def fahrenheit_covert(temp_celsius):    
+def fahrenheit_covert(temp_celsius):
     temp_fahrenheit = ((temp_celsius * 9)/5)+ 32
     return temp_fahrenheit
 

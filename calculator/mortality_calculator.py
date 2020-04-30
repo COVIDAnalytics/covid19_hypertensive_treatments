@@ -13,8 +13,9 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
+from analyzer.utils import store_json
 
-from analyzer.dataset import create_dataset
+import analyzer.dataset as ds
 
 import analyzer.optimizer as o
 
@@ -39,7 +40,7 @@ data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_da
 data_spain = hmfundacion.load_fundacionhm('../data/spain/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data)
 
 
-X_cremona, y_cremona = create_dataset(data,
+X_cremona, y_cremona = ds.create_dataset(data,
                                       discharge_data,
                                       comorbidities_data,
                                       vitals_data,
@@ -48,7 +49,7 @@ X_cremona, y_cremona = create_dataset(data,
                                       swabs_data,
                                       prediction = prediction)
 
-X_spain, y_spain =   create_dataset(data_spain,
+X_spain, y_spain =  ds.create_dataset(data_spain,
                                       discharge_data,
                                       comorbidities_data,
                                       vitals_data,
@@ -61,7 +62,9 @@ X_spain, y_spain =   create_dataset(data_spain,
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
 
-X, bounds_dict = filter_outliers(X)
+X, bounds_dict = ds.filter_outliers(X)
+store_json(bounds_dict, 'mortality_bounds.json')
+
 
 # Shuffle
 np.random.seed(SEED)

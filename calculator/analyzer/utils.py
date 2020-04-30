@@ -69,7 +69,7 @@ def plot_correlation(X, file_name):
     print("Highest correlations (> 0.8)")
     print(list(zip(upper.columns[rows], upper.columns[columns])))
 
-    
+
 # List of well written names for the Cremona data
 comorbidities = ['Multiple Sclerosis',
              'Acidosis', 'Anaemia', 'Asthma', 'Cancer', 'Chronic Heart Condition', 'Chronic Kidney', 'Chronic Liver', 'Chronic Obstructive Lung',
@@ -128,3 +128,33 @@ def export_model_imp_json(model, imp, json, path):
     with open(path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)
     return exp
+
+
+def store_json(data, file_name):
+    with open(file_name, 'w') as f:
+        json.dump(data, f)
+
+
+def get_percentages(df, missing_type=np.nan):
+    if np.isnan(missing_type):
+        df = df.isnull()  # Check what is NaN
+    elif missing_type is False:
+        df = ~df  # Check what is False
+
+    percent_missing = df.sum() * 100 / len(df)
+    return pd.DataFrame({'percent_missing': percent_missing})
+
+
+def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
+    missing_values = get_percentages(df, missing_type)
+    df_features = missing_values[missing_values['percent_missing'] < nan_threshold].index.tolist()
+
+    df = df[df_features]
+
+    if impute:
+        imp_mean = IterativeImputer(random_state=0)
+        imp_mean.fit(df)
+        imputed_df = imp_mean.transform(df)
+        df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
+
+    return df
