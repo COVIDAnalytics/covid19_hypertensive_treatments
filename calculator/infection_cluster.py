@@ -53,14 +53,14 @@ elif jobid == 1:
 data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
 
 # Create dataset
-X, y = create_dataset(data,
-                        discharge_data, 
-                        comorbidities_data, 
-                        vitals_data, 
-                        lab_tests, 
-                        demographics_data, 
-                        swabs_data,
-                        prediction = prediction)
+X, y = ds.create_dataset(data,
+                         discharge_data,
+                         comorbidities_data,
+                         vitals_data,
+                         lab_tests,
+                         demographics_data,
+                         swabs_data,
+                         prediction=prediction)
 
 X, bounds_dict = ds.filter_outliers(X)
 
