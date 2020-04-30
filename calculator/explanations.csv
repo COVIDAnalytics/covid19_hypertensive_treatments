@@ -1,0 +1,32 @@
+﻿Feature,Explanation
+ABG: MetHb,Methemoglobin fraction
+ABG: Oxygen Saturation (SaO2),Oxygen Saturation (SaO2) in %
+ABG: PaO2,Partial Pressure of Oxygen in mmHg
+ABG: pH,Acid-base balance of the blood
+Age,Age of the patient. Modeled only for adults.
+Alanine Aminotransferase (ALT),Alanine Aminotransferase (ALT) in U/L
+Aspartate Aminotransferase (AST),Aspartate Aminotransferase (AST) in U/L
+Blood Calcium,Blood Calcium in mg/dL
+Blood Creatinine,Blood Creatinine in mg/dL
+Blood Sodium,Blood Sodium in mmol/L
+Blood Urea Nitrogen (BUN),Blood Urea Nitrogen (BUN) in mg/dL
+Body Temperature,Body temperature measurement. Use the dropdown to select the unit (Fahrenheit or Celsius).
+C-Reactive Protein (CRP),C-Reactive Protein (CRP) in mg/L
+Cardiac Frequency,Number of Beats per Minute.
+CBC: Hemoglobin,Hemoglobin in g/dL
+CBC: Leukocytes,Leukocytes in 10^3/muL
+CBC: Mean Corpuscular Volume (MCV),Mean Corpuscular Volume (MCV) in fL
+CBC: Platelets,Platelets in 10^3/muL
+Cholinesterase,Cholinesterase in Units per Liter (U/L)
+Glycemia,Blood Glucose in mg/dL
+Potassium Blood Level,Potassium Blood Level in mmol/L
+Prothrombin Time (INR),Prothrombin Time Ratio (INR)
+Systolic Blood Pressure,Systolic Blood Pressure in mmHg
+Total Bilirubin,Total Bilirubin in mg/dL
+Respiratory Frequency,Number of Breaths per Minute
+,
+,
+,
+,
+,
+,
