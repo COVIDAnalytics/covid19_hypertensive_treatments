@@ -7,7 +7,7 @@ import seaborn as sns
 import numpy as np
 import pickle
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.impute import IterativeImputer
+from sklearn.impute import IterativeImputer, KNNImputer
 
 FEATURE_BOUNDS_EXPLANATION = {'Alanine Aminotransferase (ALT)': [2.0, 929.0,'Alanine Aminotransferase (ALT) in U/L'],
                             'Prothrombin Time (INR)': [0.0, 17.0, 'Prothrombin Time Ratio (INR)'],
@@ -112,9 +112,9 @@ numeric = ['SaO2','Age', 'Cardiac Frequency', 'Diastolic Blood Pressure', 'Respi
 categorical = ["Sex"]
 
 def impute_missing(df):
-    imp_mean = IterativeImputer(random_state=0)
-    imp_mean.fit(df)
-    imputed_df = imp_mean.transform(df)
+    imputer = KNNImputer()
+    imputer.fit(df)
+    imputed_df = imputer.transform(df)
     df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
     return df
 
@@ -187,9 +187,9 @@ def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
     df = df[df_features]
 
     if impute:
-        imp_mean = IterativeImputer(random_state=0)
-        imp_mean.fit(df)
-        imputed_df = imp_mean.transform(df)
+        imputer = KNNImputer()
+        imputer.fit(df)
+        imputed_df = imputer.transform(df)
         df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
 
     return df

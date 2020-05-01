@@ -4,7 +4,7 @@ import datetime
 
 # explicitly require this experimental feature
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.impute import IterativeImputer
+from sklearn.impute import IterativeImputer, KNNImputer
 
 from analyzer.utils import remove_missing
 
