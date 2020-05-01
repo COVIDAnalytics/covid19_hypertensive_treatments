@@ -35,7 +35,10 @@ FEATURE_BOUNDS_EXPLANATION = {'Alanine Aminotransferase (ALT)': [2.0, 929.0,'Ala
                             'Aspartate Aminotransferase (AST)': [9.0, 941.0,'Aspartate Aminotransferase (AST) in U/L'],
                             'Glycemia': [57.0, 620.0, 'Blood Glucose in mg/dL'],
                             'Systolic Blood Pressure': [20.0, 199.0, 'Systolic Blood Pressure in mmHg'],
-                            'Gender': 'Select the gender of the patient'}
+                            'Gender': 'Select the gender of the patient', 
+                            'Activated Partial Thromboplastin Time (aPTT)' : [0.0, 6.0, 'Activated Partial Thromboplastin Time in minutes'],
+                            'Blood Amylase' : [10, 300, 'Blood Amylase Level in Units per Liter (U/L)'],
+                            'CBC: Red cell Distribution Width (RDW)': [10, 27, 'Red cell Distribution Width in %']}
 
 
 
@@ -152,10 +155,11 @@ def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file
     return data
 
 
-def export_model_imp_json(model, imp, json, path):
+def export_model_imp_json(model, imp, json, cols, path):
     exp = {'model': model,
     'imputer': imp,
-    'json': json}
+    'json': json,
+    'columns': list(cols)}
     with open(path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)
     return exp
