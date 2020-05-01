@@ -19,27 +19,38 @@ LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease
                              "Influenza",
                              "Acute and unspecified renal failure"]
 
-SWAB_WITH_LAB_COLUMNS = ['C-Reactive Protein (CRP)',
-                        'Blood Calcium',
+SWAB_WITH_LAB_COLUMNS = ['Age',
+                        'Gender',
+                        'Body Temperature',
+                        'Systolic Blood Pressure',
+                        'Respiratory Frequency',
+                        'Cardiac Frequency',
+                        'C-Reactive Protein (CRP)', 
+                        'Blood Calcium', 
                         'CBC: Leukocytes',
                         'Aspartate Aminotransferase (AST)',
                         'ABG: PaO2',
-                        'Age',
                         'Prothrombin Time (INR)',
                         'CBC: Hemoglobin',
                         'ABG: pH',
                         'Cholinesterase',
-                        'Respiratory Frequency',
                         'Blood Urea Nitrogen (BUN)',
                         'ABG: MetHb',
-                        'Body Temperature',
                         'Total Bilirubin',
-                        'Systolic Blood Pressure',
                         'CBC: Mean Corpuscular Volume (MCV)',
-                        'Glycemia',
-                        'Cardiac Frequency',
-                        'Gender']
+                        'Glycemia']
 
+COLUMNS_WITHOUT_ABG = ['ABG: Oxygen Saturation (SaO2)',
+                    'Activated Partial Thromboplastin Time (aPTT)', 'Age',
+                    'Alanine Aminotransferase (ALT)', 'Aspartate Aminotransferase (AST)',
+                    'Blood Amylase', 'Blood Calcium', 'Blood Creatinine', 'Blood Sodium',
+                    'Blood Urea Nitrogen (BUN)', 'Body Temperature',
+                    'C-Reactive Protein (CRP)', 'CBC: Hemoglobin', 'CBC: Leukocytes',
+                    'CBC: Mean Corpuscular Volume (MCV)', 'CBC: Platelets',
+                    'CBC: Red cell Distribution Width (RDW)', 'Cardiac Frequency','Cholinesterase',
+                    'Gender', 'Glycemia', 'Potassium Blood Level',
+                    'Prothrombin Time (INR)', 'Respiratory Frequency',
+                    'Systolic Blood Pressure', 'Total Bilirubin']
 
 # Discharge codes
 # 1,2,5,6,9 = discharged, 4 = deceased

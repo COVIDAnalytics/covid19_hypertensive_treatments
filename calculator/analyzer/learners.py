@@ -134,8 +134,6 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
 
     return isAUC_XGB, ofsAUC_XGB, accTrain_XGB, accTest_XGB
 
-
-
 def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, seed = 1):
     y_train = y_train.cat.codes.astype('category')
     y_test = y_test.cat.codes.astype('category')
