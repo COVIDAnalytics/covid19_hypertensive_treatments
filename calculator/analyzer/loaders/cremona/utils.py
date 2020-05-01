@@ -40,17 +40,27 @@ SWAB_WITH_LAB_COLUMNS = ['Age',
                         'CBC: Mean Corpuscular Volume (MCV)',
                         'Glycemia']
 
-COLUMNS_WITHOUT_ABG = ['ABG: Oxygen Saturation (SaO2)',
-                    'Activated Partial Thromboplastin Time (aPTT)', 'Age',
+COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 'Cardiac Frequency',
+                    'Respiratory Frequency', 'Systolic Blood Pressure', 'ABG: Oxygen Saturation (SaO2)',
+                    'Activated Partial Thromboplastin Time (aPTT)', 'Blood Urea Nitrogen (BUN)',
                     'Alanine Aminotransferase (ALT)', 'Aspartate Aminotransferase (AST)',
                     'Blood Amylase', 'Blood Calcium', 'Blood Creatinine', 'Blood Sodium',
-                    'Blood Urea Nitrogen (BUN)', 'Body Temperature',
                     'C-Reactive Protein (CRP)', 'CBC: Hemoglobin', 'CBC: Leukocytes',
                     'CBC: Mean Corpuscular Volume (MCV)', 'CBC: Platelets',
-                    'CBC: Red cell Distribution Width (RDW)', 'Cardiac Frequency','Cholinesterase',
-                    'Gender', 'Glycemia', 'Potassium Blood Level',
-                    'Prothrombin Time (INR)', 'Respiratory Frequency',
-                    'Systolic Blood Pressure', 'Total Bilirubin']
+                    'CBC: Red cell Distribution Width (RDW)', 'Cholinesterase',
+                    'Glycemia', 'Potassium Blood Level',
+                    'Prothrombin Time (INR)', 'Total Bilirubin']
+
+SPANISH_ITALIAN_DATA = ['Age', 'Gender', 'ABG: Oxygen Saturation (SaO2)', 
+       'Cardiac Frequency', 'Systolic Blood Pressure', 'Alanine Aminotransferase (ALT)', 
+       'Blood Creatinine', 'Blood Sodium', 'Blood Urea Nitrogen (BUN)',
+       'Body Temperature', 'C-Reactive Protein (CRP)', 'CBC: Hemoglobin',
+       'CBC: Leukocytes', 'CBC: Mean Corpuscular Volume (MCV)',
+       'Aspartate Aminotransferase (AST)', 'CBC: Platelets',  
+       'Cardiac dysrhythmias', 'Chronic kidney disease',
+       'Coronary atherosclerosis and other heart disease', 'Diabetes',
+       'Essential hypertension',  'Glycemia', 'Potassium Blood Level',
+       'Prothrombin Time (INR)']
 
 # Discharge codes
 # 1,2,5,6,9 = discharged, 4 = deceased

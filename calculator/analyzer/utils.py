@@ -41,7 +41,6 @@ FEATURE_BOUNDS_EXPLANATION = {'Alanine Aminotransferase (ALT)': [2.0, 929.0,'Ala
                             'CBC: Red cell Distribution Width (RDW)': [10, 27, 'Red cell Distribution Width in %']}
 
 
-
 def change_SaO2(x):
     if x > 92:
         return 1
@@ -102,18 +101,13 @@ def plot_correlation(X, file_name):
     print("Highest correlations (> 0.8)")
     print(list(zip(upper.columns[rows], upper.columns[columns])))
 
-
-# List of well written names for the Cremona data
-comorbidities = ['Multiple Sclerosis',
-             'Acidosis', 'Anaemia', 'Asthma', 'Cancer', 'Chronic Heart Condition', 'Chronic Kidney', 'Chronic Liver', 'Chronic Obstructive Lung',
-        'Diabetes', 'Epilepsy', 'Glaucoma', 'High Triglycerides', 'Hypercholesterolemia', 'Hypertension', 'Leukemia', 'Neutropenia', 'Osteoporosis', 'Parkinson', 'Rickets']
-symptoms = ['Vomit', 'Diarrhea']
-numeric = ['SaO2','Age', 'Cardiac Frequency', 'Diastolic Blood Pressure', 'Respiratory Frequency', 'Systolic Blood Pressure','Temperature Celsius']
-categorical = ["Sex"]
-
-def impute_missing(df):
-    imputer = KNNImputer()
-    imputer.fit(df)
+def impute_missing(df, type = 'knn'):
+    if type == 'knn':
+        imputer = KNNImputer()
+        imputer.fit(df)
+    if type == 'iterative':
+        imputer = IterativeImputer(random_state=0)
+        imputer.fit(df)
     imputed_df = imputer.transform(df)
     df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
     return df
