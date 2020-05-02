@@ -46,7 +46,7 @@ def load_cremona(path, discharge_data = True, comorbidities_data = True, vitals_
 
     # Load Swab
     swabs = u.get_swabs(lab)
-    
+
     name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
     list_datasets = np.asarray([discharge_info, comorb_long, vitals, lab, demographics, swabs])
     dataset_array = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
@@ -60,15 +60,15 @@ def load_cremona(path, discharge_data = True, comorbidities_data = True, vitals_
     if discharge_data:
         dataset_discharge = u.create_dataset_discharge(discharge_info, patients, icu=icu)
         datasets.append(dataset_discharge)
-    
+
     if comorbidities_data:
         dataset_comorbidities= u.create_dataset_comorbidities(comorb_long, 9, patients)
         datasets.append(dataset_comorbidities.set_index('NOSOLOGICO'))
-    
+
     if vitals_data:
         dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=lab_tests)
         datasets.append(dataset_vitals)
-    
+
     if lab_tests:
         dataset_lab = u.create_lab_dataset(lab, patients)
         datasets.append(dataset_lab)

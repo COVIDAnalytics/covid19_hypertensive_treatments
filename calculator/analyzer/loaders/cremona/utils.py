@@ -25,8 +25,8 @@ SWAB_WITH_LAB_COLUMNS = ['Age',
                         'Systolic Blood Pressure',
                         'Respiratory Frequency',
                         'Cardiac Frequency',
-                        'C-Reactive Protein (CRP)', 
-                        'Blood Calcium', 
+                        'C-Reactive Protein (CRP)',
+                        'Blood Calcium',
                         'CBC: Leukocytes',
                         'Aspartate Aminotransferase (AST)',
                         'ABG: PaO2',
@@ -40,10 +40,10 @@ SWAB_WITH_LAB_COLUMNS = ['Age',
                         'CBC: Mean Corpuscular Volume (MCV)',
                         'Glycemia']
 
-SUBSET_COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 
-                                'Systolic Blood Pressure', 'Respiratory Frequency', 
+SUBSET_COLUMNS_WITHOUT_ABG = ['Age', 'Gender',
+                                'Systolic Blood Pressure', 'Respiratory Frequency',
                                 'Body Temperature', 'ABG: Oxygen Saturation (SaO2)',
-                                'C-Reactive Protein (CRP)', 'CBC: Leukocytes', 
+                                'C-Reactive Protein (CRP)', 'CBC: Leukocytes',
                                 'Blood Calcium', 'CBC: Platelets',
                                 'Blood Creatinine', 'Cholinesterase',
                                 'Prothrombin Time (INR)', 'Blood Sodium',
@@ -62,12 +62,12 @@ COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 'Cardiac Frequency',
                     'Glycemia', 'Potassium Blood Level',
                     'Prothrombin Time (INR)', 'Total Bilirubin']
 
-SPANISH_ITALIAN_DATA = ['Age', 'Gender', 'ABG: Oxygen Saturation (SaO2)', 
-       'Cardiac Frequency', 'Systolic Blood Pressure', 'Alanine Aminotransferase (ALT)', 
+SPANISH_ITALIAN_DATA = ['Age', 'Gender', 'ABG: Oxygen Saturation (SaO2)',
+       'Cardiac Frequency', 'Systolic Blood Pressure', 'Alanine Aminotransferase (ALT)',
        'Blood Creatinine', 'Blood Sodium', 'Blood Urea Nitrogen (BUN)',
        'Body Temperature', 'C-Reactive Protein (CRP)', 'CBC: Hemoglobin',
        'CBC: Leukocytes', 'CBC: Mean Corpuscular Volume (MCV)',
-       'Aspartate Aminotransferase (AST)', 'CBC: Platelets',  
+       'Aspartate Aminotransferase (AST)', 'CBC: Platelets',
        'Cardiac dysrhythmias', 'Chronic kidney disease',
        'Coronary atherosclerosis and other heart disease', 'Diabetes',
        'Essential hypertension',  'Glycemia', 'Potassium Blood Level',
@@ -194,10 +194,17 @@ def comorbidities_long(df):
 
 
 def get_lab_dates(t):
+    # TODO: Find better way to do so. Nested try-except is not nice.
     try:
         date = datetime.datetime.strptime(t, '%d/%m/%Y %H:%M')
     except ValueError:
-        date = datetime.datetime.strptime(t, '%d/%m/%Y')
+        try:
+            date = datetime.datetime.strptime(t, '%d/%m/%Y')
+        except ValueError:
+            try:
+                date = datetime.datetime.strptime(t, '%d/%m/%y %H:%M')
+            except ValueError:
+                date = datetime.datetime.strptime(t, '%d/%m/%y')
 
     return date
 
@@ -214,7 +221,13 @@ def get_age(t):
 def cleanup_demographics(demographics):
 
     demographics = demographics[['N_SCHEDA_PS', 'PZ_SESSO_PS', "PZ_DATA_NASCITA_PS"]]
-    demographics['PZ_DATA_NASCITA_PS'] = pd.to_datetime(demographics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
+    try:
+        demographics['PZ_DATA_NASCITA_PS'] = \
+            pd.to_datetime(demographics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        demographics['PZ_DATA_NASCITA_PS'] = \
+            pd.to_datetime(demographics['PZ_DATA_NASCITA_PS'], format='%m/%d/%Y')
+
     demographics['Age'] = demographics['PZ_DATA_NASCITA_PS'].apply(get_age)
     demographics = demographics.drop('PZ_DATA_NASCITA_PS', axis = 1)
     demographics = demographics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Gender'})
@@ -228,6 +241,10 @@ def create_vitals_dataset(vitals, patients, lab_tests=True):
     vital_signs = VITAL_SIGNS.copy()
     if lab_tests:
         vital_signs.remove('SaO2')  # Remove oxygen saturation if we have lab values (it is there)
+
+    # Cleanup commas in numbers
+    vitals.loc[:, 'VALORE_PARAMETRO'] = \
+            vitals.loc[:, 'VALORE_PARAMETRO'].apply(lambda x: x.replace(",", "."))
 
     dataset_vitals = pd.DataFrame(np.nan, columns=vital_signs, index=patients)
     for p in patients:
