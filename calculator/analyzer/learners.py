@@ -43,7 +43,7 @@ def train_oct(X_train, y_train,
     print('Out of Sample AUC', out_auc)
     print('In Sample Misclassification', in_mis)
     print('Out of Sample Misclassification', out_mis)
-    return in_auc, out_auc, in_mis, out_mis
+    return best_learner, in_auc, out_auc, in_mis, out_mis
 
 
 #INITIALIZE A LIST TO KEEP TRACK OF ALL BEST MODELS DEVELOPED
