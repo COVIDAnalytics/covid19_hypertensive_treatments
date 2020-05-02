@@ -40,6 +40,17 @@ SWAB_WITH_LAB_COLUMNS = ['Age',
                         'CBC: Mean Corpuscular Volume (MCV)',
                         'Glycemia']
 
+SUBSET_COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 
+                                'Systolic Blood Pressure', 'Respiratory Frequency', 
+                                'Body Temperature', 'ABG: Oxygen Saturation (SaO2)',
+                                'C-Reactive Protein (CRP)', 'CBC: Leukocytes', 
+                                'Blood Calcium', 'CBC: Platelets',
+                                'Blood Creatinine', 'Cholinesterase',
+                                'Prothrombin Time (INR)', 'Blood Sodium',
+                                'CBC: Red cell Distribution Width (RDW)', 'Aspartate Aminotransferase (AST)',
+                                'Blood Urea Nitrogen (BUN)', 'Alanine Aminotransferase (ALT)',
+                                'Total Bilirubin', 'CBC: Hemoglobin']
+
 COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 'Cardiac Frequency',
                     'Respiratory Frequency', 'Systolic Blood Pressure', 'ABG: Oxygen Saturation (SaO2)',
                     'Activated Partial Thromboplastin Time (aPTT)', 'Blood Urea Nitrogen (BUN)',

@@ -61,6 +61,17 @@ if jobid == 2:
     cols = u.COLUMNS_WITHOUT_ABG.copy()
     print(name_datasets[mask])
 
+if jobid == 3:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = True
+    lab_tests = True
+    demographics_data = True
+    swabs_data = True
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
+    cols = u.SUBSET_COLUMNS_WITHOUT_ABG.copy()
+    print(name_datasets[mask])
+
 
 # Load cremona data
 data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
@@ -84,6 +95,9 @@ if jobid == 1:
     X['SaO2'] = X['SaO2'].apply(change_SaO2)
 
 if jobid == 2:
+    X = X[cols]
+
+if jobid == 3:
     X = X[cols]
 
 algorithm = o.algorithms[0]
