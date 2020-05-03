@@ -92,7 +92,8 @@ if jobid == 0:
     X = X[cols]
 
 if jobid == 1:
-    X['SaO2'] = X['SaO2'].apply(change_SaO2)
+    #X['SaO2'] = X['SaO2'].apply(change_SaO2)
+    pass
 
 if jobid == 2:
     X = X[cols]

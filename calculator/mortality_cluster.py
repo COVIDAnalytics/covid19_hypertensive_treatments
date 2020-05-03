@@ -88,8 +88,8 @@ X = X.loc[idx]
 y = y.loc[idx]
 
 if jobid == 1:
-    X['SaO2'] = X['SaO2'].apply(change_SaO2)
-
+    #X['SaO2'] = X['SaO2'].apply(change_SaO2)
+    pass
 # Train
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
