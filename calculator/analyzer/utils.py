@@ -112,6 +112,12 @@ def impute_missing(df, type = 'knn'):
     df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
     return df
 
+categorical = ['Gender'] 
+comorbidities = ['Cardiac dysrhythmias',
+                'Chronic kidney disease',
+                'Coronary atherosclerosis and other heart disease', 'Diabetes',
+                'Essential hypertension']
+symptoms = []
 
 def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file_name):
     data = {'numeric': [],
@@ -154,9 +160,9 @@ def export_model_imp_json(model, imp, json, cols, seed, accTest, ofsAUC, path):
     'imputer': imp,
     'json': json,
     'columns': list(cols),
-    'seed' = seed
-    'Misclassification' = accTest,
-    'AUC' = ofsAUC}
+    'seed': seed,
+    'Misclassification': np.round(accTest,2),
+    'AUC': np.round(ofsAUC,2)}
     with open(path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)
     return exp
