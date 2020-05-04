@@ -6,6 +6,46 @@ import matplotlib.pylab as plt
 import seaborn as sns
 import numpy as np
 import pickle
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import IterativeImputer, KNNImputer
+
+FEATURE_BOUNDS_EXPLANATION = {'Alanine Aminotransferase (ALT)': [2.0, 929.0,'Alanine Aminotransferase (ALT) in U/L'],
+                            'Prothrombin Time (INR)': [0.0, 17.0, 'Prothrombin Time Ratio (INR)'],
+                            'Blood Creatinine': [0.0, 11.0, 'Blood Creatinine in mg/dL'],
+                            'Respiratory Frequency': [14.0, 40.0, 'Number of Breaths per Minute'],
+                            'Cholinesterase': [1422.0, 19851.0, 'Cholinesterase in Units per Liter (U/L)'],
+                            'ABG: pH': [7.0, 8.0, 'Acid-base balance of the blood'],
+                            'Blood Sodium': [115.0, 166.0, 'Blood Sodium in mmol/L'],
+                            'CBC: Hemoglobin': [6.0, 19.0, 'Hemoglobin in g/dL'],
+                            'Cardiac Frequency': [40.0, 171.0, 'Number of Beats per Minute.'],
+                            'ABG: PaO2': [17.0, 305.0, 'Partial Pressure of Oxygen in mmHg'],
+                            'Total Bilirubin': [0.0, 5.0, 'Total Bilirubin in mg/dL'],
+                            'ABG: MetHb': [0.0, 3.0, 'Methemoglobin fraction'],
+                            'ABG: Oxygen Saturation (SaO2)': [80, 100.0, 'Oxygen Saturation (SaO2) in %'],
+                            'SaO2': [80, 100.0, 'Oxygen Saturation (SaO2) in %'],
+                            'Potassium Blood Level': [2.0, 7.0, 'Potassium Blood Level in mmol/L'],
+                            'Blood Urea Nitrogen (BUN)': [4.0, 174.0, 'Blood Urea Nitrogen (BUN) in mg/dL'],
+                            'CBC: Leukocytes': [0.0, 36.0, 'Leukocytes in 10^3/muL'],
+                            'Body Temperature': [34, 104.0, 'Body temperature measurement. Use the dropdown to select the unit (Fahrenheit or Celsius).'],
+                            'CBC: Platelets': [20.0, 756.0, 'Platelets in 10^3/muL'],
+                            'CBC: Mean Corpuscular Volume (MCV)': [58.0, 116.0,'Mean Corpuscular Volume (MCV) in fL'],
+                            'Blood Calcium': [6.0, 12.0, 'Blood Calcium in mg/dL'],
+                            'Age': [0.0, 100.0, 'Age of the patient. Modeled only for adults.'],
+                            'C-Reactive Protein (CRP)': [0.0, 567.0, 'C-Reactive Protein (CRP) in mg/L'],
+                            'Aspartate Aminotransferase (AST)': [9.0, 941.0,'Aspartate Aminotransferase (AST) in U/L'],
+                            'Glycemia': [57.0, 620.0, 'Blood Glucose in mg/dL'],
+                            'Systolic Blood Pressure': [20.0, 199.0, 'Systolic Blood Pressure in mmHg'],
+                            'Gender': 'Select the gender of the patient', 
+                            'Activated Partial Thromboplastin Time (aPTT)' : [0.0, 6.0, 'Activated Partial Thromboplastin Time in minutes'],
+                            'Blood Amylase' : [10, 300, 'Blood Amylase Level in Units per Liter (U/L)'],
+                            'CBC: Red cell Distribution Width (RDW)': [10, 27, 'Red cell Distribution Width in %']}
+
+
+def change_SaO2(x):
+    if x > 92:
+        return 1
+    else:
+        return 0
 
 def create_dir(path):
     if os.path.exists(path):
@@ -61,14 +101,16 @@ def plot_correlation(X, file_name):
     print("Highest correlations (> 0.8)")
     print(list(zip(upper.columns[rows], upper.columns[columns])))
 
-    
-# List of well written names for the Cremona data
-comorbidities = ['Multiple Sclerosis',
-             'Acidosis', 'Anaemia', 'Asthma', 'Cancer', 'Chronic Heart Condition', 'Chronic Kidney', 'Chronic Liver', 'Chronic Obstructive Lung',
-        'Diabetes', 'Epilepsy', 'Glaucoma', 'High Triglycerides', 'Hypercholesterolemia', 'Hypertension', 'Leukemia', 'Neutropenia', 'Osteoporosis', 'Parkinson', 'Rickets']
-symptoms = ['Vomit', 'Diarrhea']
-numeric = ['SaO2','Age', 'Cardiac Frequency', 'Diastolic Blood Pressure', 'Respiratory Frequency', 'Systolic Blood Pressure','Temperature Celsius']
-categorical = ["Sex"]
+def impute_missing(df, type = 'knn'):
+    if type == 'knn':
+        imputer = KNNImputer()
+        imputer.fit(df)
+    if type == 'iterative':
+        imputer = IterativeImputer(random_state=0)
+        imputer.fit(df)
+    imputed_df = imputer.transform(df)
+    df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
+    return df
 
 
 def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file_name):
@@ -76,14 +118,15 @@ def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file
             'categorical': [],
             'checkboxes': [],
             'multidrop': []}
+    X = impute_missing(X)
 
     for i in range(len(numeric)):
-        data['numeric'].append({"name":numeric[i], 'index' : list(X.columns).index(numeric[i]), "min_val" : np.min(X[numeric[i]]),
-        "max_val" : np.max(X[numeric[i]]), "default" : np.round(np.median(X[numeric[i]]),2), 'explanation' : 'Insert value of ' + numeric[i]})
+        data['numeric'].append({"name":numeric[i], 'index' : list(X.columns).index(numeric[i]), "min_val" : FEATURE_BOUNDS_EXPLANATION[numeric[i]][0],
+        "max_val" : FEATURE_BOUNDS_EXPLANATION[numeric[i]][1], "default" : np.round(np.median(X[numeric[i]]),2), 'explanation' : FEATURE_BOUNDS_EXPLANATION[numeric[i]][2]})
 
     for i in range(len(categorical)):
         data['categorical'].append({"name": categorical[i], 'index' : list(X.columns).index(categorical[i]), "vals" : list(np.unique(X[categorical[i]])),
-        "default" : np.unique(X[categorical[i]])[0], 'explanation' : '' })
+        "default" : np.unique(X[categorical[i]])[0], 'explanation' : FEATURE_BOUNDS_EXPLANATION[categorical[i]] })
 
     data['checkboxes'].append({'name': "Symptoms", "index": [], "vals" : [], 'explanation': []})
     data['multidrop'].append({'name': "Comorbidities", "index": [], "vals" : [], 'explanation': []})
@@ -106,10 +149,41 @@ def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file
     return data
 
 
-def export_model_imp_json(model, imp, json, path):
+def export_model_imp_json(model, imp, json, cols, path):
     exp = {'model': model,
     'imputer': imp,
-    'json': json}
+    'json': json,
+    'columns': list(cols)}
     with open(path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)
     return exp
+
+
+def store_json(data, file_name):
+    with open(file_name, 'w') as f:
+        json.dump(data, f)
+
+
+def get_percentages(df, missing_type=np.nan):
+    if np.isnan(missing_type):
+        df = df.isnull()  # Check what is NaN
+    elif missing_type is False:
+        df = ~df  # Check what is False
+
+    percent_missing = df.sum() * 100 / len(df)
+    return pd.DataFrame({'percent_missing': percent_missing})
+
+
+def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
+    missing_values = get_percentages(df, missing_type)
+    df_features = missing_values[missing_values['percent_missing'] < nan_threshold].index.tolist()
+
+    df = df[df_features]
+
+    if impute:
+        imputer = KNNImputer()
+        imputer.fit(df)
+        imputed_df = imputer.transform(df)
+        df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
+
+    return df

@@ -15,7 +15,7 @@ import analyzer.loaders.hmfundacion.utils as u
 
 #path = '../../../Dropbox (Personal)/COVID_clinical/covid19_hmfoundation'
 
-def load_fundacionhm(path, lab_tests=True):
+def load_fundacionhm(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, demographics_data = False, extra_data = False):
         
     # Load admission info
     admission = pd.read_csv('%s/admissions.csv' % path, sep=';' , encoding= 'unicode_escape')
@@ -40,8 +40,12 @@ def load_fundacionhm(path, lab_tests=True):
     #Read in the dataset
     labs = pd.read_csv('%s/labs.csv' % path, encoding= 'unicode_escape')
     #Get the values
-    dataset_labs = u.create_lab_dataset(labs, dataset_admissions)
-    
+    dataset_labs = u.create_lab_dataset(labs, dataset_admissions, dataset_vitals)
+
+    if lab_tests:
+        dataset_vitals.drop('SaO2', axis=1)  # Remove oxygen saturation if we have lab values (it is there)
+
+
     #Comorbidities
     
     # Read all comorbidities from both the emergency and inpatient files
@@ -60,13 +64,44 @@ def load_fundacionhm(path, lab_tests=True):
     # Filter patients common to all datasets
     patients = u.filter_patients([dataset_admissions, dataset_demographics,dataset_vitals,
                                   dataset_labs, dataset_comorbidities, dataset_extra])
+    
+    dataset_admissions.drop(['Date_Admission', 'Date_Emergency'], axis=1, inplace=True)
+    
+    
+    name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'extras'])
+    dataset_array = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data])
 
-    data = {'admissions': dataset_admissions,
-            'demographics': dataset_demographics,
-            'comorbidities': dataset_comorbidities,
-            'vitals': dataset_vitals,
-            'lab': dataset_labs,
-            'extra':dataset_extra}
+    # Set index
+    dataset_admissions.set_index('PATIENT ID', inplace=True)
+    dataset_comorbidities.set_index('PATIENT ID', inplace=True)
+    dataset_vitals.set_index('PATIENT ID', inplace=True)
+    dataset_labs.set_index('PATIENT ID', inplace=True)
+    dataset_demographics.set_index('PATIENT ID', inplace=True)
+    dataset_extra.set_index('PATIENT ID', inplace=True)
 
+    datasets = []
+
+    # Create final dataset
+    if discharge_data:
+        datasets.append(dataset_admissions)
+    
+    if comorbidities_data:
+        datasets.append(dataset_comorbidities)
+    
+    if vitals_data:
+        datasets.append(dataset_vitals)
+    
+    if lab_tests:
+        datasets.append(dataset_labs)
+
+    if demographics_data:
+        datasets.append(dataset_demographics)
+
+    if extra_data:
+        datasets.append(dataset_extra)
+
+    datasets = np.asarray(datasets)
+
+    data = dict(zip(name_datasets[dataset_array], datasets))
 
     return data

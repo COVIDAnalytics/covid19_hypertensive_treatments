@@ -9,13 +9,11 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+import analyzer.dataset as ds
+import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
-from analyzer.utils import create_dir, export_features_json, plot_correlation
-from analyzer.learners import train_oct
-from analyzer.learners import xgboost_classifier
-from analyzer.learners import rf_classifier
-
+from analyzer.utils import store_json, change_SaO2
 import analyzer.optimizer as o
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
@@ -26,19 +24,20 @@ print('Jobid = ', jobid)
 SEED = 1
 
 prediction = 'Swab'
-folder_name = 'swab_prediction_seed' + str(SEED) + '_' + prediction.lower()
+folder_name = 'swab_prediction_seed' + str(SEED) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 output_folder = 'predictors/swab'
 
-name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'anagraphics', 'swab'])
+name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
 
 if jobid == 0:
     discharge_data = False
     comorbidities_data = False
     vitals_data = True
     lab_tests = True
-    anagraphics_data = True
+    demographics_data = True
     swabs_data = True
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
+    cols = u.SWAB_WITH_LAB_COLUMNS.copy()
     print(name_datasets[mask])
 
 elif jobid == 1:
@@ -46,62 +45,66 @@ elif jobid == 1:
     comorbidities_data = False
     vitals_data = True
     lab_tests = False
-    anagraphics_data = True
+    demographics_data = True
     swabs_data = True
-    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data])
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
     print(name_datasets[mask])
 
+if jobid == 2:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = True
+    lab_tests = True
+    demographics_data = True
+    swabs_data = True
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
+    cols = u.COLUMNS_WITHOUT_ABG.copy()
+    print(name_datasets[mask])
+
+if jobid == 3:
+    discharge_data = False
+    comorbidities_data = False
+    vitals_data = True
+    lab_tests = True
+    demographics_data = True
+    swabs_data = True
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
+    cols = u.SUBSET_COLUMNS_WITHOUT_ABG.copy()
+    print(name_datasets[mask])
+
+
 # Load cremona data
-data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, anagraphics_data, swabs_data)
+data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
 
 # Create dataset
-X, y = create_dataset(data,
-                        discharge_data, 
-                        comorbidities_data, 
-                        vitals_data, 
-                        lab_tests, 
-                        anagraphics_data, 
-                        swabs_data,
-                        prediction = prediction)
+X, y = ds.create_dataset(data,
+                         discharge_data,
+                         comorbidities_data,
+                         vitals_data,
+                         lab_tests,
+                         demographics_data,
+                         swabs_data,
+                         prediction=prediction)
 
-
-def change(x):
-    if x > 92:
-        return 1
-    else:
-        return 0
-
-cols = ['C-Reactive Protein (CRP)',
- 'Blood Calcium',
- 'CBC: Leukocytes',
- 'Aspartate Aminotransferase (AST)',
- 'ABG: PaO2',
- 'Age',
- 'Prothrombin Time (INR)',
- 'CBC: Hemoglobin',
- 'ABG: pH',
- 'Cholinesterase',
- 'Respiratory Frequency',
- 'Blood Urea Nitrogen (BUN)',
- 'ABG: MetHb',
- 'Temperature Celsius',
- 'Total Bilirubin',
- 'Systolic Blood Pressure',
- 'CBC: Mean Corpuscular Volume (MCV)',
- 'Glycemia',
- 'Cardiac Frequency',
- 'Sex']
+X, bounds_dict = ds.filter_outliers(X)
 
 if jobid == 0:
     X = X[cols]
 
 if jobid == 1:
-    X.SaO2 = X.SaO2.apply(change)
+    #X['SaO2'] = X['SaO2'].apply(change_SaO2)
+    pass
+
+if jobid == 2:
+    X = X[cols]
+
+if jobid == 3:
+    X = X[cols]
 
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 500, name_algo = 'xgboost')
+best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
 
 
 # Train trees

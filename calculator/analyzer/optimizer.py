@@ -12,7 +12,7 @@ import xgboost as xgb
 import copy
 from analyzer.learners import scores, train_and_evaluate
 
-from analyzer.utils import top_features, remove_dir
+from analyzer.utils import top_features, remove_dir, impute_missing
 from skopt import gp_minimize
 
 def performance(l):
@@ -55,6 +55,8 @@ def optimizer(algorithm, name_param, X, y, seed_len = 10, n_calls = 500, name_al
             model.set_params(**params) 
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+            X_train = impute_missing(X_train)
+            X_test = impute_missing(X_test)
             scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = 10, n_jobs = -1, scoring="roc_auc")))
 
         return -np.mean(scores)
