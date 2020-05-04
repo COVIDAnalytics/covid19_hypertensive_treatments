@@ -47,6 +47,8 @@ X, y = ds.create_dataset(data,
                          swabs_data,
                          prediction=prediction)
 
+import ipdb; ipdb.set_trace()
+
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 

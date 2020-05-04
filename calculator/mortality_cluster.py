@@ -88,10 +88,10 @@ X = X.loc[idx]
 y = y.loc[idx]
 
 if jobid == 1:
-    X['SaO2'] = X['SaO2'].apply(change_SaO2)
-
+    #X['SaO2'] = X['SaO2'].apply(change_SaO2)
+    pass
 # Train
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 500, name_algo = 'xgboost')
+best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
