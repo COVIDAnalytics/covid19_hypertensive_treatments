@@ -149,11 +149,14 @@ def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file
     return data
 
 
-def export_model_imp_json(model, imp, json, cols, path):
+def export_model_imp_json(model, imp, json, cols, seed, accTest, ofsAUC, path):
     exp = {'model': model,
     'imputer': imp,
     'json': json,
-    'columns': list(cols)}
+    'columns': list(cols),
+    'seed' = seed
+    'Misclassification' = accTest,
+    'AUC' = ofsAUC}
     with open(path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)
     return exp
