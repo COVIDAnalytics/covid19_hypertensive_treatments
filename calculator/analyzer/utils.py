@@ -150,14 +150,18 @@ def export_features_json(X, numeric, categorical,  symptoms, comorbidities):
     return data
 
 
-def export_model_imp_json(model, imp, json, cols, seed, accTest, ofsAUC, path):
+def export_model_imp_json(model, imp, json, cols, seed, accTest, ofsAUC, X_train, X_test, y_train, y_test, path):
     exp = {'model': model,
     'imputer': imp,
     'json': json,
     'columns': list(cols),
     'seed': seed,
     'Misclassification': np.round(accTest,2),
-    'AUC': np.round(ofsAUC,2)}
+    'AUC': np.round(ofsAUC,2),
+    'Size Training': len(X_train),
+    'Size Test': len(X_test),
+    'Percentage Training': np.round(np.mean(y_train),2),
+    'Percentage Test': np.round(np.mean(y_test),2)}
     with open(path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)
     return exp
