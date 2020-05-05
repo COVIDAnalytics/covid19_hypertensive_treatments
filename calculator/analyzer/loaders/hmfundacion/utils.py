@@ -265,7 +265,7 @@ def create_dataset_comorbidities(comorb_long, icd_category, dataset_admissions):
     #Drop the other two columns
     comorb_descr = comorb_descr.drop(columns=['Diabetes mellitus with complications', 'Diabetes mellitus without complication'])
 
-    dataset_comorbidities = pd.DataFrame(comorb_descr.groupby(['PATIENT ID'], as_index=False).sum())
+    dataset_comorbidities = pd.DataFrame(comorb_descr.groupby(['PATIENT ID'], as_index=False).max())
 
     # Combine the comorbidities with the main filees
     dataset_comorbidities = pd.merge(dataset_admissions['PATIENT ID'], dataset_comorbidities, how='left', left_on=['PATIENT ID'], right_on=['PATIENT ID'])

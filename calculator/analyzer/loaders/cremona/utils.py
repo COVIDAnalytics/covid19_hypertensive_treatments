@@ -348,6 +348,11 @@ def create_dataset_comorbidities(comorb_long, icd_category, patients):
 
     dataset_comorbidities = pd.DataFrame(comorb_descr.groupby(['NOSOLOGICO'], as_index=False).max())
 
+    df_patients = pd.DataFrame(patients, columns = ['NOSOLOGICO'])
+    dataset_comorbidities =  pd.merge(df_patients, dataset_comorbidities, how='left',
+        left_on=['NOSOLOGICO'], right_on = ['NOSOLOGICO'])
+    dataset_comorbidities = dataset_comorbidities.fillna(0)
+    
     return dataset_comorbidities
 
 def create_dataset_discharge(discharge, patients, icu=None):
