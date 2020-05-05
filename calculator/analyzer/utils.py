@@ -119,7 +119,7 @@ comorbidities = ['Cardiac dysrhythmias',
                 'Essential hypertension']
 symptoms = []
 
-def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file_name):
+def export_features_json(X, numeric, categorical,  symptoms, comorbidities):
     data = {'numeric': [],
             'categorical': [],
             'checkboxes': [],
@@ -147,11 +147,6 @@ def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file
         data['multidrop'][0]["index"].append(list(X.columns).index(comorbidities[i]))
         data['multidrop'][0]["vals"].append(comorbidities[i])
     data['multidrop'][0]["explanation"].append("Select the existing chronic diseases or conditions.")
-
-
-    with open(file_name, 'w') as outfile:
-        json.dump(data, outfile)
-
     return data
 
 
