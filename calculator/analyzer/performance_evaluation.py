@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import os
 import pickle
-import xgboost as xgb
 
 # Other packages
 import analyzer.loaders.cremona.utils as u
@@ -24,8 +23,6 @@ from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 import matplotlib.pyplot as plt
 
-
-import shap
 
 #Get data function
 def get_dataset(model_type, model_lab, columns):
@@ -73,35 +70,6 @@ def get_dataset(model_type, model_lab, columns):
     X = X[columns] 
         
     return X, y
-
-
-SEED = 1
-prediction = 'Swab'
-folder_name = 'swab_prediction_seed' + str(SEED) + '_' + prediction.lower()
-output_folder = 'predictors/swab'
-
-discharge_data = False
-comorbidities_data = False
-vitals_data = True
-lab_tests = True
-demographics_data = True
-swabs_data = True
-icu_data = False
-
-# Load cremona data
-data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
-
-# Create dataset
-X, y = ds.create_dataset(data,
-                         discharge_data,
-                         comorbidities_data,
-                         vitals_data,
-                         lab_tests,
-                         demographics_data,
-                         swabs_data,
-                         prediction=prediction)
-
-
 
 
 def get_model_outcomes(model_type, model_lab, website_path):
@@ -169,8 +137,6 @@ def plot_calibration_curve(model_types, model_labs, website_path):
 
 #Paths for data access
 website_path = '/Users/agni/Packages/website/'
-path_cremona = '/Users/agni/Dropbox (MIT)/COVID_clinical/covid19_cremona/data/'
-path_hm = '/Users/agni/Dropbox (MIT)/COVID_clinical/covid19_hmfoundation/'
 
 #Select the model type
 model_types = ['mortality','infection']
