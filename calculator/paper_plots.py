@@ -34,8 +34,8 @@ path_cremona = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_cremona/data
 path_hm = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_hmfoundation/'
 
 #%% Load Data
-model_type = 'mortality'
-model_lab = 'without_lab'
+model_type = 'infection'
+model_lab = 'with_lab'
 prediction = 'Outcome'
 
 with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
