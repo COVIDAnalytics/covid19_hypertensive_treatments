@@ -11,10 +11,7 @@ from analyzer.utils import store_json, change_SaO2
 import analyzer.dataset as ds
 
 import shap
-
-#%% 
 import matplotlib.pyplot as plt
-
 
 #%% ## Load Model and Data
 # Select model type.  
@@ -28,6 +25,11 @@ model_lab = 'with_lab'
 assert model_type in('mortality','infection'), "Invalid outcome"
 assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
 
+#%% Set paths
+website_path = '/Users/hollywiberg/git/website/'
+path_cremona = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_cremona/data/'
+path_hm = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_hmfoundation/'
+
 #%% Load model corresponding to *model_type* and *model_lab*.
 
 with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
@@ -36,7 +38,7 @@ with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab
 model = model_file['model']
 features = model_file['json']
 columns = model_file['columns']
-
+imputer= model_file['imputer']
 
 #%% Load data: to be replaced once we store X_train and X_test. Currently no imputation
 
@@ -47,12 +49,12 @@ SEED = 1
 prediction = 'Outcome'if model_type == 'mortality' else 'Swab'
 swabs_data = False if model_type == 'mortality' else True
 comorbidities_data = True if model_type == 'mortality' else False
+discharge_data = True if model_type == 'mortality' else False 
 lab_tests = True if model_lab == 'with_lab' else False
 
 # ## Constant variables
 extra_data = False
 demographics_data = True
-discharge_data = True
 vitals_data = True
 
 name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
@@ -71,18 +73,20 @@ if model_type == "mortality":
                                           lab_tests, demographics_data, swabs_data, prediction = prediction)
 
     # Merge datasets, filter outliers, match format of stored model
-    X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
+    X0 = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
     y = pd.concat([y_cremona, y_spain], ignore_index=True)
 else: 
-    X, y = X_cremona, y_cremona
+    X0, y = X_cremona, y_cremona
 
-X, bounds_dict = ds.filter_outliers(X)
-X = X[columns] 
+X0, bounds_dict = ds.filter_outliers(X0)
+X0 = X0[columns] 
+
+X = pd.DataFrame(imputer.transform(X0))
+X.columns =  X0.columns
+
 
 #%% Evaluate Model with SHAP
 ## Calculate SHAP values (for each observation x feature)
-
-shap.initjs()
 
 explainer = shap.TreeExplainer(model);
 shap_values = explainer.shap_values(X);
