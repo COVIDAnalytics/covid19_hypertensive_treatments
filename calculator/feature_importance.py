@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 
 model_type = 'mortality'
-model_lab = 'without_lab'
+model_lab = 'with_lab'
 
 assert model_type in('mortality','infection'), "Invalid outcome"
 assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
@@ -42,9 +42,13 @@ imputer= model_file['imputer']
 #%% Load data: to be replaced once we store X_train and X_test. Currently no imputation
 
 data = pd.read_csv(data_path+model_type+"_"+model_lab+"/train.csv")
-X = data.drop(["Unnamed: 0", "Outcome"], axis=1, inplace = False)
-y = data["Outcome"]
-
+if model_type == "mortality":
+    X = data.drop(["Unnamed: 0", "Outcome"], axis=1, inplace = False)
+    y = data["Outcome"]
+else:
+    X = data.drop(["NOSOLOGICO","Swab"], axis=1, inplace = False)
+    y = data["Swab"]
+    
 
 #%% Evaluate Model with SHAP
 ## Calculate SHAP values (for each observation x feature)
@@ -55,8 +59,9 @@ shap_values = explainer.shap_values(X);
 
 #%% Summarize SHAP values across all features
 # This acts as an alterative to the standard variable importance plots. Higher SHAP values translate to higher probability of mortality.
-
-shap.summary_plot(shap_values, X,show=False,max_display=100)
+bp_col = X.columns != "Systolic Blood Pressure"
+shap.summary_plot(shap_values[:,bp_col],  X[X.columns[bp_col]],
+                  show=False,max_display=100)
 f = plt.gcf()
 f.savefig('../results/'+model_type+'/model_'+model_lab+'/summary_plot.png', bbox_inches='tight')
  
