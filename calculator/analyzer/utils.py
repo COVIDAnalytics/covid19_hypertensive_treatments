@@ -6,6 +6,8 @@ import matplotlib.pylab as plt
 import seaborn as sns
 import numpy as np
 import pickle
+from analyzer.learners import scores, train_and_evaluate
+
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer, KNNImputer
 
@@ -173,14 +175,8 @@ def save_data(X_train, y_train, X_test, y_test, name, folder_path = '../../covid
     test = pd.concat((X_test, y_test), axis = 1)
     train.to_csv(folder_path + name + '/train.csv')
     test.to_csv(folder_path + name + '/test.csv')
-    return 
+    return train, test
     
-
-
-def store_json(data, file_name):
-    with open(file_name, 'w') as f:
-        json.dump(data, f)
-
 
 def get_percentages(df, missing_type=np.nan):
     if np.isnan(missing_type):
@@ -190,7 +186,6 @@ def get_percentages(df, missing_type=np.nan):
 
     percent_missing = df.sum() * 100 / len(df)
     return pd.DataFrame({'percent_missing': percent_missing})
-
 
 def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
     missing_values = get_percentages(df, missing_type)
@@ -205,3 +200,39 @@ def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
         df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
 
     return df
+
+def create_and_save_pickle(algorithm, X, y, seed, best_params, numeric, categorical, symptoms, comorbidities, name, pickle_path, data_in_pickle = False, folder_path = '../../covid19_clean_data/'):
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed) #split in training and test
+
+    X_train = impute_missing(X_train) #impute training set
+    X_test = impute_missing(X_test) #impute test set
+    
+    train, test = save_data(X_train, y_train, X_test, y_test, name, folder_path) #save training and test
+
+    best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC = train_and_evaluate(algorithm, X, y, seed, best_params) # get best learner
+    json = export_features_json(X, numeric, categorical,  symptoms, comorbidities) #create json
+    cols = X.columns
+
+    imputer = KNNImputer() #create imputer
+    imputer = imputer.fit(X_train)
+
+    exp = {'model': best_model,
+            'imputer': imputer,
+            'json': json,
+            'columns': list(cols),
+            'seed': seed,
+            'Misclassification': np.round(accTest,2),
+            'AUC': np.round(ofsAUC,2),
+            'Size Training': len(X_train),
+            'Size Test': len(X_test),
+            'Percentage Training': np.round(np.mean(y_train),2),
+            'Percentage Test': np.round(np.mean(y_test),2)}
+
+    if data_in_pickle:
+        exp['train'] = train
+        exp['test'] = test
+
+    with open(pickle_path, 'wb') as handle:
+        pickle.dump(exp, handle, protocol=4)
+    return
