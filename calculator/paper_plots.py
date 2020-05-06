@@ -80,6 +80,9 @@ X_spain, y_spain =  ds.create_dataset(data_spain, discharge_data, comorbidities_
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
 
+X_bounds = ds.evaluate_bounds(X, [0,.1,1,5,25,50,75,95,99,99.9,100])
+X_bounds.to_csv("/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_clean_data_ranges_infection.csv")
+
 X, bounds_dict = ds.filter_outliers(X)
 X = X[columns] 
 

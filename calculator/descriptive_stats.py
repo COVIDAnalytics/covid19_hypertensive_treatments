@@ -51,33 +51,33 @@ title_mapping = {
 }
 
 
-vitals = ['Age'
-'Body Temperature',
-'Cardiac Frequency',
-'Gender,
-'SaO2',
-'ABG: Oxygen Saturation (SaO2)'
-'Systolic Blood Pressure',
-'Respiratory Frequency']
+# vitals = ['Age'
+# 'Body Temperature',
+# 'Cardiac Frequency',
+# 'Gender',
+# 'SaO2',
+# 'ABG: Oxygen Saturation (SaO2)',
+# 'Systolic Blood Pressure',
+# 'Respiratory Frequency']
         
     
-labs = ['Alanine Aminotransferase (ALT)',
-    'Aspartate Aminotransferase (AST)',
-    'Blood Creatinine',
-    'Blood Sodium',
-    'Blood Urea Nitrogen (BUN)',
-    'C-Reactive Protein (CRP)',
-    'CBC: Hemoglobin',
-    'CBC: Leukocytes',
-    'CBC: Mean Corpuscular Volume (MCV)',
-    'CBC: Platelets',
-    'CBC: Red cell Distribution Width (RDW)',
-    'Glycemia',
-    'Potassium Blood Level',
-    'Prothrombin Time (INR)',
-    'Blood Calcium',
-    'Cholinesterase',
-    'Total Bilirubin']
+# labs = ['Alanine Aminotransferase (ALT)',
+#     'Aspartate Aminotransferase (AST)',
+#     'Blood Creatinine',
+#     'Blood Sodium',
+#     'Blood Urea Nitrogen (BUN)',
+#     'C-Reactive Protein (CRP)',
+#     'CBC: Hemoglobin',
+#     'CBC: Leukocytes',
+#     'CBC: Mean Corpuscular Volume (MCV)',
+#     'CBC: Platelets',
+#     'CBC: Red cell Distribution Width (RDW)',
+#     'Glycemia',
+#     'Potassium Blood Level',
+#     'Prothrombin Time (INR)',
+#     'Blood Calcium',
+#     'Cholinesterase',
+#     'Total Bilirubin']
 
 #%% Distribution by Feature
 

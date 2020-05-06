@@ -20,15 +20,14 @@ import matplotlib.pyplot as plt
 
 
 model_type = 'mortality'
-model_lab = 'with_lab'
+model_lab = 'without_lab'
 
 assert model_type in('mortality','infection'), "Invalid outcome"
 assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
 
 #%% Set paths
 website_path = '/Users/hollywiberg/git/website/'
-path_cremona = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_cremona/data/'
-path_hm = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_hmfoundation/'
+data_path = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_clean_data/'
 
 #%% Load model corresponding to *model_type* and *model_lab*.
 
@@ -42,47 +41,9 @@ imputer= model_file['imputer']
 
 #%% Load data: to be replaced once we store X_train and X_test. Currently no imputation
 
-
-SEED = 1
-
-## Variables determined by input
-prediction = 'Outcome'if model_type == 'mortality' else 'Swab'
-swabs_data = False if model_type == 'mortality' else True
-comorbidities_data = True if model_type == 'mortality' else False
-discharge_data = True if model_type == 'mortality' else False 
-lab_tests = True if model_lab == 'with_lab' else False
-
-# ## Constant variables
-extra_data = False
-demographics_data = True
-vitals_data = True
-
-name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
-mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
-print(name_datasets[mask])
-
-## Load Cremona data
-data = cremona.load_cremona(path_cremona, discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
-X_cremona, y_cremona = ds.create_dataset(data, discharge_data, comorbidities_data, vitals_data,
-                                      lab_tests, demographics_data, swabs_data, prediction = prediction)
-
-if model_type == "mortality":
-    ## Load Spain data
-    data_spain = hmfundacion.load_fundacionhm(path_hm, discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data)
-    X_spain, y_spain =  ds.create_dataset(data_spain, discharge_data, comorbidities_data, vitals_data,
-                                          lab_tests, demographics_data, swabs_data, prediction = prediction)
-
-    # Merge datasets, filter outliers, match format of stored model
-    X0 = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
-    y = pd.concat([y_cremona, y_spain], ignore_index=True)
-else: 
-    X0, y = X_cremona, y_cremona
-
-X0, bounds_dict = ds.filter_outliers(X0)
-X0 = X0[columns] 
-
-X = pd.DataFrame(imputer.transform(X0))
-X.columns =  X0.columns
+data = pd.read_csv(data_path+model_type+"_"+model_lab+"/train.csv")
+X = data.drop(["Unnamed: 0", "Outcome"], axis=1, inplace = False)
+y = data["Outcome"]
 
 
 #%% Evaluate Model with SHAP
@@ -95,7 +56,7 @@ shap_values = explainer.shap_values(X);
 #%% Summarize SHAP values across all features
 # This acts as an alterative to the standard variable importance plots. Higher SHAP values translate to higher probability of mortality.
 
-shap.summary_plot(shap_values, X,show=False)
+shap.summary_plot(shap_values, X,show=False,max_display=100)
 f = plt.gcf()
 f.savefig('../results/'+model_type+'/model_'+model_lab+'/summary_plot.png', bbox_inches='tight')
  

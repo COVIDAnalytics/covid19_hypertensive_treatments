@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def create_dataset(data_dict, discharge_data = True,
@@ -35,7 +36,7 @@ def create_dataset(data_dict, discharge_data = True,
 
     return X, y
 
-def filter_outliers(df_X, filter_lb = 0.1, filter_ub = 99.9):
+def filter_outliers(df_X, filter_lb = 0.1, filter_ub = 99.9, summary = False):
     bounds_dict = {}
 
     for col in df_X:
@@ -54,5 +55,17 @@ def filter_outliers(df_X, filter_lb = 0.1, filter_ub = 99.9):
 
         df_X[col][outlier_inds] = np.nan
 
-    return df_X, bounds_dict
+    if summary:
+        return df_X, bounds_dict, summary_table
+    else:
+        return df_X, bounds_dict
+
+def evaluate_bounds(df_X,  quantile_list):
+    summary_table = pd.DataFrame(np.nanpercentile(df_X, q = quantile_list, axis = 0))
+    summary_table.index = quantile_list
+    summary_table.columns = df_X.columns
+    return summary_table
+
+
+    
 
