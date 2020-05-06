@@ -177,8 +177,6 @@ def save_data(X_train, y_train, X_test, y_test, name, folder_path = '../../covid
     
 
 
-
-
 def store_json(data, file_name):
     with open(file_name, 'w') as f:
         json.dump(data, f)
