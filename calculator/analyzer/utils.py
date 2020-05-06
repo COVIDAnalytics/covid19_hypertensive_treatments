@@ -171,8 +171,8 @@ def save_data(X_train, y_train, X_test, y_test, name, folder_path = '../../covid
     X_test = impute_missing(X_test)
     train = pd.concat((X_train, y_train), axis = 1)
     test = pd.concat((X_test, y_test), axis = 1)
-    train.to_csv(folder_path + name + 'train')
-    test.to_csv(folder_path + name + 'test')
+    train.to_csv(folder_path + name + '/train.csv')
+    test.to_csv(folder_path + name + '/test.csv')
     return 
     
 

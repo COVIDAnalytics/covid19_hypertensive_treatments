@@ -92,8 +92,7 @@ if jobid == 0:
     X = X[cols]
 
 if jobid == 1:
-    #X['SaO2'] = X['SaO2'].apply(change_SaO2)
-    pass
+    X = X.drop('Systolic Blood Pressure', axis = 1)
 
 if jobid == 2:
     X = X[cols]
@@ -104,7 +103,7 @@ if jobid == 3:
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 35, n_calls = 400, name_algo = 'xgboost')
+best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
 
 
 # Train trees

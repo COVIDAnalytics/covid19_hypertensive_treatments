@@ -22,7 +22,7 @@ LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease
 SWAB_WITH_LAB_COLUMNS = ['Age',
                         'Gender',
                         'Body Temperature',
-                        'Systolic Blood Pressure',
+                        #'Systolic Blood Pressure',
                         'Respiratory Frequency',
                         'Cardiac Frequency',
                         'C-Reactive Protein (CRP)',
@@ -41,7 +41,8 @@ SWAB_WITH_LAB_COLUMNS = ['Age',
                         'Glycemia']
 
 SUBSET_COLUMNS_WITHOUT_ABG = ['Age', 'Gender',
-                                'Systolic Blood Pressure', 'Respiratory Frequency',
+                                #'Systolic Blood Pressure', 
+                                'Respiratory Frequency', 'Cardiac Frequency',
                                 'Body Temperature', 'ABG: Oxygen Saturation (SaO2)',
                                 'C-Reactive Protein (CRP)', 'CBC: Leukocytes',
                                 'Blood Calcium', 'CBC: Platelets',
@@ -52,7 +53,8 @@ SUBSET_COLUMNS_WITHOUT_ABG = ['Age', 'Gender',
                                 'Total Bilirubin', 'CBC: Hemoglobin']
 
 COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 'Cardiac Frequency',
-                    'Respiratory Frequency', 'Systolic Blood Pressure', 'ABG: Oxygen Saturation (SaO2)',
+                    'Respiratory Frequency', 'ABG: Oxygen Saturation (SaO2)',
+                    #'Systolic Blood Pressure', 
                     'Activated Partial Thromboplastin Time (aPTT)', 'Blood Urea Nitrogen (BUN)',
                     'Alanine Aminotransferase (ALT)', 'Aspartate Aminotransferase (AST)',
                     'Blood Amylase', 'Blood Calcium', 'Blood Creatinine', 'Blood Sodium',
@@ -63,7 +65,8 @@ COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 'Cardiac Frequency',
                     'Prothrombin Time (INR)', 'Total Bilirubin']
 
 SPANISH_ITALIAN_DATA = ['Age', 'Gender', 'ABG: Oxygen Saturation (SaO2)',
-       'Cardiac Frequency', 'Systolic Blood Pressure', 'Alanine Aminotransferase (ALT)',
+       'Cardiac Frequency', 'Alanine Aminotransferase (ALT)',
+       #'Systolic Blood Pressure', 
        'Blood Creatinine', 'Blood Sodium', 'Blood Urea Nitrogen (BUN)',
        'Body Temperature', 'C-Reactive Protein (CRP)', 'CBC: Hemoglobin',
        'CBC: Leukocytes', 'CBC: Mean Corpuscular Volume (MCV)',
