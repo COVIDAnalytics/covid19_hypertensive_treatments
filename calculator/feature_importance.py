@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 # - **model_lab** = 'with_lab' or 'without_lab'
 
 
-model_type = 'infection'
+model_type = 'mortality'
 model_lab = 'with_lab'
 
 assert model_type in('mortality','infection'), "Invalid outcome"
