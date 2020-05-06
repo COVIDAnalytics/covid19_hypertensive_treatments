@@ -166,6 +166,18 @@ def export_model_imp_json(model, imp, json, cols, seed, accTest, ofsAUC, X_train
         pickle.dump(exp, handle, protocol=4)
     return exp
 
+def save_data(X_train, y_train, X_test, y_test, name, folder_path = '../../covid19_clean_data/'):
+    X_train = impute_missing(X_train)
+    X_test = impute_missing(X_test)
+    train = pd.concat((X_train, y_train), axis = 1)
+    test = pd.concat((X_test, y_test), axis = 1)
+    train.to_csv(folder_path + name + 'train')
+    test.to_csv(folder_path + name + 'test')
+    return 
+    
+
+
+
 
 def store_json(data, file_name):
     with open(file_name, 'w') as f:
