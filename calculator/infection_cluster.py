@@ -13,7 +13,6 @@ import analyzer.dataset as ds
 import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
-from analyzer.utils import store_json, change_SaO2
 import analyzer.optimizer as o
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')

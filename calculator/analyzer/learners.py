@@ -8,7 +8,37 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import mlflow.sklearn
 import xgboost as xgb
 
-from analyzer.utils import top_features, remove_dir, impute_missing
+#from analyzer.utils import top_features, remove_dir, impute_missing
+
+
+def remove_dir(path):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+
+def top_features(model, X_train, n=20):
+    varsImpo = pd.DataFrame({'names':X_train.columns,
+                             'vals':model.feature_importances_})
+
+    varsImpo = varsImpo.sort_values(by='vals',
+                                    ascending = False)
+    varsImpo = varsImpo[:n]
+
+    print("Top %d\n" % n)
+    print(varsImpo)
+    return varsImpo
+
+def impute_missing(df, type = 'knn'):
+    if type == 'knn':
+        imputer = KNNImputer()
+        imputer.fit(df)
+    if type == 'iterative':
+        imputer = IterativeImputer(random_state=0)
+        imputer.fit(df)
+    imputed_df = imputer.transform(df)
+    df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
+    return df
+
 
 def train_oct(X_train, y_train,
               X_test, y_test,

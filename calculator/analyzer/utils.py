@@ -117,8 +117,9 @@ def impute_missing(df, type = 'knn'):
 categorical = ['Gender'] 
 comorbidities = ['Cardiac dysrhythmias',
                 'Chronic kidney disease',
-                'Coronary atherosclerosis and other heart disease', 'Diabetes',
-                'Essential hypertension']
+                'Coronary atherosclerosis and other heart disease', 
+                #'Essential hypertension',
+                'Diabetes']
 symptoms = []
 
 def export_features_json(X, numeric, categorical,  symptoms, comorbidities):
@@ -201,16 +202,17 @@ def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
 
     return df
 
-def create_and_save_pickle(algorithm, X, y, seed, best_params, numeric, categorical, symptoms, comorbidities, name, pickle_path, data_in_pickle = False, folder_path = '../../covid19_clean_data/'):
+def create_and_save_pickle(algorithm, X, y, seed, best_params, numeric, categorical, symptoms, comorbidities, name, pickle_path, data_save = False, data_in_pickle = False, folder_path = '../../covid19_clean_data/'):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed) #split in training and test
 
     X_train = impute_missing(X_train) #impute training set
     X_test = impute_missing(X_test) #impute test set
     
-    train, test = save_data(X_train, y_train, X_test, y_test, name, folder_path) #save training and test
+    if data_save:
+        train, test = save_data(X_train, y_train, X_test, y_test, name, folder_path) #save training and test
 
-    best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC = train_and_evaluate(algorithm, X, y, seed, best_params) # get best learner
+    best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC = train_and_evaluate(algorithm, X, y, seed, best_params) # get best learner and performances
     json = export_features_json(X, numeric, categorical,  symptoms, comorbidities) #create json
     cols = X.columns
 
@@ -230,8 +232,10 @@ def create_and_save_pickle(algorithm, X, y, seed, best_params, numeric, categori
             'Percentage Test': np.round(np.mean(y_test),2)}
 
     if data_in_pickle:
+        train = pd.concat((X_train, y_train), axis = 1)
+        test = pd.concat((X_test, y_test), axis = 1)
         exp['train'] = train
-        exp['test'] = test
+        exp['test'] = testexp
 
     with open(pickle_path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)

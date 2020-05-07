@@ -66,14 +66,14 @@ COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 'Cardiac Frequency',
 
 SPANISH_ITALIAN_DATA = ['Age', 'Gender', 'ABG: Oxygen Saturation (SaO2)',
        'Cardiac Frequency', 'Alanine Aminotransferase (ALT)',
-       #'Systolic Blood Pressure', 
+       #'Systolic Blood Pressure', 'Essential hypertension',  
        'Blood Creatinine', 'Blood Sodium', 'Blood Urea Nitrogen (BUN)',
        'Body Temperature', 'C-Reactive Protein (CRP)', 'CBC: Hemoglobin',
        'CBC: Leukocytes', 'CBC: Mean Corpuscular Volume (MCV)',
        'Aspartate Aminotransferase (AST)', 'CBC: Platelets',
        'Cardiac dysrhythmias', 'Chronic kidney disease',
        'Coronary atherosclerosis and other heart disease', 'Diabetes',
-       'Essential hypertension',  'Glycemia', 'Potassium Blood Level',
+       'Glycemia', 'Potassium Blood Level',
        'Prothrombin Time (INR)']
 
 # Discharge codes

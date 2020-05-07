@@ -11,7 +11,6 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
-from analyzer.utils import store_json, change_SaO2
 import analyzer.dataset as ds
 import analyzer.optimizer as o
 
@@ -78,8 +77,6 @@ X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
 
 X, bounds_dict = ds.filter_outliers(X)
-store_json(bounds_dict, 'mortality_bounds.json')
-
 
 # Shuffle
 np.random.seed(SEED)
@@ -91,7 +88,7 @@ if jobid == 0:
     X = X[u.SPANISH_ITALIAN_DATA] 
 
 if jobid == 1:
-    X = X.drop('Systolic Blood Pressure', axis = 1)
+    X = X.drop(['Systolic Blood Pressure', 'Essential hypertension'], axis = 1)
 
 # Train
 algorithm = o.algorithms[0]
