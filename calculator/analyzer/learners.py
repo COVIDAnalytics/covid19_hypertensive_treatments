@@ -8,6 +8,8 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import mlflow.sklearn
 import xgboost as xgb
 
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import IterativeImputer, KNNImputer
 #from analyzer.utils import top_features, remove_dir, impute_missing
 
 
