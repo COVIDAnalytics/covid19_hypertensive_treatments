@@ -235,7 +235,7 @@ def create_and_save_pickle(algorithm, X, y, seed, best_params, numeric, categori
         train = pd.concat((X_train, y_train), axis = 1)
         test = pd.concat((X_test, y_test), axis = 1)
         exp['train'] = train
-        exp['test'] = testexp
+        exp['test'] = test
 
     with open(pickle_path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)

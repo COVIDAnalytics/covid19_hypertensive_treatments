@@ -13,7 +13,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
-from analyzer.utils import store_json
+#from analyzer.utils import store_json
 
 import analyzer.dataset as ds
 
@@ -63,7 +63,7 @@ X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
 
 X, bounds_dict = ds.filter_outliers(X)
-store_json(bounds_dict, 'mortality_bounds.json')
+#store_json(bounds_dict, 'mortality_bounds.json')
 
 
 # Shuffle
