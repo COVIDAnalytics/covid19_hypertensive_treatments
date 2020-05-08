@@ -18,7 +18,3 @@ for model_type, model_lab in itertools.product(['mortality','infection'],['with_
     imp.feature_importance(model_type, model_lab, website_path, data_path, save_path)
     # summary = generate_summary(model_type, model_lab, title_mapping, website_path)
     # summary.to_csv(save_path+'descriptive_statistics.csv', index = False)
-
-    
-
-  
