@@ -237,7 +237,8 @@ def create_and_save_pickle(algorithm, X, y, seed, best_params, numeric, categori
             'Size Test': len(X_test),
             'Percentage Training': np.round(np.mean(y_train),2),
             'Percentage Test': np.round(np.mean(y_test),2),
-            'importance': ft_imp}
+            'importance': ft_imp,
+            'explainer': explainer}
 
     if data_in_pickle:
         train = pd.concat((X_train, y_train), axis = 1)
