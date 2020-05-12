@@ -338,7 +338,7 @@ def plot_calibration_curve_bootstrap(model_types, model_labs, results_path, seed
     ax2.legend(loc="upper center", ncol=2)
 
     plt.tight_layout()
-    plt.savefig('../results/performance_evaluation/'+'_'.join(model_types)+'_'.join(model_labs)+'_'+str(seeds[0])+'_'+str(seeds[len(seeds)-1])+'_calibration_plot.png', bbox_inches='tight')
+    plt.savefig('../results/performance_evaluation/'+'_'.join(model_types)+'_'.join(model_labs)+'_'+str(seeds[0])+'_'+str(seeds[len(seeds)-1])+'_calibration_plot.pdf', bbox_inches='tight')
 
 
 def plot_auc_curve_bootstrap(model_types, model_labs, results_path, seeds):
@@ -371,7 +371,7 @@ def plot_auc_curve_bootstrap(model_types, model_labs, results_path, seeds):
     plt.ylabel("Sensitivity")
     plt.xlabel("1 - Specificity")
     plt.tight_layout()
-    plt.savefig('../results/performance_evaluation/'+'_'.join(model_types)+'_'.join(model_labs)+'_'+str(seeds[0])+'_'+str(seeds[len(seeds)-1])+'_auc_plot.png', bbox_inches='tight')
+    plt.savefig('../results/performance_evaluation/'+'_'.join(model_types)+'_'.join(model_labs)+'_'+str(seeds[0])+'_'+str(seeds[len(seeds)-1])+'_auc_plot.pdf', bbox_inches='tight')
 
 
 def plot_precision_recall_curve_bootstrap(model_types, model_labs, results_path, seeds):
@@ -409,7 +409,7 @@ def plot_precision_recall_curve_bootstrap(model_types, model_labs, results_path,
             plt.legend()
             # show the plot
             plt.tight_layout()
-            plt.savefig('../results/performance_evaluation/'+'_'.join(model_types)+'_'.join(model_labs)+'_'+str(seeds[0])+'_'+str(seeds[len(seeds)-1])+'_precision_recall_plot.png', bbox_inches='tight')
+            plt.savefig('../results/performance_evaluation/'+'_'.join(model_types)+'_'.join(model_labs)+'_'+str(seeds[0])+'_'+str(seeds[len(seeds)-1])+'_precision_recall_plot.pdf', bbox_inches='tight')
 
 def mean_confidence_interval(data, confidence=0.95):
     a = 1.0 * np.array(data)
@@ -424,7 +424,7 @@ def get_table_confidence_interval(tab2, confidence_level, colnames):
 
     for i in colnames:           
        m, l, u = (round(100*v,2) for v in mean_confidence_interval(tab2[i], confidence=confidence_level))       
-       val = str(m)+' 95%CI('+str(l)+','+str(u)+')'
+       val = str(m)+' ('+str(l)+','+str(u)+')'
        tab3[i] = pd.Series(val)
                   
     return tab3
