@@ -23,7 +23,7 @@ def performance(l):
 name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "lambda", "alpha"]
 name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
 name_param_cart = ["max_depth", "min_weight_fraction_leaf", "min_samples_leaf", "min_samples_split", "min_impurity_decrease", "criterion"]
-name_param_lr = ["penalty", "tol", "C", "l1_ratio", "solver"]
+name_param_lr = ["penalty", "tol", "C", "solver"]
 
 algorithms = [xgb.XGBClassifier, RandomForestClassifier, DecisionTreeClassifier, LogisticRegression]
 name_params = [name_param_xgb, name_param_rf, name_param_cart, name_param_lr]
@@ -60,10 +60,9 @@ def optimizer(algorithm, name_param, X, y, seed_len = 10, n_calls = 500, name_al
 
     elif name_algo == 'lr':
         n_features = len(X.columns)
-        space  = [Categorical(['l1','l2', 'elasticnet', 'none'], name = 'penalty'),
+        space  = [Categorical(['l1','l2', 'none'], name = 'penalty'),
                     Real(10**-5, 10, 'uniform', name ='tol'),
                     Real(10**-4, 100, "uniform", name ='C'),
-                    Real(0, 1, 'uniform', name = 'l1_ratio'),
                     Categorical(['saga'], name = 'solver')]
 
 
