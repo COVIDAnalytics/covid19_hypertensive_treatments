@@ -78,30 +78,132 @@ def format_axes(ax):
 
     return ax
 
+def get_model_data(model_type, model_lab, website_path, data_path):
+        
+    print(model_type)
+    print(model_lab)
+        
+    #Load model corresponding to model_type and lab
+    with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+        model_file = pickle.load(file)
+
+    seedID = model_file['seed']
+      
+    #Load model corresponding to model_type and lab
+    with open(data_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
+        model_file = pickle.load(file)
+
+    #Extract the inputs of the model    
+    model = model_file['model']
+    features = model_file['json']
+    columns = model_file['columns']
+    imputer= model_file['imputer']
+    test = model_file['test']
+    
+    if model_type == 'mortality':
+        y = test['Outcome']
+    else:
+        y=test['Swab']
+        
+    X = test.iloc[:,0:(len(test.columns)-1)]
+            
 #%% 
 def feature_importance(model_type, model_lab, website_path, data_path, save_path, title_mapping, 
-                       feature_limit = 100, latex = False):
+                       feature_limit = 100, latex = True, dependence_plot = False,
+                       data_filter = None, suffix_filter = ''):
     assert model_type in('mortality','infection'), "Invalid outcome"
     assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
     
     if latex:
-        save_path = save_path+"latex_"
+        suffix_filter = suffix_filter+"_latex"
 
     ## Load model corresponding to *model_type* and *model_lab*.
 
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+        best_model = pickle.load(file)
+
+    seedID = best_model['seed']
+      
+    #Load model corresponding to model_type and lab
+    with open(data_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
         model_file = pickle.load(file)
         
     model = model_file['model']
+    data = model_file['train']
 
     ## Load data: to be replaced once we store X_train and X_test. Currently no imputation
     
-    data = pd.read_csv(data_path+model_type+"_"+model_lab+"/train.csv")
+    if data_filter != None:
+        print("Raw Data Rows = "+str(data.shape[0]))
+        print("Applying filter: "+data_filter)
+        data = data.query(data_filter)
+        print("Filtered Data  Rows = "+str(data.shape[0]))
+            
     if model_type == "mortality":
-        X = data.drop(["Unnamed: 0", "Outcome"], axis=1, inplace = False)
+        X = data.drop(["Outcome"], axis=1, inplace = False)
         y = data["Outcome"]
     else:
-        X = data.drop(["NOSOLOGICO","Swab"], axis=1, inplace = False)
+        X = data.drop(["Swab"], axis=1, inplace = False)
+        y = data["Swab"]
+    
+    ## Calculate SHAP values (for each observation x feature)
+    explainer = shap.TreeExplainer(model);
+    shap_values = explainer.shap_values(X);
+    
+    ft_recode = []
+    for i in X.columns:
+        ft_recode.append(title_mapping[i])
+    
+    ## Summarize SHAP values across all features
+    # This acts as an alterative to the standard variable importance plots. Higher SHAP values translate to higher probability of mortality.
+    plt.close()
+    if latex:
+        latexify(columns=2)
+    shap.summary_plot(shap_values, X, show=False,feature_names=ft_recode, max_display=feature_limit, plot_type = "violin")
+    f = plt.gcf()
+    f.savefig(save_path+'summary_plot_top'+str(feature_limit)+suffix_filter+'.pdf', bbox_inches='tight')
+    plt.clf() 
+    plt.close()
+    
+    ## Deep-dive into individual features
+    # For a given feature, see how the SHAP varies across its possible values. 
+    # The interaction_index lets you choose a secondary index to visualize.
+    # If omitted, it will automatically find the variable with the highest interaction.
+
+    if dependence_plot:
+        for i in X.columns:
+            plt.close()
+            latexify(fig_width = 3.4)
+            shap.dependence_plot(i, shap_values, X,show=False)
+            f = plt.gcf()
+            f.savefig(save_path+'dependence_plot/'+i+suffix_filter+'.pdf', bbox_inches='tight')
+            plt.clf()
+            plt.close()
+
+def feature_importance_website(model_type, model_lab, website_path, data_path, save_path, title_mapping, 
+                       feature_limit = 10):
+    assert model_type in('mortality','infection'), "Invalid outcome"
+    assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
+
+    ## Load model corresponding to *model_type* and *model_lab*.
+    with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+        best_model = pickle.load(file)
+
+    seedID = best_model['seed']
+      
+    #Load model corresponding to model_type and lab
+    with open(data_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
+        model_file = pickle.load(file)
+        
+    model = model_file['model']
+    data = model_file['train']
+
+    ## Load data: to be replaced once we store X_train and X_test. Currently no imputation
+    if model_type == "mortality":
+        X = data.drop(["Outcome"], axis=1, inplace = False)
+        y = data["Outcome"]
+    else:
+        X = data.drop(["Swab"], axis=1, inplace = False)
         y = data["Swab"]
 
     ## Calculate SHAP values (for each observation x feature)
@@ -115,30 +217,12 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     ## Summarize SHAP values across all features
     # This acts as an alterative to the standard variable importance plots. Higher SHAP values translate to higher probability of mortality.
     plt.close()
-    latexify(fig_width = 3.4)
     shap.summary_plot(shap_values, X, show=False,feature_names=ft_recode, max_display=feature_limit, plot_type = "violin")
     f = plt.gcf()
-    f.savefig(save_path+'summary_plot_top'+str(feature_limit)+'.pdf', bbox_inches='tight')
     f.savefig(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.jpg', bbox_inches='tight')
     plt.clf() 
     plt.close()
     
- 
-    ## Deep-dive into individual features
-    # For a given feature, see how the SHAP varies across its possible values. 
-    # The interaction_index lets you choose a secondary index to visualize.
-    # If omitted, it will automatically find the variable with the highest interaction.
-
-    for i in X.columns:
-        plt.close()
-        latexify(fig_width = 3.4)
-        shap.dependence_plot(i, shap_values, X,show=False)
-        f = plt.gcf()
-        f.savefig(save_path+'dependence_plot_'+i+'.pdf', bbox_inches='tight')
-        plt.clf()
-        plt.close()
-
-
 #%% Evaluate drivers of individual predictions 
 # # Select index j for prediction to generate.
 

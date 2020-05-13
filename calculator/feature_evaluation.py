@@ -52,21 +52,20 @@ title_mapping = {
 website_path = '/Users/hollywiberg/git/website/'
 data_path = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_clean_data/'
 
+subgroups = {'Age < 55': 'Age_below55',
+    'Age >= 55 & Age < 80': 'Age_55to79',
+    'Age >= 80': 'Age_atleast80',
+    'Gender ==  0': 'Male',
+    'Gender == 1': 'Female'}
+
 for model_type, model_lab in itertools.product(['infection','mortality'],['with_lab','without_lab']):
 # for model_type, model_lab in itertools.product(['mortality'],['without_lab']):
-    print("Model: %s, %s" %(model_type, model_lab))
     save_path = '../results/'+model_type+'/model_'+model_lab+'/'
-    imp.feature_importance(model_type, model_lab, website_path, data_path, save_path, title_mapping, 
-                           latex = True, feature_limit = 10)
-    # summary = ev.generate_summary(model_type, model_lab, website_path, title_mapping)
-    # summary.to_csv(save_path+'descriptive_statistics.csv', index = False)
-    
-# model_type = 'mortality'; model_lab = 'without_lab'
-# with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
-#         model_file = pickle.load(file)
-
-
-# ft_recode = []
-# for i in X.columns:
-#     ft_recode.append(title_mapping[i])
-    
+    imp.feature_importance_website(model_type, model_lab, website_path, data_path, save_path, title_mapping, 
+                               feature_limit = 10)
+    print("Model: %s, %s" %(model_type, model_lab))
+    for s in subgroups.keys():
+        print("Subgroup: %s" % s)
+        imp.feature_importance(model_type, model_lab, website_path, data_path, save_path, title_mapping, 
+                               latex = True, feature_limit = 10, dependence_plot = False,
+                               data_filter = s, suffix_filter = subgroups[s])
