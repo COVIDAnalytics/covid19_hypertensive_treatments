@@ -90,13 +90,20 @@ if jobid == 0:
 if jobid == 1:
     X = X.drop(['Systolic Blood Pressure', 'Essential hypertension'], axis = 1)
 
-# Train
+# Train XGB
 # algorithm = o.algorithms[0]
 # name_param = o.name_params[0]
 
 # best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
 
-algorithm = o.algorithms[2]
-name_param = o.name_params[2]
+# Train CART
+# algorithm = o.algorithms[2]
+# name_param = o.name_params[2]
 
-best_cart = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'cart')
+# best_cart = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'cart')
+
+# Train Logistic regression
+algorithm = o.algorithms[3]
+name_param = o.name_params[3]
+
+best_lr = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'lr')
