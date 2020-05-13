@@ -57,8 +57,9 @@ def train_oct(X_train, y_train,
         iai.OptimalTreeClassifier(
             random_seed = seed,
         ),
-        max_depth=range(3, 10),
-        minbucket=[5, 10, 15, 20, 25, 30, 35],
+        max_depth=range(1, 10),
+        # minbucket=[5, 10, 15, 20, 25, 30, 35],
+        criterion = ['gini', 'entropy', 'misclassification'],
         ls_num_tree_restarts=200,
     )
     oct_grid.fit_cv(X_train, y_train, n_folds=5, validation_criterion = 'auc')

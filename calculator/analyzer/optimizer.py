@@ -7,6 +7,7 @@ from skopt.utils import use_named_args
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 import mlflow.sklearn
 import xgboost as xgb
 import copy
@@ -20,9 +21,10 @@ def performance(l):
 
 name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "lambda", "alpha"]
 name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
+name_param_cart = ["max_depth", "min_weight_fraction_leaf", "min_samples_leaf", "min_samples_split", "min_impurity_decrease", "splitter", "criterion"]
 
-algorithms = [xgb.XGBClassifier, RandomForestClassifier]
-name_params = [name_param_xgb, name_param_rf]
+algorithms = [xgb.XGBClassifier, RandomForestClassifier, DecisionTreeClassifier]
+name_params = [name_param_xgb, name_param_rf, name_param_cart]
 
 def optimizer(algorithm, name_param, X, y, seed_len = 10, n_calls = 500, name_algo = 'xgboost'):
 
@@ -44,6 +46,16 @@ def optimizer(algorithm, name_param, X, y, seed_len = 10, n_calls = 500, name_al
                     Real(1, 200, 'uniform', name ='min_samples_leaf'),
                     Real(2, 200, 'uniform', name = 'min_samples_split'),
                     Categorical(['sqrt', 'log2'], name = 'max_features')]
+
+    elif name_algo == 'cart':
+        n_features = len(X.columns)
+        space  = [Integer(1, n_features, name='max_depth'),
+                    Real(0, 0.5, 'uniform', name ='min_weight_fraction_leaf'),
+                    Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
+                    Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
+                    Real(0, 1, 'uniform', name = 'min_impurity_decrease'),
+                    Categorical(['gini', 'entropy'], name = 'criterion')]
+
 
     @use_named_args(space)
     def objective(**params):

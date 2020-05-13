@@ -99,10 +99,16 @@ if jobid == 2:
 if jobid == 3:
     X = X[cols]
 
-algorithm = o.algorithms[0]
-name_param = o.name_params[0]
+# algorithm = o.algorithms[0]
+# name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
+# best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
+
+algorithm = o.algorithms[2]
+name_param = o.name_params[2]
+
+best_cart = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'cart')
+
 
 
 # Train trees

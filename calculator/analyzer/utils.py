@@ -219,13 +219,7 @@ def create_and_save_pickle(algorithm, X, y, seed, best_params, numeric, categori
 
     imputer = KNNImputer() #create imputer
     imputer = imputer.fit(X_train)
-
-    explainer = shap.TreeExplainer(best_model); # create shap explainer
-    shap_values = explainer.shap_values(X_train); # compute shap values for imputed training set
     
-    shap.summary_plot(shap_values, X_train, show=False, max_display=50)
-    ft_imp = plt.gcf()
-
     exp = {'model': best_model,
             'imputer': imputer,
             'json': json,
@@ -236,9 +230,16 @@ def create_and_save_pickle(algorithm, X, y, seed, best_params, numeric, categori
             'Size Training': len(X_train),
             'Size Test': len(X_test),
             'Percentage Training': np.round(np.mean(y_train),2),
-            'Percentage Test': np.round(np.mean(y_test),2),
-            'importance': ft_imp,
-            'explainer': explainer}
+            'Percentage Test': np.round(np.mean(y_test),2)}
+            
+    if data_save:
+        explainer = shap.TreeExplainer(best_model); # create shap explainer
+        shap_values = explainer.shap_values(X_train); # compute shap values for imputed training set
+        
+        # shap.summary_plot(shap_values, X_train, show=False, max_display=50)
+        # ft_imp = plt.gcf()
+        # exp['importance']= ft_imp,
+        exp['explainer']= explainer
 
     if data_in_pickle:
         train = pd.concat((X_train, y_train), axis = 1)
