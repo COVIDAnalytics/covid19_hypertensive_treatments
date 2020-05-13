@@ -20,7 +20,7 @@ print('Jobid = ', jobid)
 
 SEED = 1
 prediction = 'Outcome'
-folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower()
+folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 output_folder = 'predictors/outcome'
 
 name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
