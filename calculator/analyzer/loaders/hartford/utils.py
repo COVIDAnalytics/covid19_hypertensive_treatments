@@ -3,10 +3,10 @@ import pandas as pd
 import datetime
 
 # explicitly require this experimental feature
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.impute import IterativeImputer, KNNImputer
+# from sklearn.experimental import enable_iterative_imputer  # noqa
+# from sklearn.impute import IterativeImputer, KNNImputer
 
-from analyzer.utils import remove_missing
+# from analyzer.utils import remove_missing
 
 RENAMED_ADMISSION_COLUMNS = {
     'EDAD/AGE':'Age',
