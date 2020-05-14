@@ -159,7 +159,8 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     plt.close()
     if latex:
         latexify(columns=2)
-    shap.summary_plot(shap_values, X, show=False,feature_names=ft_recode, max_display=feature_limit, plot_type = "violin")
+    shap.summary_plot(shap_values, X, show=False,feature_names=ft_recode, max_display=feature_limit, 
+                      plot_type = "violin", plot_size = .7)
     f = plt.gcf()
     f.savefig(save_path+'summary_plot_top'+str(feature_limit)+suffix_filter+'.pdf', bbox_inches='tight')
     plt.clf() 
@@ -173,7 +174,8 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     if dependence_plot:
         for i in X.columns:
             plt.close()
-            latexify(fig_width = 3.4)
+            if latex:
+                latexify(columns=2)
             shap.dependence_plot(i, shap_values, X,show=False)
             f = plt.gcf()
             f.savefig(save_path+'dependence_plot/'+i+suffix_filter+'.pdf', bbox_inches='tight')
