@@ -181,10 +181,10 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     # TODO: Complete (command does not take axis)
 
     # Detailed
-    max_display = 9
+    max_display = np.minimum(len(X.columns) - 1, 9)   # -1 because we remove age
     n_cols = 3
     latexify(columns=1)
-    fig, axs = plt.subplots(int(max_display/n_cols), n_cols,
+    fig, axs = plt.subplots(np.ceil(max_display/n_cols).astype(np.int64), n_cols,
                             figsize=(20, 20),
                             #  facecolor='w', edgecolor='k'
                             )
@@ -200,18 +200,25 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     for idx in range(max_display):
         ax = axs[idx]
-        feat = feat_display[idx]
+        try:
+            feat = feat_display[idx]
+        except:
+            import ipdb; ipdb.set_trace()
         shap.dependence_plot(feat,
                              shap_values, X, ax=ax,
                              interaction_index="Age",
                              xmin="percentile(1)", xmax="percentile(99)",
+                             alpha=0.5,
                              show=False)
         ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
         ax.set_ylim([-2, 2])
+        if feat.split(" ", 1)[0] in ['CRP']:
+            ax.set_xscale('log')
+
         ax.grid()
 
 
-    fig.savefig('test.pdf')
+    fig.savefig(save_path+'feature_plot'+suffix_filter+'.pdf')
 
     #  shap.summary_plot(shap_values, X, show=False,
     #                    feature_names=ft_recode,
@@ -228,7 +235,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     #                    ax=ax1)
 
 
-    import ipdb; ipdb.set_trace()
+    #  import ipdb; ipdb.set_trace()
 
 
 
@@ -239,31 +246,31 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     ## Summarize SHAP values across all features
     # This acts as an alterative to the standard variable importance plots. Higher SHAP values translate to higher probability of mortality.
-    plt.close()
-    if latex:
-        latexify(columns=2)
-    shap.summary_plot(shap_values, X, show=False,feature_names=ft_recode, max_display=feature_limit,
-                      plot_type = "violin", plot_size = .7)
-    f = plt.gcf()
-    f.savefig(save_path+'summary_plot_top'+str(feature_limit)+suffix_filter+'.pdf', bbox_inches='tight')
-    plt.clf()
-    plt.close()
+    #  plt.close()
+    #  if latex:
+    #      latexify(columns=2)
+    #  shap.summary_plot(shap_values, X, show=False,feature_names=ft_recode, max_display=feature_limit,
+    #                    plot_type = "violin", plot_size = .7)
+    #  f = plt.gcf()
+    #  f.savefig(save_path+'summary_plot_top'+str(feature_limit)+suffix_filter+'.pdf', bbox_inches='tight')
+    #  plt.clf()
+    #  plt.close()
 
     ## Deep-dive into individual features
     # For a given feature, see how the SHAP varies across its possible values.
     # The interaction_index lets you choose a secondary index to visualize.
     # If omitted, it will automatically find the variable with the highest interaction.
 
-    if dependence_plot:
-        for i in X.columns:
-            plt.close()
-            if latex:
-                latexify(columns=2)
-            shap.dependence_plot(i, shap_values, X, show=False)
-            f = plt.gcf()
-            f.savefig(save_path+'dependence_plot/'+i+suffix_filter+'.pdf', bbox_inches='tight')
-            plt.clf()
-            plt.close()
+    #  if dependence_plot:
+    #      for i in X.columns:
+    #          plt.close()
+    #          if latex:
+    #              latexify(columns=2)
+    #          shap.dependence_plot(i, shap_values, X, show=False)
+    #          f = plt.gcf()
+    #          f.savefig(save_path+'dependence_plot/'+i+suffix_filter+'.pdf', bbox_inches='tight')
+    #          plt.clf()
+    #          plt.close()
 
 def feature_importance_website(model_type, model_lab, website_path, data_path, save_path, title_mapping,
                        feature_limit = 10):
