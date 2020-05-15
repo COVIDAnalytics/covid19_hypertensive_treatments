@@ -265,7 +265,7 @@ def plot_precision_recall_curve(model_types, model_labs, website_path, results_p
             plt.tight_layout()
             plt.savefig('../results/performance_evaluation/'+'_'.join(model_types)+'_'.join(model_labs)+'_best_precision_recall_plot.png', bbox_inches='tight')
 
-def get_scores(y, y_pred, threshold):
+def get_scores(y, y_pred, threshold, prob_pos):
    CM = confusion_matrix(y, y_pred)
    TN = CM[0][0]
    FN = CM[1][0] 
@@ -288,10 +288,13 @@ def get_scores(y, y_pred, threshold):
 
    # Overall accuracy
    ACC = (TP+TN)/(TP+FP+FN+TN)
+   
+   auc = metrics.roc_auc_score(y, prob_pos)
 
-   colnames = ['Threshold','Accuracy','Sensitivity','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
+
+   colnames = ['AUC','Threshold','Accuracy','Sensitivity','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
    mat_met = pd.DataFrame(columns = colnames) 
-   newrow =[threshold, ACC, TPR, TNR, PPV, NPV, FPR, FNR, FDR]
+   newrow =[auc, threshold, ACC, TPR, TNR, PPV, NPV, FPR, FNR, FDR]
    mat_met.loc[0] = newrow
    return mat_met
 
@@ -502,7 +505,7 @@ def get_table_confidence_interval(tab2, confidence_level, colnames):
     return tab3
 
 
-def classification_report_table_bootstrap(model_types, model_labs, results_path, sensitivity_threshold, confidence_level):
+def classification_report_table_bootstrap(seeds, model_types, model_labs, results_path, sensitivity_threshold, confidence_level):
     
     #Get the data ''
     
@@ -541,3 +544,302 @@ def classification_report_table_bootstrap(model_types, model_labs, results_path,
     
     tab.to_csv('../results/performance_evaluation/performance_tables/bootstrap/'+'_'.join(model_types)+'_'+'_'.join(model_labs)+'_'+str(sensitivity_threshold)+'_'+str(seeds[0])+'_'+str(seeds[len(seeds)-1])+'_summary_perforamance.csv', index=False)
     return tab
+
+
+def get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_path):      
+    
+    #Load validation population
+    val_df = pd.read_csv(validation_path , encoding= 'unicode_escape')
+    #Filter to only patients for which the outcome is known.
+    val_df = val_df.loc[val_df['Outcome'].isin([0,1])]
+    
+    if model_lab == 'without_lab':
+        val_df = val_df.rename(columns={'ABG: Oxygen Saturation (SaO2)':'SaO2'})
+        
+    if val_df['Body Temperature'].mean() < 45:
+        val_df['Body Temperature'] = ((val_df['Body Temperature']/5)*9)+32
+
+    #Load model corresponding to model_type and lab
+    with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+        model_file = pickle.load(file)
+
+    seedID = model_file['seed']
+  
+    #Load model corresponding to model_type and lab
+    with open(results_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
+        model_file = pickle.load(file)
+        
+    #Extract the inputs of the model    
+    model = model_file['model']
+    features = model_file['json']
+    columns = model_file['columns']
+    imputer= model_file['imputer']
+    test = model_file['test']
+   
+    if model_type == 'mortality':
+        y = test['Outcome']
+    else:
+        y=test['Swab']
+        
+    X = test.iloc[:,0:(len(test.columns)-1)]
+        
+    #Select only the relevant columns    
+    val_X0 = val_df[X.columns]
+    val_y =  val_df['Outcome']
+    
+    val_X = pd.DataFrame(imputer.transform(val_X0))    
+    val_X.columns = list(val_X0.columns.values)
+   
+    y_pred = model.predict(val_X)
+    prob_pos = model.predict_proba(val_X)[:, 1]
+    
+    return val_y,y_pred, prob_pos
+
+def get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option):
+
+    #Load model corresponding to model_type and lab
+    with open(results_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
+        model_file = pickle.load(file)
+
+    #Extract the inputs of the model    
+    model = model_file['model']
+    features = model_file['json']
+    columns = model_file['columns']
+    imputer= model_file['imputer']
+    if train_option:
+        train = model_file['train']    
+        if model_type == 'mortality':
+            y = train['Outcome']
+        else:
+            y=train['Swab']    
+        X = train.iloc[:,0:(len(train.columns)-1)]
+    else:
+        test = model_file['test']    
+        if model_type == 'mortality':
+            y = test['Outcome']
+        else:
+            y=test['Swab']    
+        X = test.iloc[:,0:(len(test.columns)-1)]
+            
+    y_pred = model.predict(X)
+    prob_pos = model.predict_proba(X)[:, 1]
+
+    return y, y_pred, prob_pos 
+
+def get_binomial_CI(metric, n):    
+
+    interval = 1.96 * sqrt( (metric * (1 - metric)) / n)   
+    return metric, metric-interval, metric+interval
+
+
+def get_validation_table_confidence_interval(tab2, cols2,n):
+   
+    tab3 = pd.DataFrame(columns = cols2) 
+
+    for i in cols2:                
+       m, l, u = (round(100*v,2) for v in get_binomial_CI(tab2[i], n))         
+       val = str(m)+' ('+str(l)+','+str(u)+')'
+       tab3[i] = pd.Series(val)                 
+    return tab3
+
+def create_metrics_table(cohort, cols, model_type, model_lab, results_path, seedID, train_option):
+    
+    tab3 = pd.DataFrame(columns = cols) 
+        
+    #First we add the training set
+    y, y_pred, prob_pos = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option)     
+    is_fpr, is_tpr, thresh = precision_recall_curve(y, prob_pos)
+    n = len(y)
+    
+    colnames = ['AUC','Threshold','Accuracy','Sensitivity','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
+    sum_table = pd.DataFrame(columns = colnames) 
+
+    for t in thresh:
+        y_pred = [1 if m > t else 0 for m in prob_pos]
+        sum_table.loc[len(sum_table)] = get_scores(y, y_pred, t, prob_pos).loc[0]
+     
+    df = sum_table[sum_table['Sensitivity'] > sensitivity_threshold]
+    x = df[df['Sensitivity'] == df['Sensitivity'].min()].iloc[0]
+    
+    cols2 =  set(cols).intersection(colnames) 
+    tab2 = get_validation_table_confidence_interval(x, cols2, n)
+
+    
+    x2 = pd.Series({'Model Type': model_type, 'Model Labs': model_lab, 'Cohort': cohort,'N':n})
+
+    tab3.loc[len(tab3)] = x2.append(tab2.loc[0,:])   
+      
+    return tab3
+
+def create_metrics_table_validation(cohort, cols, model_type, model_lab, website_path, results_path, validation_path):
+    
+    tab3 = pd.DataFrame(columns = cols) 
+        
+    #First we add the training set   
+    y, y_pred, prob_pos = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_path)
+    is_fpr, is_tpr, thresh = precision_recall_curve(y, prob_pos)
+    n = len(y)
+    
+    colnames = ['AUC','Threshold','Accuracy','Sensitivity','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
+    sum_table = pd.DataFrame(columns = colnames) 
+
+    for t in thresh:
+        y_pred = [1 if m > t else 0 for m in prob_pos]
+        sum_table.loc[len(sum_table)] = get_scores(y, y_pred, t, prob_pos).loc[0]
+     
+    df = sum_table[sum_table['Sensitivity'] > sensitivity_threshold]
+    x = df[df['Sensitivity'] == df['Sensitivity'].min()].iloc[0]
+    
+    cols2 =  set(cols).intersection(colnames) 
+    tab2 = get_validation_table_confidence_interval(x, cols2, n)
+
+    
+    x2 = pd.Series({'Model Type': model_type, 'Model Labs': model_lab, 'Cohort': cohort,'N':n})
+
+    tab3.loc[len(tab3)] = x2.append(tab2.loc[0,:])   
+      
+    return tab3
+
+
+
+def classification_report_table_validation(model_type, model_labs, results_path, validation_paths, sensitivity_threshold):
+    
+    #Get the data 
+    cols = ['Model Type','Model Labs','Cohort','N','AUC','Threshold','Accuracy','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
+    tab = pd.DataFrame(columns = cols) 
+    
+    for model_lab in model_labs: 
+
+        #Load model corresponding to model_type and lab
+        with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+            model_file = pickle.load(file)
+
+        seedID = model_file['seed']
+                                 
+        tab1 = create_metrics_table('Training Set', cols, model_type, model_lab, results_path, seedID, train_option=True)        
+        tab = tab.append(tab1) 
+         
+        tab2 = create_metrics_table('Testing Set', cols, model_type, model_lab, results_path, seedID, train_option=False)        
+        tab = tab.append(tab2) 
+      
+        tab3 = create_metrics_table_validation('Greek HC', cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[0])
+        tab = tab.append(tab3) 
+    
+    tab.to_csv('../results/mortality/paper_tables/summary_perforamance_mortality_AUC_sensitivity.csv', index=False)
+    return tab
+
+    
+def get_model_outcomes_algorithm_pickle(alg, model_type, model_lab, results_path, seedID):      
+
+    #Load model corresponding to model_type and lab
+    with open(results_path+alg+'/'+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
+        model_file = pickle.load(file)
+
+    #Extract the inputs of the model    
+    model = model_file['model']
+    features = model_file['json']
+    columns = model_file['columns']
+    imputer= model_file['imputer']
+    test = model_file['test']
+    
+    if model_type == 'mortality':
+        y = test['Outcome']
+    else:
+        y=test['Swab']
+        
+    X = test.iloc[:,0:(len(test.columns)-1)]
+            
+    y_pred = model.predict(X)
+    prob_pos = model.predict_proba(X)[:, 1]
+
+    return y, y_pred, prob_pos 
+
+    
+def classification_report_table_mlmodels(seeds,model_type, model_labs, results_path, sensitivity_threshold, confidence_level):
+    #Get the data 
+    cols = ['Algorithm','Model Labs','AUC','Threshold','Accuracy','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
+    
+    algs_list = ['xgboost','lr','cart']
+    tab = pd.DataFrame(columns = cols) 
+    
+    for model_lab in model_labs: 
+        for alg in algs_list:
+            
+            tab2 = pd.DataFrame(columns = cols) 
+            
+            for seedID in seeds:                            
+                y, y_pred, prob_pos = get_model_outcomes_algorithm_pickle(alg, model_type, model_lab, results_path, seedID)      
+                is_fpr, is_tpr, thresh = precision_recall_curve(y, prob_pos)
+
+                colnames = ['AUC','Threshold','Accuracy','Sensitivity','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
+                sum_table = pd.DataFrame(columns = colnames) 
+
+                for t in thresh:
+                    y_pred = [1 if m > t else 0 for m in prob_pos]
+                    sum_table.loc[len(sum_table)] = get_scores(y, y_pred, t, prob_pos).loc[0]
+            
+            
+                df = sum_table[sum_table['Sensitivity'] > sensitivity_threshold]
+                x = df[df['Sensitivity'] == df['Sensitivity'].min()].iloc[0]
+                x2 = pd.Series({'Algorithm':alg, 'Model Labs': model_lab})
+                     
+                tab2.loc[len(tab2)] = x2.append(x)
+            
+            cols2 =  set(cols).intersection(colnames) 
+
+            tab3 = get_table_confidence_interval(tab2, confidence_level, cols2)
+            tab3['Algorithm'] = alg
+            tab3['Model Type'] = model_type
+            tab3['Model Labs'] = model_lab                   
+            tab3 = tab3[tab.columns]              
+            tab = tab.append(tab3)                                       
+           
+    tab.to_csv('../results/mortality/paper_tables/summary_perforamance_mortality_algorithms_AUC_sensitivity.csv', index=False)
+    return tab
+
+
+def plot_auc_curve_validation(model_type, model_labs, results_path, validation_paths):    
+     
+    for model_lab in model_labs: 
+       
+        # #Then we add the validation set 1       
+        # y1, y_pred1, prob_pos1 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_path)
+        # fpr1, tpr1, _ = metrics.roc_curve(y1,  prob_pos1)
+        # auc1 = metrics.roc_auc_score(y1, prob_pos1)
+        # name1 = "AUC of Greek HC "
+
+        #Load model corresponding to model_type and lab
+        with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+            model_file = pickle.load(file)
+
+        seedID = model_file['seed']
+        
+        #First we add the training set
+        name2 = "AUC of Training Set "
+        y2, y_pred2, prob_pos2 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=True)     
+        fpr2, tpr2, _ = metrics.roc_curve(y2,  prob_pos2)
+        auc2 = metrics.roc_auc_score(y2, prob_pos2)
+        
+        #Then we add the testing set
+        name3 = "AUC of Testing Set "
+        y3, y_pred3, prob_pos3 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=False)     
+        fpr3, tpr3, _ = metrics.roc_curve(y3,  prob_pos3)
+        auc3 = metrics.roc_auc_score(y3, prob_pos3)
+        
+        
+        plt.close()
+        fig = plt.figure(1, figsize=(10, 10))
+        plt.plot(fpr1,tpr1,label=name1+str(round(auc1,3)))
+        plt.legend(loc=4)
+        plt.plot(fpr2,tpr2,label=name2+str(round(auc2,3)))
+        plt.legend(loc=4)
+        plt.plot(fpr3,tpr3,label=name3+str(round(auc3,3)))
+        plt.legend(loc=4)
+
+        plt.ylabel("Sensitivity")
+        plt.xlabel("1 - Specificity")
+        plt.tight_layout()
+
+        plt.savefig('../results/mortality/paper_plots/roc'+'_'+(model_lab)+'_best_auc_plot.png', bbox_inches='tight')
+        plt.close()
+
