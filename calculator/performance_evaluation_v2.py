@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import os
 import pickle
+import csv
 
 import evaluation_utils as u
 import matplotlib.pyplot as plt
@@ -18,6 +19,9 @@ import matplotlib.pyplot as plt
 #Paths for data access
 website_path = '/Users/agni/Packages/website/'
 results_path = '/Users/agni/Dropbox (Personal)/COVID_clinical/covid19_clean_data/xgboost/'
+validation_path = '/Users/agni/Dropbox (Personal)/COVID_clinical/covid19_greece/'
+
+
 
 #Select the model type
 model_types = ['mortality','infection']
@@ -27,6 +31,20 @@ seeds = list(range(1, 41))
 #Extract the seed
 SEED = 1
 SPINE_COLOR = 'gray'
+
+
+model_type = 'mortality'
+model_lab = 'with_lab'
+model_lab = 'without_lab'
+
+
+
+
+
+
+
+
+
 
 # Bootstrapped Results
 # Calibration
