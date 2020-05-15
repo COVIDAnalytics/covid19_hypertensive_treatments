@@ -38,7 +38,7 @@ model_type = 'mortality'
 
 # Table 1: AUC and Sensitivity results with confidence intervals
 sensitivity_threshold = 0.9
-tab = u.classification_report_table_validation(model_type, model_labs, results_path, validation_paths, sensitivity_threshold)
+tab = u.classification_report_table_validation(model_type, website_path, model_labs, results_path, validation_paths, sensitivity_threshold)
 
 # Table 2: AUC and Sensitivity results with confidence intervals across models
 confidence_level = 0.95

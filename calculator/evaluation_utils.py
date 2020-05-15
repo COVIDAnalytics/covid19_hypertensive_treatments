@@ -642,7 +642,7 @@ def get_validation_table_confidence_interval(tab2, cols2,n):
        tab3[i] = pd.Series(val)                 
     return tab3
 
-def create_metrics_table(cohort, cols, model_type, model_lab, results_path, seedID, train_option):
+def create_metrics_table(cohort, cols, model_type, model_lab, results_path, seedID, train_option, sensitivity_threshold):
     
     tab3 = pd.DataFrame(columns = cols) 
         
@@ -671,7 +671,7 @@ def create_metrics_table(cohort, cols, model_type, model_lab, results_path, seed
       
     return tab3
 
-def create_metrics_table_validation(cohort, cols, model_type, model_lab, website_path, results_path, validation_path):
+def create_metrics_table_validation(cohort, cols, model_type, model_lab, website_path, results_path, validation_path, sensitivity_threshold):
     
     tab3 = pd.DataFrame(columns = cols) 
         
@@ -702,7 +702,7 @@ def create_metrics_table_validation(cohort, cols, model_type, model_lab, website
 
 
 
-def classification_report_table_validation(model_type, model_labs, results_path, validation_paths, sensitivity_threshold):
+def classification_report_table_validation(model_type, website_path, model_labs, results_path, validation_paths, sensitivity_threshold):
     
     #Get the data 
     cols = ['Model Type','Model Labs','Cohort','N','AUC','Threshold','Accuracy','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
@@ -798,15 +798,17 @@ def classification_report_table_mlmodels(seeds,model_type, model_labs, results_p
     return tab
 
 
-def plot_auc_curve_validation(model_type, model_labs, results_path, validation_paths):    
+def plot_auc_curve_validation(model_type,website_path, model_labs, results_path, validation_paths):    
      
     for model_lab in model_labs: 
        
-        # #Then we add the validation set 1       
-        # y1, y_pred1, prob_pos1 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_path)
-        # fpr1, tpr1, _ = metrics.roc_curve(y1,  prob_pos1)
-        # auc1 = metrics.roc_auc_score(y1, prob_pos1)
-        # name1 = "AUC of Greek HC "
+        #Then we add the validation set 1       
+        y1, y_pred1, prob_pos1 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[0])
+        fpr1, tpr1, _ = metrics.roc_curve(y1,  prob_pos1)
+        auc1 = metrics.roc_auc_score(y1, prob_pos1)
+        name1 = "AUC of Greek HC "
+        
+        plt.close()
 
         #Load model corresponding to model_type and lab
         with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
@@ -814,12 +816,16 @@ def plot_auc_curve_validation(model_type, model_labs, results_path, validation_p
 
         seedID = model_file['seed']
         
+        plt.close()
+
         #First we add the training set
         name2 = "AUC of Training Set "
         y2, y_pred2, prob_pos2 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=True)     
         fpr2, tpr2, _ = metrics.roc_curve(y2,  prob_pos2)
         auc2 = metrics.roc_auc_score(y2, prob_pos2)
         
+        plt.close()
+
         #Then we add the testing set
         name3 = "AUC of Testing Set "
         y3, y_pred3, prob_pos3 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=False)     
@@ -839,7 +845,141 @@ def plot_auc_curve_validation(model_type, model_labs, results_path, validation_p
         plt.ylabel("Sensitivity")
         plt.xlabel("1 - Specificity")
         plt.tight_layout()
+        
+        with open('../results/mortality/paper_plots/roc'+'_'+(model_lab)+'_plot.pkl','wb') as fid:
+            pickle.dump(fig, fid)
 
-        plt.savefig('../results/mortality/paper_plots/roc'+'_'+(model_lab)+'_best_auc_plot.png', bbox_inches='tight')
+        plt.savefig('../results/mortality/paper_plots/roc'+'_'+(model_lab)+'_plot.png', bbox_inches='tight')
         plt.close()
+
+def plot_precision_recall_curve_validation(model_type,website_path, model_labs, results_path, validation_paths):
+    
+    for model_lab in model_labs: 
+       
+        #Then we add the validation set 1       
+        y1, y_pred1, prob_pos1 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[0])
+        precision1, recall1, _ = precision_recall_curve(y1,prob_pos1)
+        name1 = "Greek HC"
+        
+        plt.close()
+
+        #Load model corresponding to model_type and lab
+        with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+            model_file = pickle.load(file)
+
+        seedID = model_file['seed']
+        
+        plt.close()
+
+        #First we add the training set
+        name2 = "Training Set "
+        y2, y_pred2, prob_pos2 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=True)     
+        precision2, recall2, _ = precision_recall_curve(y2,prob_pos2)
+        
+        plt.close()
+
+        #Then we add the testing set
+        name3 = "AUC of Testing Set "
+        y3, y_pred3, prob_pos3 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=False)     
+        precision3, recall3, _ = precision_recall_curve(y3,prob_pos3)
+                              
+        
+        plt.close()
+        fig = plt.figure(1, figsize=(10, 10))
+        plt.plot(precision1, recall1,label=name1)
+        plt.legend(loc=4)
+        plt.plot(precision2, recall2,label=name2)
+        plt.legend(loc=4)
+        plt.plot(precision3, recall3,label=name3)
+        plt.legend(loc=4)
+
+        # axis labels
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.tight_layout()
+    
+        with open('../results/mortality/paper_plots/pr'+'_'+(model_lab)+'_plot.pkl','wb') as fid:
+            pickle.dump(fig, fid)
+
+        plt.savefig('../results/mortality/paper_plots/pr'+'_'+(model_lab)+'_plot.png', bbox_inches='tight')
+        plt.close()
+        
+def plot_calibration_curve_validation(model_type,website_path, model_labs, results_path, validation_paths):
+    
+    for model_lab in model_labs: 
+       
+        #Then we add the validation set 1       
+        y1, y_pred1, prob_pos1 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[0])
+        fraction_of_positives1, mean_predicted_value1 = \
+                calibration_curve(y1, prob_pos1, n_bins=10)
+
+        name1 = "Greek HC"
+        
+        plt.close()
+
+        #Load model corresponding to model_type and lab
+        with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+            model_file = pickle.load(file)
+
+        seedID = model_file['seed']
+        
+        plt.close()
+
+        #First we add the training set
+        name2 = "Training Set "
+        y2, y_pred2, prob_pos2 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=True)     
+        fraction_of_positives2, mean_predicted_value2 = \
+                calibration_curve(y2, prob_pos2, n_bins=10)
+     
+        plt.close()
+
+        #Then we add the testing set
+        name3 = "AUC of Testing Set "
+        y3, y_pred3, prob_pos3 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=False)     
+        fraction_of_positives3, mean_predicted_value3 = \
+                calibration_curve(y3, prob_pos3, n_bins=10)
+                      
+        
+        plt.close()
+        fig = plt.figure(1, figsize=(10, 10))
+        ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
+        ax2 = plt.subplot2grid((3, 1), (2, 0))
+
+        ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+        
+        
+        
+        ax1.plot(mean_predicted_value1, fraction_of_positives1, "s-",
+                     label=(name1))
+        ax2.hist(prob_pos1, range=(0, 1), bins=10, label=name1,
+                     histtype="step", lw=2)
+        
+        ax1.plot(mean_predicted_value2, fraction_of_positives2, "s-",
+                     label=(name2))
+        ax2.hist(prob_pos2, range=(0, 1), bins=10, label=name2,
+                     histtype="step", lw=2)
+   
+        ax1.plot(mean_predicted_value3, fraction_of_positives3, "s-",
+                     label=(name3))
+        ax2.hist(prob_pos3, range=(0, 1), bins=10, label=name3,
+                     histtype="step", lw=2)
+
+        ax1.set_ylabel("Fraction of positives")
+        ax1.set_ylim([-0.05, 1.05])
+        ax1.legend(loc="lower right")
+        ax1.set_title('Calibration plots  (reliability curve)')
+        
+        ax2.set_xlabel("Mean predicted value")
+        ax2.set_ylabel("Count")
+        ax2.legend(loc="upper center", ncol=2)
+
+        plt.tight_layout()
+
+        with open('../results/mortality/paper_plots/calibration'+'_'+(model_lab)+'_plot.pkl','wb') as fid:
+            pickle.dump(fig, fid)
+
+        plt.savefig('../results/mortality/paper_plots/calibration'+'_'+(model_lab)+'_plot.png', bbox_inches='tight')
+        plt.close()
+
+
 
