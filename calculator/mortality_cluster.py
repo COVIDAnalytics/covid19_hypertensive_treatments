@@ -116,4 +116,4 @@ from interpretableai import iai
 algorithm = iai.OptimalTreeClassifier
 name_param = o.name_params[4]
 
-best_oct = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 300, name_algo = 'oct')
+best_oct = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 250, name_algo = 'oct')

@@ -71,7 +71,7 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
         space  = [Integer(1, n_features, name='max_depth'),
                     Categorical(['gini', 'entropy', 'misclassification'], name = 'criterion'),
                     Real(10**-6, 1, "uniform", name ='minbucket'), 
-                    Real(10**-8, 1, "uniform", name ='cp')]
+                    Real(10**-15, 1, "uniform", name ='cp')]
 
 
     @use_named_args(space)
