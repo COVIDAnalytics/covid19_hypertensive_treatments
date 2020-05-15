@@ -879,7 +879,7 @@ def plot_precision_recall_curve_validation(model_type,website_path, model_labs, 
         plt.close()
 
         #Then we add the testing set
-        name3 = "AUC of Testing Set "
+        name3 = "Testing Set "
         y3, y_pred3, prob_pos3 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=False)     
         precision3, recall3, _ = precision_recall_curve(y3,prob_pos3)
                               
@@ -911,7 +911,7 @@ def plot_calibration_curve_validation(model_type,website_path, model_labs, resul
         #Then we add the validation set 1       
         y1, y_pred1, prob_pos1 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[0])
         fraction_of_positives1, mean_predicted_value1 = \
-                calibration_curve(y1, prob_pos1, n_bins=10)
+                calibration_curve(y1, prob_pos1, n_bins=10, strategy = 'quantile')
 
         name1 = "Greek HC"
         
@@ -929,15 +929,15 @@ def plot_calibration_curve_validation(model_type,website_path, model_labs, resul
         name2 = "Training Set "
         y2, y_pred2, prob_pos2 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=True)     
         fraction_of_positives2, mean_predicted_value2 = \
-                calibration_curve(y2, prob_pos2, n_bins=10)
+                calibration_curve(y2, prob_pos2, n_bins=10, strategy = 'quantile')
      
         plt.close()
 
         #Then we add the testing set
-        name3 = "AUC of Testing Set "
+        name3 = "Testing Set "
         y3, y_pred3, prob_pos3 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=False)     
         fraction_of_positives3, mean_predicted_value3 = \
-                calibration_curve(y3, prob_pos3, n_bins=10)
+                calibration_curve(y3, prob_pos3, n_bins=10, strategy = 'quantile')
                       
         
         plt.close()
