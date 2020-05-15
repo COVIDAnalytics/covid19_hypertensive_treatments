@@ -1,31 +1,70 @@
-Feature_Recoded,Type,Percent Missing,Mean,Standard Deviation,Minimum,25th Percentile,50th Percentile,75th Percentile,Maximum,Outcome
-Cardiac dysrhythmias,Categoric,0.0,0.0699545294046402,0.2551153898239136,0.0,0.0,0.0,0.0,1.0,All
-Chronic kidney disease,Categoric,0.0,0.022735221311450005,0.14908218383789062,0.0,0.0,0.0,0.0,1.0,All
-Coronary atherosclerosis and other heart disease,Categoric,0.0,0.04372158274054527,0.2045130580663681,0.0,0.0,0.0,0.0,1.0,All
-Diabetes,Categoric,0.0,0.12137110531330109,0.32661503553390503,0.0,0.0,0.0,0.0,1.0,All
-Gender,Categoric,0.0,0.3864987790584564,0.4870298206806183,0.0,0.0,0.0,1.0,1.0,All
-Outcome,Categoric,0.0,0.25008744316194476,0.4331389321549863,0.0,0.0,0.0,0.5,1.0,All
-Age,Numeric,0.0006995452955579351,67.09170532226562,15.686175346374512,0.0,57.0,68.0,79.0,100.0,All
-Heart Rate,Numeric,0.08779293459251492,90.77493286132812,16.7436466217041,41.0,79.0,89.0,101.0,167.0,All
-Oxygen Saturation,Numeric,0.06295907660020983,92.57648468017578,6.24772834777832,50.0,91.0,94.0,96.0,100.0,All
-Temperature,Numeric,0.06330884924798885,98.69168853759766,1.6036648750305176,93.19999694824219,97.5199966430664,98.41999816894531,99.72274780273438,104.0,All
-Cardiac dysrhythmias,Categoric,0.0,0.10209789872169495,0.3029893934726715,0.0,0.0,0.0,0.0,1.0,Non-survivor
-Chronic kidney disease,Categoric,0.0,0.0447552464902401,0.2069104164838791,0.0,0.0,0.0,0.0,1.0,Non-survivor
-Coronary atherosclerosis and other heart disease,Categoric,0.0,0.06293706595897675,0.24301928281784058,0.0,0.0,0.0,0.0,1.0,Non-survivor
-Diabetes,Categoric,0.0,0.15804195404052734,0.3650364577770233,0.0,0.0,0.0,0.0,1.0,Non-survivor
-Gender,Categoric,0.0,0.31748253107070923,0.4658224582672119,0.0,0.0,0.0,1.0,1.0,Non-survivor
-Outcome,Categoric,0.0,1.0,0.0,1.0,1.0,1.0,1.0,1.0,Non-survivor
-Age,Numeric,0.0013986013986013734,79.3585433959961,9.938531875610352,42.0,74.0,81.0,86.0,100.0,Non-survivor
-Heart Rate,Numeric,0.06153846153846154,88.90744018554688,17.296560287475586,41.0,78.0,87.0,100.0,167.0,Non-survivor
-Oxygen Saturation,Numeric,0.047552447552447585,88.5688247680664,8.50386905670166,50.0,85.19999694824219,91.0,94.0,100.0,Non-survivor
-Temperature,Numeric,0.0699300699300699,98.89606475830078,1.6982393264770508,93.37999725341797,97.69999694824219,98.77999877929688,100.04000091552734,104.0,Non-survivor
-Cardiac dysrhythmias,Categoric,0.0,0.05923507362604141,0.23612037301063538,0.0,0.0,0.0,0.0,1.0,Survivor
-Chronic kidney disease,Categoric,0.0,0.015391791239380836,0.12313321232795715,0.0,0.0,0.0,0.0,1.0,Survivor
-Coronary atherosclerosis and other heart disease,Categoric,0.0,0.03731343150138855,0.18957200646400452,0.0,0.0,0.0,0.0,1.0,Survivor
-Diabetes,Categoric,0.0,0.10914178937673569,0.3118910491466522,0.0,0.0,0.0,0.0,1.0,Survivor
-Gender,Categoric,0.0,0.4095149338245392,0.4918562173843384,0.0,0.0,0.0,1.0,1.0,Survivor
-Outcome,Categoric,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,Survivor
-Age,Numeric,0.0004664179104477695,63.00466537475586,15.110462188720703,0.0,54.0,63.0,74.0,100.0,Survivor
-Heart Rate,Numeric,0.09654850746268662,91.4218521118164,16.503253936767578,42.0,80.0,90.0,102.0,161.5,Survivor
-Oxygen Saturation,Numeric,0.06809701492537312,93.94245910644531,4.514091491699219,50.0,92.0,95.0,96.94444274902344,100.0,Survivor
-Temperature,Numeric,0.06110074626865669,98.62443542480469,1.5657768249511719,93.19999694824219,97.5199966430664,98.41999816894531,99.68000030517578,104.0,Survivor
+Feature_Recoded,All,,Survivor,,Non-Survivor,
+Cardiac dysrhythmias,200 (0.07%),0.0%,127 (0.06%),0.0%,73 (0.1%),0.0%
+Chronic kidney disease,65 (0.02%),0.0%,33 (0.02%),0.0%,32 (0.05%),0.0%
+Coronary atherosclerosis and other heart disease,125 (0.04%),0.0%,80 (0.04%),0.0%,45 (0.06%),0.0%
+Diabetes,345 (0.12%),0.0%,234 (0.11%),0.0%,111 (0.16%),0.0%
+Gender,1095 (0.39%),0.0%,868 (0.41%),0.0%,227 (0.32%),0.0%
+Outcome,711 (0.25%),0.0%,0 (0%),0.0%,711 (1%),0.0%
+Age,68 (57-79),0.1%,63 (54-74),0.0%,81 (73.25-86),0.1%
+Alanine Aminotransferase (ALT),27 (17-44),10.8%,27.85 (17.5-45),11.7%,25.5 (16-41),8.2%
+Aspartate Aminotransferase,36 (25-55),13.0%,34 (24.4-51),13.1%,45 (30.05-69),12.5%
+Blood Urea Nitrogen (BUN),17 (12.62-25.21),8.2%,15 (11.54-20),8.3%,29.46 (20.28-47.18),8.0%
+C-Reactive Protein,74.15 (29.09-149.48),4.3%,58.65 (22.73-119.34),4.1%,141.14 (71.99-223.09),4.9%
+Creatinine,0.95 (0.77-1.22),4.3%,0.9 (0.74-1.07),4.5%,1.27 (0.96-1.8),3.7%
+Glycemia,118 (105-141),6.9%,115 (103.45-133),7.2%,134 (113-171),6.0%
+Heart Rate,89 (79-101),8.6%,90 (80-102),9.4%,87 (78-100),6.2%
+Hemoglobin,13.9 (12.7-15),11.4%,14 (12.9-15),8.1%,13.5 (12-14.7),21.4%
+Leukocytes,6.76 (5.15-9.18),11.8%,6.53 (5.05-8.69),8.2%,8.01 (5.66-11.35),22.6%
+Mean Corpuscular Volume,87.8 (84.9-91),11.5%,87.5 (84.7-90.4),8.2%,89.3 (85.75-92.7),21.4%
+Oxygen Saturation,94 (90-96),18.0%,94.4 (92-96),17.2%,88.5 (80-93.6),20.3%
+Platelets,201 (156-263),11.5%,206 (160-266.5),8.2%,185 (141-246.75),21.5%
+Potassium,4.06 (3.7-4.4),7.8%,4.02 (3.72-4.4),7.4%,4.1 (3.7-4.6),9.3%
+Prothrombin Time,1.11 (1.02-1.25),25.3%,1.11 (1.02-1.23),28.4%,1.13 (1.02-1.31),15.9%
+Sodium,137.1 (135-140),4.5%,137 (135-139.42),4.7%,138 (135-141),3.9%
+Temperature,98.42 (97.52-99.71),6.3%,98.36 (97.52-99.64),6.0%,98.78 (97.7-100.04),6.9%
+Cardiac dysrhythmias,,,,,,
+Chronic kidney disease,,,,,,
+Coronary atherosclerosis and other heart disease,,,,,,
+Diabetes,,,,,,
+Gender,,,,,,
+Outcome,,,,,,
+Age,,,,,,
+Alanine Aminotransferase (ALT),,,,,,
+Aspartate Aminotransferase,,,,,,
+Blood Urea Nitrogen (BUN),,,,,,
+C-Reactive Protein,,,,,,
+Creatinine,,,,,,
+Glycemia,,,,,,
+Heart Rate,,,,,,
+Hemoglobin,,,,,,
+Leukocytes,,,,,,
+Mean Corpuscular Volume,,,,,,
+Oxygen Saturation,,,,,,
+Platelets,,,,,,
+Potassium,,,,,,
+Prothrombin Time,,,,,,
+Sodium,,,,,,
+Temperature,,,,,,
+Cardiac dysrhythmias,,,,,,
+Chronic kidney disease,,,,,,
+Coronary atherosclerosis and other heart disease,,,,,,
+Diabetes,,,,,,
+Gender,,,,,,
+Outcome,,,,,,
+Age,,,,,,
+Alanine Aminotransferase (ALT),,,,,,
+Aspartate Aminotransferase,,,,,,
+Blood Urea Nitrogen (BUN),,,,,,
+C-Reactive Protein,,,,,,
+Creatinine,,,,,,
+Glycemia,,,,,,
+Heart Rate,,,,,,
+Hemoglobin,,,,,,
+Leukocytes,,,,,,
+Mean Corpuscular Volume,,,,,,
+Oxygen Saturation,,,,,,
+Platelets,,,,,,
+Potassium,,,,,,
+Prothrombin Time,,,,,,
+Sodium,,,,,,
+Temperature,,,,,,

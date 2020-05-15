@@ -7,42 +7,6 @@ import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
 import analyzer.dataset as ds
 
-#%% Load mapping (from website/risk_calculators/utils.py)
-
-oxygen = 'Oxygen Saturation'
-
-title_mapping = {
-    'ABG: Oxygen Saturation (SaO2)': oxygen,
-    'Alanine Aminotransferase (ALT)': 'Alanine Aminotransferase (ALT)',
-    'Age': 'Age',
-    'Aspartate Aminotransferase (AST)': 'Aspartate Aminotransferase',
-    'Blood Creatinine': 'Creatinine',
-    'Blood Sodium': 'Sodium',
-    'Blood Urea Nitrogen (BUN)': 'Blood Urea Nitrogen (BUN)',
-    'Body Temperature': 'Temperature',
-    'C-Reactive Protein (CRP)':  'C-Reactive Protein',
-    'CBC: Hemoglobin': 'Hemoglobin',
-    'CBC: Leukocytes': 'Leukocytes',
-    'CBC: Mean Corpuscular Volume (MCV)': 'Mean Corpuscular Volume',
-    'CBC: Platelets': 'Platelets',
-    'CBC: Red cell Distribution Width (RDW)': 'Red Cell Distribution Width (RDW)',
-    'Cardiac Frequency': 'Heart Rate',
-    'Cardiac dysrhythmias': 'Cardiac dysrhythmias',
-    'Gender' : 'Gender',
-    'Glycemia': 'Glycemia',
-    'Potassium Blood Level': 'Potassium',
-    'Prothrombin Time (INR)': 'Prothrombin Time',
-    'Systolic Blood Pressure': 'Systolic Blood Pressure (SYS)',
-    'SaO2': oxygen,
-    'Blood Calcium': 'Calcium',
-    'ABG: PaO2': 'Partial Pressure Oxygen (PaO2)',
-    'ABG: pH': 'Arterial Blood Gas pH',
-    'Cholinesterase': 'Cholinesterase',
-    'Respiratory Frequency': 'Respiratory Frequency',
-    'ABG: MetHb': 'Arterial Blood Gas Methemoglobinemia',
-    'Total Bilirubin': 'Total Bilirubin',
-    'Comorbidities':'Comorbidities'
-}
 
 #%% Load function
 def get_dataset(model_type, model_lab, columns, imputer, impute = False, path_cremona = '../data/cremona/', path_hm = '../data/spain/'):
@@ -104,18 +68,18 @@ def descriptive_table(data, features, title_mapping):
     
     summary_full = summary_numeric.append(summary_categoric)
     summary_full['Missing_Pct'] = 1 - summary_full['count']/data.shape[0]
-    summary_full.drop(["count"], axis = 1, inplace = True)
-    summary_full.columns = ['Mean', 'Standard Deviation', 
+    # summary_full.drop(["count"], axis = 1, inplace = True)
+    summary_full.columns = ['Count', 'Mean', 'Standard Deviation', 
                             'Minimum', '25th Percentile', '50th Percentile',
                             '75th Percentile', 'Maximum', 'Type', 'Percent Missing']
     summary_full["Feature"] = summary_full.index
     summary_full["Feature_Recoded"] = summary_full["Feature"].replace(title_mapping, inplace=False)
-    final_cols = ['Feature_Recoded', 'Type', 'Percent Missing', 'Mean', 'Standard Deviation',
+    final_cols = ['Feature_Recoded', 'Type', 'Count', 'Percent Missing', 'Mean', 'Standard Deviation',
               'Minimum', '25th Percentile', '50th Percentile','75th Percentile', 'Maximum']
     
     return summary_full[final_cols].sort_values(by = ['Type', 'Feature_Recoded'])
 
-def generate_summary(model_type, model_lab, title_mapping, website_path):
+def generate_summary(model_type, model_lab, website_path, title_mapping):
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
             model_file = pickle.load(file)
     
@@ -139,3 +103,8 @@ def generate_summary(model_type, model_lab, title_mapping, website_path):
     res0['Outcome'] = 'Survivor' if model_type == 'mortality' else 'No Infection'
     
     return pd.concat([resAll, res1, res0])
+
+# def clean_summary(summary):
+
+    
+    
