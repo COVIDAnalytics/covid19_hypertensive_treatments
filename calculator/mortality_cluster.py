@@ -103,7 +103,17 @@ if jobid == 1:
 # best_cart = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'cart')
 
 # Train Logistic regression
-algorithm = o.algorithms[3]
-name_param = o.name_params[3]
+# algorithm = o.algorithms[3]
+# name_param = o.name_params[3]
 
-best_lr = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'lr')
+# best_lr = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'lr')
+
+# Train OCT
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
+from interpretableai import iai
+
+algorithm = iai.OptimalTreeClassifier
+name_param = o.name_params[4]
+
+best_oct = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 300, name_algo = 'oct')

@@ -108,15 +108,25 @@ def train_and_evaluate(algorithm, X, y, seed, best_params):
     X_test = impute_missing(X_test)
 
     best_model = algorithm()
+    if 'max_depth' in best_params:
+        best_params['max_depth'] = int(best_params['max_depth'])
     best_model.set_params(**best_params)
     best_model.fit(X_train, y_train)
 
-    accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC  = \
-                scores(best_model,
-                    X_train,
-                    y_train,
-                    X_test,
-                    y_test)
+    if 'minbucket' not in best_params:
+        accTrain, accTest, isAUC, ofsAUC  = \
+                    scores(best_model,
+                        X_train,
+                        y_train,
+                        X_test,
+                        y_test)
+    
+    else:
+        isAUC = best_model.score(X_train, y_train, criterion='auc')
+        ofsAUC = best_model.score(X_test, y_test, criterion='auc')
+        accTrain = best_model.score(X_train, y_train, criterion='misclassification')
+        accTest = best_model.score(X_test, y_test, criterion='misclassification')
+
         
     print('Seed = ', seed)
     print('In Sample AUC', isAUC)
@@ -125,7 +135,7 @@ def train_and_evaluate(algorithm, X, y, seed, best_params):
     print('Out of Sample Misclassification', accTest)
     print('\n')
 
-    return best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC
+    return best_model, accTrain, accTest, isAUC, ofsAUC
 
 #INITIATE 10-FOLD CV
 
