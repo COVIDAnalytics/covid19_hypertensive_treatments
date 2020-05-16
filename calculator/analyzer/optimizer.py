@@ -46,8 +46,8 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
         n_features = len(X.columns)
         space  = [Integer(10, 500, name = "n_estimators"),
                     Integer(2, 10, name='max_depth'),
-                    Real(1, 200, 'uniform', name ='min_samples_leaf'),
-                    Real(2, 200, 'uniform', name = 'min_samples_split'),
+                    Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
+                    Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
                     Categorical(['sqrt', 'log2'], name = 'max_features')]
 
     elif name_algo == 'cart':
@@ -57,7 +57,7 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
                     Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
                     Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
                     Real(0, 1, 'uniform', name = 'min_impurity_decrease'),
-                    Categorical(['gini', 'entropy'], name = 'criterioan')]
+                    Categorical(['gini', 'entropy'], name = 'criterion')]
 
     elif name_algo == 'lr':
         n_features = len(X.columns)
