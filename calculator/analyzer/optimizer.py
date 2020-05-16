@@ -33,7 +33,7 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
 
     if name_algo == 'xgboost':
         n_features = len(X.columns)
-        space  = [Integer(10, 500, name="n_estimators"),
+        space  = [Integer(10, 600, name="n_estimators"),
                     Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
                     Integer(5, 15, name='max_depth'),
                     Real(10**-4, 20, 'uniform', name='min_child_weight'),
@@ -44,7 +44,7 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
 
     elif name_algo == 'rf':
         n_features = len(X.columns)
-        space  = [Integer(10, 500, name = "n_estimators"),
+        space  = [Integer(10, 600, name = "n_estimators"),
                     Integer(5, 15, name='max_depth'),
                     Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
                     Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
