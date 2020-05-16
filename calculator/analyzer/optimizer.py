@@ -35,24 +35,24 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
         n_features = len(X.columns)
         space  = [Integer(10, 600, name="n_estimators"),
                     Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
-                    Integer(5, 15, name='max_depth'),
+                    Integer(5, 7, name='max_depth'),
                     Real(10**-4, 20, 'uniform', name='min_child_weight'),
-                    Real(10**-4, 40, 'uniform', name='gamma'),
-                    Real(10**-4, 10**0, "log-uniform", name='colsample_bytree'),
-                    Real(10**-4, 60, 'uniform', name='lambda'),
-                    Real(10**-4, 30, 'uniform', name='alpha')]
+                    Real(10**-7, 40, 'uniform', name='gamma'),
+                    Real(10**-2, 2, "uniform", name='colsample_bytree'),
+                    Real(10**-7, 60, 'uniform', name='lambda'),
+                    Real(10**-7, 30, 'uniform', name='alpha')]
 
     elif name_algo == 'rf':
         n_features = len(X.columns)
         space  = [Integer(10, 600, name = "n_estimators"),
-                    Integer(5, 15, name='max_depth'),
+                    Integer(5, 7, name='max_depth'),
                     Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
                     Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
                     Categorical(['sqrt', 'log2'], name = 'max_features')]
 
     elif name_algo == 'cart':
         n_features = len(X.columns)
-        space  = [Integer(5, 15, name='max_depth'),
+        space  = [Integer(5, 7, name='max_depth'),
                     Real(0, 0.5, 'uniform', name ='min_weight_fraction_leaf'),
                     Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
                     Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
