@@ -27,7 +27,7 @@ title_mapping = {
     'Cardiac Frequency': 'Heart Rate (bpm)',
     'Cardiac dysrhythmias': 'Cardiac dysrhythmias',
     'Gender': 'Gender (M/F)',
-    'Glycemia': 'Blood Glucose',
+    'Glycemia': 'Blood Glucose (mg/dL)',
     'Potassium Blood Level': 'Potassium',
     'Prothrombin Time (INR)': 'Prothrombin Time (INR)',
     'Systolic Blood Pressure': 'Systolic Blood Pressure (mmHg)',
@@ -47,7 +47,7 @@ title_mapping = {
 }
 
 title_mapping_summary = {
-    'ABG: Oxygen Saturation (SaO2)': 'Oxygen\n Saturation (\%)',
+    'ABG: Oxygen Saturation (SaO2)': 'Oxygen Saturation (\%)',
     'Alanine Aminotransferase (ALT)': 'ALT (U/L)',
     'Age': 'Age',
     'Aspartate Aminotransferase (AST)': 'AST (U/L)',
@@ -64,7 +64,7 @@ title_mapping_summary = {
     'Cardiac Frequency': 'Heart Rate (bpm)',
     'Cardiac dysrhythmias': 'Cardiac\n dysrhythmias',
     'Gender': 'Gender (M/F)',
-    'Glycemia': 'Blood Glucose',
+    'Glycemia': 'Blood Glucose (mg/dL)',
     'Potassium Blood Level': 'Potassium',
     'Prothrombin Time (INR)': 'INR',
     'Systolic Blood Pressure': 'Systolic BP (mmHg)',
@@ -73,9 +73,9 @@ title_mapping_summary = {
     # 'ABG: PaO2': 'Partial Pressure\n Oxygen (PaO2)',
     # 'ABG: pH': 'Arterial Blood Gas pH',
     'Cholinesterase': 'Cholinesterase',
-    'Respiratory Frequency': 'Respiratory\n Frequency',
+    'Respiratory Frequency': 'Respiratory Frequency',
     # 'ABG: MetHb': 'Arterial Blood Gas Methemoglobinemia',
-    'Total Bilirubin': 'Total\n Bilirubin (mg/dL)',
+    'Total Bilirubin': 'Total Bilirubin (mg/dL)',
     'Comorbidities': 'Comorbidities',
     'Diabetes': 'Diabetes',
     'Chronic kidney disease': 'Chronic\n kidney disease',
@@ -97,11 +97,13 @@ data_path = '../../covid19_clean_data/xgboost/'
 #     'Gender ==  0': 'Male',
 #     'Gender == 1': 'Female'}
 
-for model_type, model_lab in itertools.product(['infection', 'mortality'], ['with_lab', 'without_lab']):
+for model_type, model_lab in itertools.product(['mortality', 'infection'],
+                                               ['with_lab', 'without_lab']):
     # for model_type, model_lab in itertools.product(['mortality'],['without_lab']):
     print("Model: %s, %s" % (model_type, model_lab))
     save_path = '../results/'+model_type+'/model_'+model_lab+'/'
-    imp.feature_importance(model_type, model_lab, website_path, data_path, save_path, title_mapping_summary,
+    imp.feature_importance(model_type, model_lab, website_path, data_path,
+                           save_path, title_mapping_summary,
                            latex=True, feature_limit=10, dependence_plot=True)
 
 

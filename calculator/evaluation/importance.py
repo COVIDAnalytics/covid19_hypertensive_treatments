@@ -118,9 +118,6 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     assert model_type in('mortality','infection'), "Invalid outcome"
     assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
 
-    if latex:
-        suffix_filter = suffix_filter+"_latex"
-
     ## Load model corresponding to *model_type* and *model_lab*.
 
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
@@ -134,6 +131,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     model = model_file['model']
     data = model_file['train']
+    data_test = model_file['test']
 
     ## Load data: to be replaced once we store X_train and X_test. Currently no imputation
 
@@ -141,51 +139,49 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
         print("Raw Data Rows = "+str(data.shape[0]))
         print("Applying filter: "+data_filter)
         data = data.query(data_filter)
+        data_test= data.query(data_test)
         print("Filtered Data  Rows = "+str(data.shape[0]))
 
     if model_type == "mortality":
         X = data.drop(["Outcome"], axis=1, inplace = False)
         y = data["Outcome"]
+        X_test = data_test.drop(["Outcome"], axis=1, inplace = False)
+        y_test = data_test["Outcome"]
+
     else:
         X = data.drop(["Swab"], axis=1, inplace = False)
         y = data["Swab"]
+        X_test = data_test.drop(["Swab"], axis=1, inplace = False)
+        y_test = data_test["Swab"]
 
     ## Calculate SHAP values (for each observation x feature)
-    explainer = shap.TreeExplainer(model, feature_importance="tree_path_dependent");
+    explainer = shap.TreeExplainer(model,
+                                   data=X_test,
+                                   );
     shap_values = explainer.shap_values(X);
 
     # Recode column names
     X.columns = [title_mapping[i] for i in X.columns]
 
 
-    # Filter outlierrs
-    #  for c in X.columns:
-    #      filter_idx = (X[c] <= X[c].quantile(0.99)) & (X[c] >= X[c].quantile(0.01))
-    #      X = X[filter_idx]
-    #      shap_values = shap_values[np.argwhere(filter_idx.tolist()).flatten(), :]
-
-
-
-    #  ft_recode = []
-    #  for i in X.columns:
-    #      ft_recode.append(title_mapping[i])
-
 
 
     # Write complete grid as in original SHAP paper
+
+    # Old way with gridspec
     #  fig = plt.figure(constrained_layout=True)
     #  gs = fig.add_gridspec(2, 4)
     #  gs.update(wspace=0.5)  # Reduce space
 
-    # Main summary
-    # TODO: Complete (command does not take axis)
-
-    # Detailed
+    # New way with just subplots
     max_display = np.minimum(len(X.columns) - 1, 9)   # -1 because we remove age
     n_cols = 3
-    latexify(columns=1)
+    if latex:
+        latexify(columns=1)
+
+
     fig, axs = plt.subplots(np.ceil(max_display/n_cols).astype(np.int64), n_cols,
-                            figsize=(20, 20),
+                            figsize=(10, 10), constrained_layout=True
                             #  facecolor='w', edgecolor='k'
                             )
 
@@ -200,32 +196,58 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     for idx in range(max_display):
         ax = axs[idx]
-        try:
-            feat = feat_display[idx]
-        except:
-            import ipdb; ipdb.set_trace()
+        feat = feat_display[idx]
         shap.dependence_plot(feat,
                              shap_values, X, ax=ax,
                              interaction_index="Age",
                              xmin="percentile(1)", xmax="percentile(99)",
-                             alpha=0.5,
+                             #  alpha=0.5,
+                             x_jitter=0.1,
+                             dot_size=3,
                              show=False)
         ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
         ax.set_ylim([-2, 2])
         if feat.split(" ", 1)[0] in ['CRP']:
             ax.set_xscale('log')
 
-        ax.grid()
+        # Remove colorbar
+        ax.collections[0].colorbar.remove()
+
+        #  import ipdb; ipdb.set_trace()
+        ax.hlines(y=0, xmin=X[feat].min(), xmax=X[feat].max(),
+                  color="#cccccc", lw=0.5, linestyle="dotted", zorder=-1)
+
+    #  fig.subplots_adjust(right=0.8)
 
 
-    fig.savefig(save_path+'feature_plot'+suffix_filter+'.pdf')
+    # Plot colorbar on the right
+    cb = fig.colorbar(ax.collections[0], ax=axs.flat)
+    cb.set_label("Age", size=13)
+    cb.ax.tick_params(labelsize=11)
+    cb.set_alpha(1)
+    cb.outline.set_visible(False)
+    bbox = cb.ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    #  cb.ax.set_aspect((bbox.height - 0.8) * 20)
+    cb.ax.set_aspect((bbox.height - 0.8) * 10)
 
-    #  shap.summary_plot(shap_values, X, show=False,
-    #                    feature_names=ft_recode,
-    #                    max_display=feature_limit,
-    #                    plot_type="violin",
-    #                    ax=ax0)
-    #
+
+    print("Number of samples %d" % len(X))
+
+    fig.savefig(save_path+'feature_plot'+suffix_filter+'.pdf',  bbox_inches='tight')
+
+    plt.close()
+    shap.summary_plot(shap_values, X, show=False,
+                      max_display=max_display,
+                      plot_size=(10, 5),
+                      feature_names=[c[:c.find("(")] if c.find("(") != -1 else c for c in X.columns],
+                      plot_type="violin")
+    f = plt.gcf()
+    f.savefig(save_path+'summary_plot'+suffix_filter+'.pdf', bbox_inches='tight')
+    plt.clf()
+
+
+
+  #
     #  # Test
     #  ax1 = fig.add_subplot(gs[1, 0:2])
     #  shap.summary_plot(shap_values, X, show=False,
