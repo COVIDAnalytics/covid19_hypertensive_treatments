@@ -1,5 +1,9 @@
+import pandas as pd
 
-path = '/nfs/sloanlab001/data/HartfordHealthCare/HHCtoMIT/Oncology/May2020/20200512 '
+
+path = '/nfs/sloanlab001/data/HartfordHealthCare/HHCtoMIT/HHC2020100_MIT_Risk_Calc/'
+
+df = pd.read_csv('%shhDYNIdeas_COVID_Prediction_Response_Hist_05012020_05142020_202005150219.txt' % path, sep='|')
 
 def load_hartford(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, demographics_data = False, swabs_data = False):
 
