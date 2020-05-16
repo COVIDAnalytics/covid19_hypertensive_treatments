@@ -12,25 +12,34 @@ import numpy as np
 import pickle
 
 
-#path = '../../../Dropbox (Personal)/COVID_clinical/covid19_sotiria_data'
+#path = '../../../Dropbox (Personal)/COVID_clinical/covid19_sevilla'
 
 RENAMED_COLUMNS = {
     'ï»¿ID':'PATIENT ID',
-    'AGE':'Age',
-    'SEX':'Gender',
-    'HTN':'Essential hypertension',
-    'DM':'Diabetes',
-    'CHD':'Coronary atherosclerosis and other heart disease',
-    'HF':'Cardiac dysrhythmias',
-    'Chronic_Renal_dis':'Chronic renal disfunction',
-    'Liver_dis':'Liver disfunction',
-    'Dof_ADMISSION':'Date_Admission',
+    'Age (Age)':'Age',
+    'Sex (Sex)':'Gender',
+    'Did the patient die prior to discharge? (Did_the_patient_die_prior_to_discharge)':'Outcome',
+    'Diabetes (Diabetes)':'Diabetes',
+    'Hypertension (Hypertension)':'Essential hypertension',    
+    'Coronary heart disease (Coronary_heart_disease)':'Coronary atherosclerosis and other heart disease',
+    'Chronic kidney/renal disease (Chronic_kidney_renal_disease)':'Chronic renal disfunction',
+    'Date/Time of Hospital Admission (Date_Time_of_Hospital_Admission)':'Date_Admission',
     'Death':'Outcome',
+    'Oxygen Saturation':'ABG: Oxygen Saturation (SaO2)',
+    'Max temperature (celsius) (Max_temperature_celsius)':'Body Temperature',
+    'Pulse >=125 beats per min (Pulse_greq125_beats_per_min)':'Cardiac Frequency',
+    'Chronic obstructive lung (Chronic_obstructive_lung)':'COPD',
+    'Current smoker (Current_smoker)':'Smoking_history',
+    'Current drinker (Current_drinker)':'alcohol_abuse',
+    'Cancer (Any) (Cancer_Any)':'Cancer', 
+    'Systolic blood pressure <90mm Hg (Systolic_blood_pressure_lt_90mm_Hg)':'Systolic Blood Pressure'}
+    
+
+
+    {'HF':'Cardiac dysrhythmias',
+    'Liver_dis':'Liver disfunction',
     'RR_adm':'Respiratory Frequency',
-    'Fever_max_inh':'Body Temperature',
-    'HR_adm':'Cardiac Frequency',
     'GLU_PRIMERA/FIRST_URG/EMERG':'Glycemia',
-    'SatO2_adm':'ABG: Oxygen Saturation (SaO2)',
     'SBP_adm':'Systolic Blood Pressure',
     'Tbil_adm':'Total Bilirubin',
     'WBC_adm':'CBC: Leukocytes', #needs to be divided by 1000
@@ -54,24 +63,36 @@ RENAMED_COLUMNS = {
     'trop_adm':'troponin'}
 
 
+
 DEMOGRAPHICS_COLUMNS = ['PATIENT ID','Age','Gender']
 
-ADMISSION_COLUMNS = ['PATIENT ID','Outcome']
+ADMISSION_COLUMNS = ['PATIENT ID','Date_Admission','Outcome']
 
 
 COMORBIDITIES_COLUMNS = ['PATIENT ID','Essential hypertension', 'Diabetes', 
                  'Coronary atherosclerosis and other heart disease',
-                 'Cardiac dysrhythmias',
-                 'Stroke',
                  'Chronic renal disfunction',
-                 'Liver disfunction',
-                 'COPD',
-                 'Asthma','Smoking_history',
-                 'alcohol_abuse','obesity',
-                 'Cancer','Hematologic_malignancies',
-                 'Immunodefisciency']
+                 'COPD','Smoking_history',
+                 'alcohol_abuse',
+                 'Cancer']
 
-VITALS_COLUMNS = ['PATIENT ID','Body Temperature', 'Cardiac Frequency', 'Systolic Blood Pressure', 'Respiratory Frequency']
+VITALS_COLUMNS = ['PATIENT ID','Body Temperature', 'Cardiac Frequency']
+
+
+EXTRA_COLUMNS = ['PATIENT ID',
+                 'Cardiac dysrhythmias',
+                 'Liver disfunction']
+                 
+                 
+                 
+                 # 'Cholinesterase',              
+                 # 'Blood Calcium',            
+                 # 'Blood Amylase',            
+                 # 'Activated Partial Thromboplastin Time (aPTT)',            
+                 # 'CBC: Mean Corpuscular Volume (MCV)',
+                 # 'Blood Sodium',
+                 # 'Potassium Blood Level',
+                 # 'Glycemia']
 
 
 LAB_METRICS = ['PATIENT ID',
@@ -95,25 +116,23 @@ LAB_METRICS = ['PATIENT ID',
                'troponin',
                'Urea']
 
-EXTRA_COLUMNS = ['PATIENT ID',
-                 'Cholinesterase',              
-                 'Blood Calcium',            
-                 'Blood Amylase',            
-                 'Activated Partial Thromboplastin Time (aPTT)',            
-                 'CBC: Mean Corpuscular Volume (MCV)',
-                 'Blood Sodium',
-                 'Potassium Blood Level',
-                 'Glycemia']
 
-
-def load_greece(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, demographics_data = True, extra_data = True):
+def load_sevilla, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, demographics_data = True, extra_data = True):
 
     # Load admission info
-    df = pd.read_csv('%s/greece_covid_data.csv' % path, sep=',' , encoding= 'unicode_escape')
-     
+    df = pd.read_csv('%s/COVID19_SASpatients_v1.csv' % path, sep=',' , encoding= 'unicode_escape')
+    
+    # Filter to only patients for which we know the endpoint  
+    df = df[df['Discharged? (Discharged)'].notnull()]
+    df = df[~(df['Discharged? (Discharged)']=='No') & (df['Did the patient die prior to discharge? (Did_the_patient_die_prior_to_discharge)']=='No') ]
+    
+    #Drop columns that only contain NA values
+    df = df.dropna(axis=1, how='all')
+    
     #Rename the relevant columns
     df = df.rename(columns=RENAMED_COLUMNS)
-
+    
+    #Keep relevant columns for that are in the calculator already
     dataset_admissions = df[ADMISSION_COLUMNS]
    
     # Filter to relevant patients
@@ -124,13 +143,25 @@ def load_greece(path, discharge_data = True, comorbidities_data = True, vitals_d
     
     #Vital values
     dataset_vitals = df[VITALS_COLUMNS]
-      
-    # Lab values
-    dataset_labs = df[LAB_METRICS]
+    
+    #Dictionary for cardiac frequency values
+    dataset_vitals[['Cardiac Frequency']] = dataset_vitals[['Cardiac Frequency']].replace(['Yes','No'], [26,19])   
+    
+    #Dictionary for binary values
+    binary_dict = {'Yes': 1,'No': 0}
     
     #Comorbidities
     dataset_comorbidities = df[COMORBIDITIES_COLUMNS]
+    dataset_comorbidities[COMORBIDITIES_COLUMNS] = dataset_comorbidities[COMORBIDITIES_COLUMNS].replace(['Yes','No'], [1,0])   
     
+    
+    
+ 
+        
+    # Lab values
+    dataset_labs = df[LAB_METRICS]
+    
+ 
     # Oxygen saturation remove the %
     dataset_labs['ABG: Oxygen Saturation (SaO2)'] = dataset_labs['ABG: Oxygen Saturation (SaO2)'].str.replace('%','').astype(float)
 

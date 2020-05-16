@@ -58,6 +58,15 @@ X_spain, y_spain =  ds.create_dataset(data_spain,
                                       extra_data,
                                       prediction = prediction)
 
+X_greece, y_greece =  ds.create_dataset(data_greece,
+                                      discharge_data,
+                                      comorbidities_data,
+                                      vitals_data,
+                                      lab_tests,
+                                      demographics_data,
+                                      extra_data,
+                                      prediction = prediction)
+
 # Merge dataset
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
