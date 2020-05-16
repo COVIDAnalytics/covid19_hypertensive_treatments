@@ -105,11 +105,17 @@ if jobid == 3:
 
 # best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
 
-# Train CART
-algorithm = o.algorithms[2]
-name_param = o.name_params[2]
+# Train RF
+algorithm = o.algorithms[1]
+name_param = o.name_params[1]
 
-best_cart = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'cart')
+best_rf = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'rf')
+
+# Train CART
+# algorithm = o.algorithms[2]
+# name_param = o.name_params[2]
+
+# best_cart = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'cart')
 
 # Train Logistic regression
 # algorithm = o.algorithms[3]
