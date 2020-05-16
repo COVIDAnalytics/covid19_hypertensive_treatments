@@ -97,7 +97,7 @@ def scores(model, t_X, t_Y, te_X, te_Y):
 
     ofs_fpr, ofs_tpr, _ = roc_curve(te_Y, pred_te_Y)
     ofsAUC = auc(ofs_fpr, ofs_tpr)
-    return (accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC)
+    return (accTrain, accTest, isAUC, ofsAUC)
 
 #DEFINE FUNCTION THAT TRAINS A MODEL AND OUTPUTS THE PERFORMANCES
 
@@ -156,7 +156,7 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
     print(pd.DataFrame(bestHypXGB.items(), columns = ['Parameter', 'Value']))
     
     bestXGB = gridsearch.best_estimator_
-    accTrain_XGB, accTest_XGB, ofs_fpr_XGB, ofs_tpr_XGB, isAUC_XGB, ofsAUC_XGB  = \
+    accTrain_XGB, accTest_XGB, isAUC_XGB, ofsAUC_XGB  = \
             scores(bestXGB,
                    X_train.astype(np.float64),
                    y_train.astype(int),
@@ -192,7 +192,7 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     print(pd.DataFrame(bestHypRF.items(), columns = ['Parameter', 'Value']))
     
     bestRF = gridsearch.best_estimator_
-    accTrain_RF, accTest_RF, ofs_fpr_RF, ofs_tpr_RF, isAUC_RF, ofsAUC_RF  = \
+    accTrain_RF, accTest_RF, isAUC_RF, ofsAUC_RF  = \
             scores(bestRF,
                    X_train.astype(np.float64),
                    y_train.astype(int),
