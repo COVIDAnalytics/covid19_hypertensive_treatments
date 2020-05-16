@@ -106,10 +106,10 @@ if jobid == 3:
 # best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
 
 # Train RF
-algorithm = o.algorithms[1]
-name_param = o.name_params[1]
+# algorithm = o.algorithms[1]
+# name_param = o.name_params[1]
 
-best_rf = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'rf')
+# best_rf = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'rf')
 
 # Train CART
 # algorithm = o.algorithms[2]
@@ -124,14 +124,14 @@ best_rf = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450,
 # best_lr = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'lr')
 
 # Train OCT
-# from julia.api import Julia
-# jl = Julia(compiled_modules=False)
-# from interpretableai import iai
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
+from interpretableai import iai
 
-# algorithm = iai.OptimalTreeClassifier
-# name_param = o.name_params[4]
+algorithm = iai.OptimalTreeClassifier
+name_param = o.name_params[4]
 
-# best_oct = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 250, name_algo = 'oct')
+best_oct = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 250, name_algo = 'oct')
 
 print(algorithm)
 
