@@ -33,9 +33,9 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
 
     if name_algo == 'xgboost':
         n_features = len(X.columns)
-        space  = [Integer(10, 1300, name="n_estimators"),
+        space  = [Integer(10, 500, name="n_estimators"),
                     Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
-                    Integer(1, n_features, name='max_depth'),
+                    Integer(2, 10, name='max_depth'),
                     Real(10**-4, 20, 'uniform', name='min_child_weight'),
                     Real(10**-4, 40, 'uniform', name='gamma'),
                     Real(10**-4, 10**0, "log-uniform", name='colsample_bytree'),
@@ -44,15 +44,15 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
 
     elif name_algo == 'rf':
         n_features = len(X.columns)
-        space  = [Integer(10, 2000, name = "n_estimators"),
-                    Integer(1, n_features, name='max_depth'),
+        space  = [Integer(10, 500, name = "n_estimators"),
+                    Integer(2, 10, name='max_depth'),
                     Real(1, 200, 'uniform', name ='min_samples_leaf'),
                     Real(2, 200, 'uniform', name = 'min_samples_split'),
                     Categorical(['sqrt', 'log2'], name = 'max_features')]
 
     elif name_algo == 'cart':
         n_features = len(X.columns)
-        space  = [Integer(1, n_features, name='max_depth'),
+        space  = [Integer(1, 10, name='max_depth'),
                     Real(0, 0.5, 'uniform', name ='min_weight_fraction_leaf'),
                     Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
                     Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
@@ -68,7 +68,7 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
 
     elif name_algo == 'oct':
         n_features = len(X.columns)
-        space  = [Integer(1, n_features, name='max_depth'),
+        space  = [Integer(2, 10, name='max_depth'),
                     Categorical(['gini', 'entropy', 'misclassification'], name = 'criterion'),
                     Real(10**-6, 1, "uniform", name ='minbucket'), 
                     Real(10**-15, 1, "uniform", name ='cp')]
@@ -103,7 +103,7 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
 
         return -np.mean(scores)
 
-    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 20, n_jobs = -1)
+    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 50, n_jobs = -1)
     best_params = dict(zip(name_param, opt_model.x)) 
 
     print('The best parameters are:')
