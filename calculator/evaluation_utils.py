@@ -946,9 +946,7 @@ def plot_calibration_curve_validation(model_type,website_path, model_labs, resul
         ax2 = plt.subplot2grid((3, 1), (2, 0))
 
         ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-        
-        
-        
+            
         ax1.plot(mean_predicted_value1, fraction_of_positives1, "s-",
                      label=(name1))
         ax2.hist(prob_pos1, range=(0, 1), bins=10, label=name1,
