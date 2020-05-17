@@ -4,10 +4,86 @@ import shap
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
+import os
 
 
 from math import sqrt
 import matplotlib
+
+title_mapping = {
+    'ABG: Oxygen Saturation (SaO2)': 'Oxygen Saturation (\%)',
+    'Alanine Aminotransferase (ALT)': 'Alanine Aminotransferase (U/L)',
+    'Age': 'Age',
+    'Aspartate Aminotransferase (AST)': 'Aspartate Aminotransferase (U/L)',
+    'Blood Creatinine': 'Blood Creatinine (mg/dL)',
+    'Blood Sodium': 'Sodium (mmol/L)',
+    'Blood Urea Nitrogen (BUN)': 'Blood Urea Nitrogen (mg/dL)',
+    'Body Temperature': 'Temperature (F)',
+    'C-Reactive Protein (CRP)':  'C-Reactive Protein (mg/L)',
+    'CBC: Hemoglobin': 'Hemoglobin (g/dL)',
+    'CBC: Leukocytes': 'White Blood Cells (1000/muL)',
+    'CBC: Mean Corpuscular Volume (MCV)': 'Mean Corpuscular Volume (fL)',
+    'CBC: Platelets': 'Platelets (1000/muL)',
+    'CBC: Red cell Distribution Width (RDW)': 'Red Cell Distribution Width (%)',
+    'Cardiac Frequency': 'Heart Rate (bpm)',
+    'Cardiac dysrhythmias': 'Cardiac dysrhythmias',
+    'Gender': 'Gender (M/F)',
+    'Glycemia': 'Blood Glucose (mg/dL)',
+    'Potassium Blood Level': 'Potassium',
+    'Prothrombin Time (INR)': 'Prothrombin Time (INR)',
+    'Systolic Blood Pressure': 'Systolic Blood Pressure (mmHg)',
+    'SaO2': 'Oxygen Saturation (\%)',
+    'Blood Calcium': 'Calcium (mg/dL)',
+    'ABG: PaO2': 'Partial Pressure Oxygen (PaO2)',
+    'ABG: pH': 'Arterial Blood Gas pH',
+    'Cholinesterase': 'Cholinesterase',
+    'Respiratory Frequency': 'Respiratory Frequency (bpm)',
+    'ABG: MetHb': 'Arterial Blood Gas Methemoglobinemia',
+    'Total Bilirubin': 'Total Bilirubin (mg/dL)',
+    'Comorbidities': 'Comorbidities',
+    'Diabetes': 'Diabetes',
+    'Chronic kidney disease': 'Chronic kidney disease',
+    'Cardiac dysrhythmias': 'Cardiac dysrhythmias',
+    'Coronary atherosclerosis and other heart disease': 'Coronary atherosclerosis and other heart disease'
+}
+
+title_mapping_summary = {
+    'ABG: Oxygen Saturation (SaO2)': 'Oxygen Saturation (\%)',
+    'Alanine Aminotransferase (ALT)': 'ALT (U/L)',
+    'Age': 'Age',
+    'Aspartate Aminotransferase (AST)': 'AST (U/L)',
+    'Blood Creatinine': 'Creatinine (mg/dL)',
+    'Blood Sodium': 'Sodium (mmol/L)',
+    'Blood Urea Nitrogen (BUN)': 'BUN (mg/dL)',
+    'Body Temperature': 'Temperature (F)',
+    'C-Reactive Protein (CRP)':  'CRP (mg/L)',
+    'CBC: Hemoglobin': 'Hemoglobin (g/dL)',
+    'CBC: Leukocytes': 'WBC (1000/muL)',
+    'CBC: Mean Corpuscular Volume (MCV)': 'MCV (fL)',
+    'CBC: Platelets': 'Platelets (1000/muL)',
+    'CBC: Red cell Distribution Width (RDW)': 'RDW (\%)',
+    'Cardiac Frequency': 'Heart Rate (bpm)',
+    'Cardiac dysrhythmias': 'Cardiac\n dysrhythmias',
+    'Gender': 'Gender (M/F)',
+    'Glycemia': 'Blood Glucose (mg/dL)',
+    'Potassium Blood Level': 'Potassium',
+    'Prothrombin Time (INR)': 'INR',
+    'Systolic Blood Pressure': 'Systolic BP (mmHg)',
+    'SaO2': 'Oxygen Saturation (\%)',
+    'Blood Calcium': 'Calcium',
+    # 'ABG: PaO2': 'Partial Pressure\n Oxygen (PaO2)',
+    # 'ABG: pH': 'Arterial Blood Gas pH',
+    'Cholinesterase': 'Cholinesterase',
+    'Respiratory Frequency': 'Respiratory Frequency',
+    # 'ABG: MetHb': 'Arterial Blood Gas Methemoglobinemia',
+    'Total Bilirubin': 'Total Bilirubin (mg/dL)',
+    'Comorbidities': 'Comorbidities',
+    'Diabetes': 'Diabetes',
+    'Chronic kidney disease': 'Chronic\n kidney disease',
+    'Cardiac dysrhythmias': 'Cardiac\ndysrhythmias',
+    'Coronary atherosclerosis and other heart disease': 'Coronary atherosclerosis\n and other heart disease'
+}
+
 
 #%% Latex-style image printing
 
@@ -112,7 +188,7 @@ def get_model_data(model_type, model_lab, website_path, data_path):
 
 
 
-def feature_importance(model_type, model_lab, website_path, data_path, save_path, title_mapping,
+def feature_importance(model_type, model_lab, website_path, data_path, save_path,
                        feature_limit = 100, latex = True, dependence_plot = False,
                        data_filter = None, suffix_filter = ''):
     assert model_type in('mortality','infection'), "Invalid outcome"
@@ -202,7 +278,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
                              interaction_index="Age",
                              xmin="percentile(1)", xmax="percentile(99)",
                              #  alpha=0.5,
-                             x_jitter=0.1,
+                             #  x_jitter=0.1,
                              dot_size=3,
                              show=False)
         ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
@@ -233,7 +309,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     print("Number of samples %d" % len(X))
 
-    fig.savefig(save_path+'feature_plot'+suffix_filter+'.pdf',  bbox_inches='tight')
+    fig.savefig(os.path.join(save_path, 'feature_plot' + suffix_filter+'.pdf'),  bbox_inches='tight')
 
     plt.close()
     shap.summary_plot(shap_values, X, show=False,
@@ -242,7 +318,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
                       feature_names=[c[:c.find("(")] if c.find("(") != -1 else c for c in X.columns],
                       plot_type="violin")
     f = plt.gcf()
-    f.savefig(save_path+'summary_plot'+suffix_filter+'.pdf', bbox_inches='tight')
+    f.savefig(os.path.join(save_path, 'summary_plot' + suffix_filter + '.pdf'), bbox_inches='tight')
     plt.clf()
 
 
@@ -294,7 +370,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     #          plt.clf()
     #          plt.close()
 
-def feature_importance_website(model_type, model_lab, website_path, data_path, save_path, title_mapping,
+def feature_importance_website(model_type, model_lab, website_path, data_path, save_path,
                        feature_limit = 10):
     assert model_type in('mortality','infection'), "Invalid outcome"
     assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
