@@ -71,12 +71,12 @@ def latexify(fig_width=None, fig_height=None, columns=1):
     # minipage. You need to use subplots.
     params = {'backend': 'ps',
               'text.latex.preamble': ['\\usepackage{gensymb}'],
-              'axes.labelsize': 12, # fontsize for x and y labels (was 12 and before 10)
+              'axes.labelsize': 20, # fontsize for x and y labels (was 12 and before 10)
               'axes.titlesize': 12,
-              'font.size': 12, # was 12 and before 10
-              'legend.fontsize': 12, # was 12 and before 10
-              'xtick.labelsize': 12,
-              'ytick.labelsize': 12,
+              'font.size': 20, # was 12 and before 10
+              'legend.fontsize': 20, # was 12 and before 10
+              'xtick.labelsize': 20,
+              'ytick.labelsize': 20,
               'text.usetex': False,
               'figure.figsize': [fig_width,fig_height],
               'font.family': 'serif'
@@ -439,9 +439,12 @@ def plot_auc_curve_bootstrap(model_types, model_labs, results_path, seeds):
              
             fpr, tpr, _ = metrics.roc_curve(y,  prob_pos)
             auc = metrics.roc_auc_score(y, prob_pos)
-            plt.plot(fpr,tpr,label=name+str(round(auc,3)))
+            plt.plot(fpr,tpr,linewidth=4.0,label=name+str(round(auc,3)))
             plt.legend(loc=4)
-
+    
+    params = {'legend.fontsize': 20,
+          'legend.handlelength': 2}
+    plt.rcParams.update(params)
     plt.ylabel("Sensitivity")
     plt.xlabel("1 - Specificity")
     plt.tight_layout()
@@ -474,8 +477,11 @@ def plot_precision_recall_curve_bootstrap(model_types, model_labs, results_path,
                      
             precision, recall, _ = precision_recall_curve(y,prob_pos)
             
-            plt.plot(recall,precision,label=name)
+            plt.plot(recall,precision,linewidth=4.0,label=name)
             plt.legend(loc=4)
+            params = {'legend.fontsize': 20,
+                      'legend.handlelength': 2}
+            plt.rcParams.update(params)
 
             # axis labels
             plt.xlabel('Recall')
@@ -715,14 +721,17 @@ def classification_report_table_validation(model_type, website_path, model_labs,
             model_file = pickle.load(file)
 
         seedID = model_file['seed']
-                                 
-        tab1 = create_metrics_table('Training Set', cols, model_type, model_lab, results_path, seedID, train_option=True)        
+        
+        train_option=True                         
+        tab1 = create_metrics_table('Training Set', cols, model_type, model_lab, results_path, seedID, train_option, sensitivity_threshold)        
         tab = tab.append(tab1) 
-         
-        tab2 = create_metrics_table('Testing Set', cols, model_type, model_lab, results_path, seedID, train_option=False)        
+        
+        train_option=False                         
+        tab2 = create_metrics_table('Testing Set', cols, model_type, model_lab, results_path, seedID, train_option, sensitivity_threshold)        
         tab = tab.append(tab2) 
       
-        tab3 = create_metrics_table_validation('Greek HC', cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[0])
+        validation_path = validation_paths[0]
+        tab3 = create_metrics_table_validation('Greek HC', cols, model_type, model_lab, website_path, results_path, validation_path, sensitivity_threshold)
         tab = tab.append(tab3) 
     
     tab.to_csv('../results/mortality/paper_tables/summary_perforamance_mortality_AUC_sensitivity.csv', index=False)

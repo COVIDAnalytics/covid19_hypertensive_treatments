@@ -1,0 +1,24 @@
+% Model with labs - Test
+\newcommand{\auclabstest}{0.94 (95% CI, 0.91-0.97)}}
+\newcommand{\acclabstest}{0.87 (95% CI, 0.83-0.91)}}
+\newcommand{\speclabstest}{0.86 (95% CI, 0.82-0.9)}}
+\newcommand{\preclabstest}{0.69 (95% CI, 0.63-0.74)}}
+\newcommand{\npvlabstest}{0.96 (95% CI, 0.94-0.99)}}
+%Model with labs - Greece
+\newcommand{\auclabstest}{0.86 (95% CI, 0.82-0.9)}}
+\newcommand{\acclabstest}{0.6 (95% CI, 0.55-0.66)}}
+\newcommand{\speclabstest}{0.57 (95% CI, 0.52-0.62)}}
+\newcommand{\preclabstest}{0.19 (95% CI, 0.15-0.23)}}
+\newcommand{\npvlabstest}{0.98 (95% CI, 0.97-1.0)}}
+% Model without labs - Test
+\newcommand{\auclabstest}{0.91 (95% CI, 0.87-0.94)}}
+\newcommand{\acclabstest}{0.78 (95% CI, 0.73-0.82)}}
+\newcommand{\speclabstest}{0.73 (95% CI, 0.68-0.78)}}
+\newcommand{\preclabstest}{0.53 (95% CI, 0.47-0.59)}}
+\newcommand{\npvlabstest}{0.96 (95% CI, 0.93-0.98)}}
+%Model without labs - Greece
+\newcommand{\auclabstest}{0.74 (95% CI, 0.7-0.79)}}
+\newcommand{\acclabstest}{0.36 (95% CI, 0.3-0.41)}}
+\newcommand{\speclabstest}{0.3 (95% CI, 0.25-0.35)}}
+\newcommand{\preclabstest}{0.12 (95% CI, 0.09-0.16)}}
+\newcommand{\npvlabstest}{0.97 (95% CI, 0.95-0.99)}}
