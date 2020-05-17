@@ -33,25 +33,25 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
 
     if name_algo == 'xgboost':
         n_features = len(X.columns)
-        space  = [Integer(10, 700, name="n_estimators"),
+        space  = [Integer(10, 900, name="n_estimators"),
                     Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
-                    Integer(5, 10, name='max_depth'),
+                    Integer(3, 10, name='max_depth'),
                     Real(10**-7, 10**0, 'uniform', name='min_child_weight'),
-                    Real(10**-7, 10**0, 'uniform', name='gamma'),
+                    Real(10**-7, 20, 'uniform', name='gamma'),
                     Real(10**-2, 10**-0, "uniform", name='colsample_bytree'),
-                    Real(10**-7, 10**0, 'uniform', name='alpha')]
+                    Real(10**-7, 20, 'uniform', name='alpha')]
 
     elif name_algo == 'rf':
         n_features = len(X.columns)
-        space  = [Integer(10, 700, name = "n_estimators"),
-                    Integer(5, 10, name='max_depth'),
+        space  = [Integer(10, 900, name = "n_estimators"),
+                    Integer(3, 10, name='max_depth'),
                     Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
                     Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
                     Categorical(['sqrt', 'log2'], name = 'max_features')]
 
     elif name_algo == 'cart':
         n_features = len(X.columns)
-        space  = [Integer(5, 10, name='max_depth'),
+        space  = [Integer(3, 10, name='max_depth'),
                     Real(0, 0.5, 'uniform', name ='min_weight_fraction_leaf'),
                     Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
                     Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
