@@ -313,7 +313,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     plt.close()
     shap.summary_plot(shap_values, X, show=False,
-                      max_display=max_display,
+                      max_display=10,
                       plot_size=(10, 5),
                       feature_names=[c[:c.find("(")] if c.find("(") != -1 else c for c in X.columns],
                       plot_type="violin")
