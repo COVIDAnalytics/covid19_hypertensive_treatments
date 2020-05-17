@@ -7,6 +7,7 @@ import seaborn as sns
 import numpy as np
 import pickle
 from analyzer.learners import scores, train_and_evaluate
+from sklearn.model_selection import train_test_split
 import shap
 
 from sklearn.experimental import enable_iterative_imputer  # noqa
@@ -210,8 +211,11 @@ def create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params
     X_train = impute_missing(X_train) #impute training set
     X_test = impute_missing(X_test) #impute test set
     
+    if current_seed == best_seed:
+        data_save = True
+
     if data_save:
-        train, test = save_data(X_train, y_train, X_test, y_test, name, folder_path = '../../covid19_clean_data/') #save training and test
+        train, test = save_data(X_train, y_train, X_test, y_test, name, folder_path) #save training and test
 
     best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X, y, current_seed, best_params) # get best learner and performances
     json = export_features_json(X, numeric, categorical,  symptoms, comorbidities) #create json
@@ -233,7 +237,7 @@ def create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params
             'Percentage Training': np.round(np.mean(y_train),2),
             'Percentage Test': np.round(np.mean(y_test),2)}
             
-    if data_save:
+    if 'alpha' in best_params:
         explainer = shap.TreeExplainer(best_model); # create shap explainer
         shap_values = explainer.shap_values(X_train); # compute shap values for imputed training set
         

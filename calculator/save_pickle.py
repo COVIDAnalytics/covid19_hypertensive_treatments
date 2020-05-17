@@ -12,14 +12,15 @@ import xgboost as xgb
 from analyzer.learners import scores, train_and_evaluate
 
 BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': 30, 
-                                                        'best_params': {'n_estimators': 1062,
-                                                                        'learning_rate': 0.041787,
-                                                                        'max_depth': 1,
-                                                                        'min_child_weight': 0.0001,
-                                                                        'gamma': 0.0001,
-                                                                        'colsample_bytree': 0.139031,
-                                                                        'lambda': 0.0001,
-                                                                        'alpha': 0.0001}},
+                                                        'best_params': {'n_estimators': 700,
+                                                                        'learning_rate': 1.267451e-02,
+                                                                        'max_depth': 5,
+                                                                        'min_child_weight': 1,
+                                                                        'gamma': 1,
+                                                                        'colsample_bytree': 3.711728e-01,
+                                                                        'alpha': 1.000000e-07}},
+
+
                                                 'cart': {'best_seed': 16, 
                                                         'best_params': { 'max_depth': 22,
                                                         'min_weight_fraction_leaf':  0.0095584,
@@ -34,14 +35,14 @@ BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': 30,
                                                                         'solver': 'saga'}}},
 
                         'mortality_without_lab': {'xgboost': {'best_seed': 26, 
-                                                        'best_params': {'n_estimators': 619,
-                                                                        'learning_rate': 0.030293,
-                                                                        'max_depth': 2,
-                                                                        'min_child_weight': 9.752503,
-                                                                        'gamma': 0.000100,
-                                                                        'colsample_bytree': 1.00,
-                                                                        'lambda': 60,
-                                                                        'alpha':   0.000100}},
+                                                        'best_params': {'n_estimators': 296,
+                                                                        'learning_rate': 0.017417,
+                                                                        'max_depth': 5,
+                                                                        'min_child_weight': 1,
+                                                                        'gamma': 1,
+                                                                        'colsample_bytree': 0.411901,
+                                                                        'alpha':   1}},
+
                                                 'cart': {'best_seed': 26, 
                                                         'best_params': { 'max_depth': 6,
                                                                         'min_weight_fraction_leaf':  0.0399055,
@@ -56,14 +57,14 @@ BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': 30,
                                                                         'solver': 'saga'}}},
 
                         'infection_with_lab': {'xgboost': {'best_seed': 30, 
-                                                        'best_params': {'n_estimators': 790,
-                                                                        'learning_rate': 0.119077,
-                                                                        'max_depth': 10,
-                                                                        'min_child_weight': 5.611450,
-                                                                        'gamma': 1.907042,
-                                                                        'colsample_bytree': 0.454366,
-                                                                        'lambda': 59.567080,
-                                                                        'alpha':1.420127}},
+                                                        'best_params': {'n_estimators': 700,
+                                                                        'learning_rate': 0.011938,
+                                                                        'max_depth': 5,
+                                                                        'min_child_weight': 1,
+                                                                        'gamma': 1,
+                                                                        'colsample_bytree': 0.413484,
+                                                                        'alpha':1}},
+
                                                 'cart': {'best_seed': 29, 
                                                         'best_params': {'max_depth': 20,
                                                                         'min_weight_fraction_leaf':  0.0167917,
@@ -77,15 +78,15 @@ BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': 30,
                                                                         'C': 100,
                                                                         'solver': 'saga'}}},
 
-                        'infection_without_lab': {'xgboost': {'best_seed': 6, 
-                                                        'best_params': {'n_estimators': 877,
-                                                                        'learning_rate': 0.019551,
-                                                                        'max_depth': 4,
-                                                                        'min_child_weight': 0.0001,
-                                                                        'gamma': 0.0001,
-                                                                        'colsample_bytree': 1.00,
-                                                                        'lambda': 60.00,
-                                                                        'alpha': 8.755914}},
+                        'infection_without_lab': {'xgboost': {'best_seed': 23, 
+                                                        'best_params': {'n_estimators': 700,
+                                                                        'learning_rate': 0.003671,
+                                                                        'max_depth': 5,
+                                                                        'min_child_weight': 1,
+                                                                        'gamma': 1,
+                                                                        'colsample_bytree': 0.628944,
+                                                                        'alpha': 1}},
+
                                                 'cart': {'best_seed': 29, 
                                                         'best_params': { 'max_depth': 6,
                                                                         'min_weight_fraction_leaf':  0.0558581,
@@ -107,27 +108,91 @@ website_path = '../../website/assets/risk_calculators'
 post_processing_path = '../../covid19_clean_data'
 
 categorical = ['Gender'] 
-comorbidities = ['Cardiac dysrhythmias',
+comorb = ['Cardiac dysrhythmias',
                 'Chronic kidney disease',
                 'Coronary atherosclerosis and other heart disease', 
                 #'Essential hypertension',
                 'Diabetes']
 symptoms = []
 
-for i in range(len(predictions)):
-        prediction = predictions[i]
-        best_seed = BEST_PARAMS_AND_SEEDS[prediction]['xgboost']['best_seed']
-        best_params = BEST_PARAMS_AND_SEEDS[prediction]['xgboost']['best_params']
+len_seed = 40
 
-        if i == 0: #mortality_with_lab
-                u.create_and_save_pickle(xgb.XGBClassifier, X, y, best_seed, best_seed, best_params, categorical, #Save on the website
-                                         symptoms, comorbidities, prediction, website_path + '/mortality/model_with_lab.pkl', 
-                                         data_save = True, data_in_pickle = False, post_processing_path)
+i = 0
+prediction = predictions[i]
+best_seed = BEST_PARAMS_AND_SEEDS[prediction]['xgboost']['best_seed'] #seed of the model to save on the website
+best_params = BEST_PARAMS_AND_SEEDS[prediction]['xgboost']['best_params'] #parameters of the model to save on the website
 
-                for current_seed in range(1, 41):
-                        for j in range(len(algorithms)):
-                                u.create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params, categorical, #Save for post processing
-                                                        symptoms, comorbidities, prediction, website_path + '/mortality/model_with_lab.pkl', 
-                                                        data_save = True, data_in_pickle = False, post_processing_path)
+if i == 0: #mortality_with_lab
+        comorbidities = comorb.copy()
 
+        u.create_and_save_pickle(xgb.XGBClassifier, X, y, best_seed, best_seed, best_params, categorical, #Save on the website
+                                        symptoms, comorbidities, prediction, website_path + '/mortality/model_with_lab.pkl', 
+                                        data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
 
+        for current_seed in range(1, len_seed + 1):
+                for j in range(len(algorithms)):
+                        algorithm = algorithms[j]
+                        algorithm_name = algorithms_name[j]
+
+                        best_seed = BEST_PARAMS_AND_SEEDS[prediction][algorithm_name]['best_seed']
+                        best_params = BEST_PARAMS_AND_SEEDS[prediction][algorithm_name]['best_params']
+
+                        u.create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params, categorical, #Save for post processing
+                                                symptoms, comorbidities, prediction, post_processing_path + '/' + algorithm_name + '/' + prediction + '/seed' + str(current_seed) + '.pkl', 
+                                                data_save = False, data_in_pickle = True, folder_path = post_processing_path + '/' + algorithm_name + '/')
+
+if i == 1: #mortality_without_lab
+        comorbidities = comorb.copy()
+
+        u.create_and_save_pickle(xgb.XGBClassifier, X, y, best_seed, best_seed, best_params, categorical, #Save on the website
+                                        symptoms, comorbidities, prediction, website_path + '/mortality/model_without_lab.pkl', 
+                                        data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
+
+        for current_seed in range(1, len_seed + 1):
+                for j in range(len(algorithms)):
+                        algorithm = algorithms[j]
+                        algorithm_name = algorithms_name[j]
+
+                        best_seed = BEST_PARAMS_AND_SEEDS[prediction][algorithm_name]['best_seed']
+                        best_params = BEST_PARAMS_AND_SEEDS[prediction][algorithm_name]['best_params']
+
+                        u.create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params, categorical, #Save for post processing
+                                                symptoms, comorbidities, prediction, post_processing_path + '/' + algorithm_name + '/' + prediction + '/seed' + str(current_seed) + '.pkl', 
+                                                data_save = False, data_in_pickle = True, folder_path = post_processing_path + '/' + algorithm_name + '/')
+if i == 2: #infection_with_lab
+        comorbidities = []
+
+        u.create_and_save_pickle(xgb.XGBClassifier, X, y, best_seed, best_seed, best_params, categorical, #Save on the website
+                                        symptoms, comorbidities, prediction, website_path + '/infection/model_with_lab.pkl', 
+                                        data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
+
+        for current_seed in range(1, len_seed + 1):
+                for j in range(len(algorithms)):
+                        algorithm = algorithms[j]
+                        algorithm_name = algorithms_name[j]
+
+                        best_seed = BEST_PARAMS_AND_SEEDS[prediction][algorithm_name]['best_seed']
+                        best_params = BEST_PARAMS_AND_SEEDS[prediction][algorithm_name]['best_params']
+
+                        u.create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params, categorical, #Save for post processing
+                                                symptoms, comorbidities, prediction, post_processing_path + '/' + algorithm_name + '/' + prediction + '/seed' + str(current_seed) + '.pkl', 
+                                                data_save = False, data_in_pickle = True, folder_path = post_processing_path + '/' + algorithm_name + '/')
+
+if i == 3: #infection_without_lab
+        comorbidities = []
+
+        u.create_and_save_pickle(xgb.XGBClassifier, X, y, best_seed, best_seed, best_params, categorical, #Save on the website
+                                        symptoms, comorbidities, prediction, website_path + '/infection/model_without_lab.pkl', 
+                                        data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
+
+        for current_seed in range(1, len_seed + 1):
+                for j in range(len(algorithms)):
+                        algorithm = algorithms[j]
+                        algorithm_name = algorithms_name[j]
+
+                        best_seed = BEST_PARAMS_AND_SEEDS[prediction][algorithm_name]['best_seed']
+                        best_params = BEST_PARAMS_AND_SEEDS[prediction][algorithm_name]['best_params']
+
+                        u.create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params, categorical, #Save for post processing
+                                                symptoms, comorbidities, prediction, post_processing_path + '/' + algorithm_name + '/' + prediction + '/seed' + str(current_seed) + '.pkl', 
+                                                data_save = False, data_in_pickle = True, folder_path = post_processing_path + '/' + algorithm_name + '/')
