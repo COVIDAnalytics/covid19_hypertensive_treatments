@@ -67,10 +67,10 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
 
     elif name_algo == 'oct':
         n_features = len(X.columns)
-        space  = [Integer(2, 10, name='max_depth'),
+        space  = [Integer(3, 10, name='max_depth'),
                     Categorical(['gini', 'entropy', 'misclassification'], name = 'criterion'),
-                    Real(10**-6, 1, "uniform", name ='minbucket'), 
-                    Real(10**-15, 1, "uniform", name ='cp')]
+                    Real(10**-6, 0.4, "uniform", name ='minbucket'), 
+                    Real(10**-12, 0.7, "uniform", name ='cp')]
 
 
     @use_named_args(space)
