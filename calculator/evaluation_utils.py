@@ -156,7 +156,7 @@ def get_model_outcomes(model_type, model_lab, website_path, results_path):
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
         model_file = pickle.load(file)
 
-    seedID = model_file['seed']
+    seedID = model_file['best seed']
 
     #Load model corresponding to model_type and lab
     with open(results_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
@@ -569,7 +569,7 @@ def get_model_outcomes_pickle_validation(model_type, model_lab, website_path, re
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
         model_file = pickle.load(file)
 
-    seedID = model_file['seed']
+    seedID = model_file['best seed']
 
     #Load model corresponding to model_type and lab
     with open(results_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
@@ -720,7 +720,7 @@ def classification_report_table_validation(model_type, website_path, model_labs,
         with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
             model_file = pickle.load(file)
 
-        seedID = model_file['seed']
+        seedID = model_file['best seed']
         tab1 = create_metrics_table('Training Set', cols, model_type, model_lab, results_path, seedID, True, sensitivity_threshold)
         tab = tab.append(tab1)
 
@@ -827,7 +827,7 @@ def plot_auc_curve_validation(model_type,website_path, model_labs, results_path,
         with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
             model_file = pickle.load(file)
 
-        seedID = model_file['seed']
+        seedID = model_file['best seed']
         #  plt.close()
 
         #First we add the training set
@@ -869,7 +869,7 @@ def plot_precision_recall_curve_validation(model_type,website_path, model_labs, 
         with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
             model_file = pickle.load(file)
 
-        seedID = model_file['seed']
+        seedID = model_file['best seed']
 
         plt.close()
 
@@ -923,7 +923,7 @@ def plot_calibration_curve_validation(model_type,website_path, model_labs, resul
         with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
             model_file = pickle.load(file)
 
-        seedID = model_file['seed']
+        seedID = model_file['best seed']
 
         plt.close()
 
