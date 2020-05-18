@@ -165,7 +165,7 @@ def get_model_data(model_type, model_lab, website_path, data_path):
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
         model_file = pickle.load(file)
 
-    seedID = model_file['seed']
+    seedID = model_file['best seed']
 
     #Load model corresponding to model_type and lab
     with open(data_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
@@ -199,7 +199,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
         best_model = pickle.load(file)
 
-    seedID = best_model['seed']
+    seedID = best_model['best seed']
 
     #Load model corresponding to model_type and lab
     with open(data_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
@@ -379,7 +379,7 @@ def feature_importance_website(model_type, model_lab, website_path, data_path, s
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
         best_model = pickle.load(file)
 
-    seedID = best_model['seed']
+    seedID = best_model['best seed']
 
     #Load model corresponding to model_type and lab
     with open(data_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
