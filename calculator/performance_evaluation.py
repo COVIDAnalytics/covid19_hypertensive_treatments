@@ -14,7 +14,7 @@ import evaluation.importance as imp
 import matplotlib.pyplot as plt
 
 #Paths for data access
-website_path = '../../../website/'
+website_path = '../../website/'
 results_path = '../../covid19_clean_data/'
 output_path = '../results'
 validation_path_greece = '../../covid19_greece/general_greek_registry.csv'
