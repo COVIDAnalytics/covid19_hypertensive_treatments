@@ -1,9 +1,37 @@
 import pandas as pd
+import os
+import datetime
+
+path = '/nfs/sloanlab001/data/HartfordHealthCare/HHCtoMIT/Risk_Calculator/'
+
+file_list = os.listdir(path)
+
+df_all = pd.DataFrame()
+for file in file_list:
+    if file.startswith("hhDYNIdeas_COVID_Prediction_Response_Hist_"):
+        print("Reading file: %s" % file)
+        df = pd.read_csv(path+file, sep='|', encoding= 'unicode_escape')
+        df_all = df_all.append(df)
+
+df_all['ADMISSION_DATE'] = df_all.HOSP_ADMSN_TIME.apply(get_lab_dates)
+df_all['RECORD_DATE'] = df_all.CALENDAR_DT_STR.apply(get_lab_dates)
+
+df_admission = df_all.query("ADMISSION_DATE == RECORD_DATE")
+df_admission_filtered = df_admission.loc[df_admission["PAT_MRN_ID"].isin(pat_list)]
 
 
-path = '/nfs/sloanlab001/data/HartfordHealthCare/HHCtoMIT/HHC2020100_MIT_Risk_Calc/'
+"DYNIdeas_LOS_COVID_Diag_and_Orders_202005180733_20200518-080512.txt"
 
-df = pd.read_csv('%shhDYNIdeas_COVID_Prediction_Response_Hist_05012020_05142020_202005150219.txt' % path, sep='|')
+
+for lab in RENAMED_LAB_MEASUREMENTS.keys():
+    print(lab+": Fill rate = "+str(df_admission_filtered[lab].count()))
+for v in RENAMED_VITALS_MEASUREMENTS.keys():
+    print(v+": Fill rate = "+str(df_admission_filtered[v].count()))
+
+# 2714611092, 203779493, 3704735423
+tests_file = sorted(filter(lambda x: "DYNIdeas_LOS_COVID_Diag_and_Orders" in x, file_list))[-1]
+df_tests = pd.read_csv(path+tests_file, sep='|', encoding= 'unicode_escape')
+
 
 def load_hartford(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, demographics_data = False, swabs_data = False):
 

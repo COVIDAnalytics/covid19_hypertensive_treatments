@@ -30,14 +30,13 @@ ADMISSION_COLUMNS = ['PATIENT ID','Outcome','Date_Admission','Date_Emergency']
 TREATMENT_COLS = ['VENT_ORDER', 'O2_DEVICE', 'INV_FLOW', 'INV_O2_CONCENTRATION', 
     'ECOMO', 'MED_PER_DAY', 'MAR_PER_DAY']
 
-RENAMED_VITALS_MEASUREMENTS  = [
-    'MIN_SPO2':'SaO2', # approximate matchh
-    'MAX_TEMP':, 
+RENAMED_VITALS_MEASUREMENTS  = {'MIN_SPO2':'SaO2', # approximate matchh
+    'MAX_TEMP':'Body Temperature', 
     'MAX_RR':'Respiratory Frequency', 
-    'MAX_SYSTOLIC':'Systolic Blood Pressure']
+    'MAX_SYSTOLIC':'Systolic Blood Pressure'}
+    #  'max_pulse':'Cardiac Frequency'
 
-RENAMED_LAB_MEASUREMENTS = [
-    'PAO2':'ABG: PaO2', 
+RENAMED_LAB_MEASUREMENTS = {'PAO2':'ABG: PaO2', 
     'PH':'ABG: pH', 
     'AST':'Aspartate Aminotransferase (AST)', 
     'CALCIUM':'Blood Calcium', 
@@ -54,12 +53,24 @@ RENAMED_LAB_MEASUREMENTS = [
     'POTASSIUM':'Potassium Blood Level',
     'CARBOXYHGB':'ABG: COHb',  
     'D_DIMER': 'D-Dimer', 
-    'HIGH_SENSITIVITY_D_DIMER',
-    'PLATELET':'CBC: Platelets']
+    'PLATELET':'CBC: Platelets',
+    'TOTAL_BILIRUBIN':'Total Bilirubin', 
+    'RDW':'CBC: Red cell Distribution Width (RDW)', 
+    'SERUM_CHOLINESTERASE':'Cholinesterase',
+    'GLUCOSE':'Glycemia_1',
+    'GLUCOSE_POC':'Glycemia_1',
+    'INR':'Prothrombin Time (INR)',
+    'UREA_NITROGEN':'Blood Urea Nitrogen (BUN)' 
+    'WHITE_BLOOD_CELL':'CBC: Leukocytes'}
+    ## Expanded Extract
+    # 'ABG: standard bicarbonate (sHCO3)'
+    # 'ABG: Base Excess',
+    # 'Activated Partial Thromboplastin Time (aPTT)'
 
 HCUP_LIST = [49,50,87,90,95,146]
 
-HHC_EXTRA = ['LYMPHS_ABS', 'LDH', 'PTT', 'INTERLEUKIN_6', 'HGBA1C', 'BASE_DEFICIENCY',  # deficiency = 1 - excess?
+HHC_EXTRA = ['LYMPHS_ABS', 'LDH', 
+    'PTT', 'INTERLEUKIN_6', 'HGBA1C', 'BASE_DEFICIENCY', 'HIGH_SENSITIVITY_D_DIMER', # deficiency = 1 - excess?
     'PAT_ENC_CSN_ID', 'HOSP_DISCH_TIME', 'SYMPTOM_ACTIVITY', 'GENERAL_MOBILITY']
 
 CREMONA_EXTRA = [ 
@@ -75,6 +86,19 @@ CREMONA_EXTRA = [
     'ABG: Base Excess',
     'Activated Partial Thromboplastin Time (aPTT)'
     ]
+
+
+### Filter 
+
+
+def get_lab_dates(t):
+    # TODO: Find better way to do so. Nested try-except is not nice.
+    t = t[0:10]
+    try:
+        date = datetime.datetime.strptime(t, '%m/%d/%Y')
+    except ValueError:
+        date = datetime.datetime.strptime(t, '%Y-%m-%d')
+    return date
 
 
 # def missing_values_table(df):
