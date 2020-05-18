@@ -12,14 +12,13 @@ import xgboost as xgb
 from analyzer.learners import scores, train_and_evaluate
 
 BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': 30, 
-                                                        'best_params': {'n_estimators': 700,
-                                                                        'learning_rate': 1.267451e-02,
-                                                                        'max_depth': 5,
-                                                                        'min_child_weight': 1,
-                                                                        'gamma': 1,
-                                                                        'colsample_bytree': 3.711728e-01,
+                                                        'best_params': {'n_estimators': 900,
+                                                                        'learning_rate': 1.370821e-02,
+                                                                        'max_depth': 3,
+                                                                        'min_child_weight': 1.000000e-07,
+                                                                        'gamma': 1.000000e-07,
+                                                                        'colsample_bytree': 3.606281e-01,
                                                                         'alpha': 1.000000e-07}},
-
 
                                                 'cart': {'best_seed': 16, 
                                                         'best_params': { 'max_depth': 22,
