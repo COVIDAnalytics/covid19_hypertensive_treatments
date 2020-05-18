@@ -91,10 +91,10 @@ if jobid == 1:
     X = X.drop(['Systolic Blood Pressure', 'Essential hypertension'], axis = 1)
 
 # Train XGB
-algorithm = o.algorithms[0]
-name_param = o.name_params[0]
+# algorithm = o.algorithms[0]
+# name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
+# best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
 
 # Train RF
 # algorithm = o.algorithms[1]
@@ -115,13 +115,13 @@ best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450
 # best_lr = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'lr')
 
 # Train OCT
-# from julia.api import Julia
-# jl = Julia(compiled_modules=False)
-# from interpretableai import iai
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
+from interpretableai import iai
 
-# algorithm = iai.OptimalTreeClassifier
-# name_param = o.name_params[4]
+algorithm = iai.OptimalTreeClassifier
+name_param = o.name_params[4]
 
-# best_oct = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 250, name_algo = 'oct')
+best_oct = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 200, name_algo = 'oct')
 
 print(algorithm)
