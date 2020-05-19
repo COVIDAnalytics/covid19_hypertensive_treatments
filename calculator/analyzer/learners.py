@@ -126,8 +126,6 @@ def train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params)
         accTrain = best_model.score(X_train, y_train, criterion='misclassification')
         accTest = best_model.score(X_test, y_test, criterion='misclassification')
 
-        
-    print('Seed = ', seed)
     print('In Sample AUC', isAUC)
     print('Out of Sample AUC', ofsAUC)
     print('In Sample Misclassification', accTrain)
