@@ -8,11 +8,13 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+from sklearn.impute import KNNImputer
 import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
 import analyzer.dataset as ds
 import analyzer.optimizer as o
+from analyzer.utils import impute_missing
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
 jobid = int(jobid)
@@ -92,29 +94,32 @@ if jobid == 0:
 if jobid == 1:
     X = X.drop(['Systolic Blood Pressure', 'Essential hypertension'], axis = 1)
 
+seed = 30
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+
 # Train XGB
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'xgboost')
+best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'xgboost')
 
 # Train RF
 # algorithm = o.algorithms[1]
 # name_param = o.name_params[1]
 
-# best_rf = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'rf')
+# best_rf, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'rf')
 
 # Train CART
 # algorithm = o.algorithms[2]
 # name_param = o.name_params[2]
 
-# best_cart = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'cart')
+# best_cart, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'cart')
 
 # Train Logistic regression
 # algorithm = o.algorithms[3]
 # name_param = o.name_params[3]
 
-# best_lr = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450, name_algo = 'lr')
+# best_lr, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'lr')
 
 # Train OCT
 # from julia.api import Julia
@@ -124,6 +129,12 @@ best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 450
 # algorithm = iai.OptimalTreeClassifier
 # name_param = o.name_params[4]
 
-# best_oct = o.optimizer(algorithm, name_param, X, y, seed_len = 40, n_calls = 200, name_algo = 'oct')
+# best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 200, name_algo = 'oct')
+
+
+X_train = impute_missing(X_train)
+X_test = impute_missing(X_test)
+
+best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params)
 
 print(algorithm)

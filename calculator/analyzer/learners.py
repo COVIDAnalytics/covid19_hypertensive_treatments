@@ -101,9 +101,8 @@ def scores(model, t_X, t_Y, te_X, te_Y):
 
 #DEFINE FUNCTION THAT TRAINS A MODEL AND OUTPUTS THE PERFORMANCES
 
-def train_and_evaluate(algorithm, X, y, seed, best_params):
+def train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params):
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
     X_train = impute_missing(X_train)
     X_test = impute_missing(X_test)
 

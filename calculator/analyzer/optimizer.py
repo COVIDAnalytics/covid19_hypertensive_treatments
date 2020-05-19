@@ -29,7 +29,7 @@ name_param_oct = ["max_depth", "criterion", "minbucket", "cp"]
 algorithms = [xgb.XGBClassifier, RandomForestClassifier, DecisionTreeClassifier, LogisticRegression]
 name_params = [name_param_xgb, name_param_rf, name_param_cart, name_param_lr, name_param_oct]
 
-def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500, name_algo = 'xgboost'):
+def optimizer(algorithm, name_param, X, y, cv = 40, n_calls = 500, name_algo = 'xgboost'):
 
     if name_algo == 'xgboost':
         n_features = len(X.columns)
@@ -72,37 +72,30 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
                     Real(10**-6, 0.4, "uniform", name ='minbucket'), 
                     Real(10**-12, 0.7, "uniform", name ='cp')]
 
+    X = impute_missing(X)
 
     @use_named_args(space)
     def objective(**params):
 
-        scores = []
+        if name_algo != 'oct':
+            model = algorithm()
+            model.set_params(**params)
+            score = np.mean(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"))
 
-        for seed in range(1, seed_len + 1):
- 
-            X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-            X_train = impute_missing(X_train)
-            X_test = impute_missing(X_test)
+        else:
+            from julia.api import Julia
+            jl = Julia(compiled_modules=False)
+            from interpretableai import iai
 
-            if name_algo != 'oct':
-                model = algorithm()
-                model.set_params(**params)
-                scores.append(np.mean(cross_val_score(model, X_train, y_train, cv = cv, n_jobs = -1, scoring="roc_auc")))
+            params["max_depth"] = int(params["max_depth"])
+            grid = iai.GridSearch(iai.OptimalTreeClassifier(random_seed = 0), **params) 
 
-            else:
-                from julia.api import Julia
-                jl = Julia(compiled_modules=False)
-                from interpretableai import iai
+            grid.fit_cv(X, y, n_folds=cv, validation_criterion = 'auc')
+            score = float(grid.get_grid_results()[['split' + str(i) + '_valid_score' for i in range(1, cv+1)]].T.mean())
 
-                params["max_depth"] = int(params["max_depth"])
-                grid  = iai.GridSearch(iai.OptimalTreeClassifier(random_seed = seed), **params) 
+        return - score
 
-                grid.fit_cv(X_train, y_train, n_folds=10, validation_criterion = 'auc')
-                scores.append(float(grid.get_grid_results()[['split' + str(i) + '_valid_score' for i in range(1, cv+1)]].T.mean()))
-
-        return -np.mean(scores)
-
-    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 50, n_jobs = -1)
+    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 30, n_jobs = -1)
     best_params = dict(zip(name_param, opt_model.x)) 
 
     print('The best parameters are:')
@@ -111,24 +104,14 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
     print('\n')
     print('Cross-validation AUC = ', - opt_model.fun)
 
-    inmis = []
-    outmis = []
-    inauc = []
-    outauc = []
+    best_model = algorithm()
+    best_model.set_params(**best_params)
 
-    for seed in range(1, seed_len + 1):
+    seed = 30
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+    model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) #gets in sample performance
 
-        best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X, y, seed, best_params)
-        inmis.append(accTrain)
-        outmis.append(accTest)
-        inauc.append(isAUC)
-        outauc.append(ofsAUC)
-        
-    print('Average, Median, Min, Max, Std In Sample AUC', performance(inauc))
-    print('Average, Median, Min, Max, Std Out of Sample AUC', performance(outauc))
-    print('Average, Median, Min, Max, Std In Sample Misclassification', performance(inmis))
-    print('Average, Median, Min, Max, Std Out of Sample Misclassification', performance(outmis))
     if name_algo != 'oct':
-        top_features(best_model, X)
+        top_features(model, X)
     
-    return best_model
+    return best_model, best_params
