@@ -29,6 +29,7 @@ output_folder = 'predictors/swab'
 name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
 
 if jobid == 0:
+    o2_col = 'ABG: Oxygen Saturation (SaO2)'
     discharge_data = False
     comorbidities_data = False
     vitals_data = True
@@ -40,6 +41,7 @@ if jobid == 0:
     print(name_datasets[mask])
 
 elif jobid == 1:
+    o2_col = 'SaO2'
     discharge_data = False
     comorbidities_data = False
     vitals_data = True
@@ -50,6 +52,7 @@ elif jobid == 1:
     print(name_datasets[mask])
 
 if jobid == 2:
+    o2_col = 'ABG: Oxygen Saturation (SaO2)'
     discharge_data = False
     comorbidities_data = False
     vitals_data = True
@@ -61,6 +64,7 @@ if jobid == 2:
     print(name_datasets[mask])
 
 if jobid == 3:
+    o2_col = 'ABG: Oxygen Saturation (SaO2)'
     discharge_data = False
     comorbidities_data = False
     vitals_data = True
@@ -85,7 +89,7 @@ X, y = ds.create_dataset(data,
                          swabs_data,
                          prediction=prediction)
 
-X, bounds_dict = ds.filter_outliers(X)
+X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o2_col)
 
 if jobid == 0:
     X = X[cols]

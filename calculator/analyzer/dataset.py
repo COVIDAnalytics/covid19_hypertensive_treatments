@@ -35,7 +35,7 @@ def create_dataset(data_dict, discharge_data = True,
 
     return X, y
 
-def filter_outliers(df_X, filter_lb = 0.1, filter_ub = 99.9):
+def filter_outliers(df_X, filter_lb = 0.1, filter_ub = 99.9, o2 = "SaO2"):
     bounds_dict = {}
 
     for col in df_X:
@@ -44,6 +44,10 @@ def filter_outliers(df_X, filter_lb = 0.1, filter_ub = 99.9):
         lb = np.floor(np.nanpercentile(df_X[col], filter_lb))
         ub = np.ceil(np.nanpercentile(df_X[col], filter_ub))
         med = np.round(np.nanpercentile(df_X[col], 50))
+        
+        if col == o2:
+            lb = 75
+            ub = 99
 
         bounds_dict[col] = {'min_val': lb,
             'max_val': ub,

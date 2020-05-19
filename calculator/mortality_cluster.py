@@ -29,6 +29,7 @@ extra_data = False
 demographics_data = True
 
 if jobid == 0:
+    o2_col = 'ABG: Oxygen Saturation (SaO2)'
     discharge_data = True
     comorbidities_data = True
     vitals_data = True
@@ -38,6 +39,7 @@ if jobid == 0:
     print(name_datasets[mask])
 
 elif jobid == 1:
+    o2_col = 'SaO2'
     discharge_data = True
     comorbidities_data = True
     vitals_data = True
@@ -76,7 +78,7 @@ X_spain, y_spain =  ds.create_dataset(data_spain,
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
 
-X, bounds_dict = ds.filter_outliers(X)
+X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o2_col)
 
 # Shuffle
 np.random.seed(SEED)
