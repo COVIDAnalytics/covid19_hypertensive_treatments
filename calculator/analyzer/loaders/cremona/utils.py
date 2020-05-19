@@ -225,10 +225,10 @@ def cleanup_demographics(demographics):
         demographics['PZ_DATA_NASCITA_PS'] = \
             pd.to_datetime(demographics['PZ_DATA_NASCITA_PS'], format='%Y-%m-%d %H:%M:%S')
     except ValueError:
-        demographics['PZ_DATA_NASCITA_PS'] = \
+        demographics.loc[:, 'PZ_DATA_NASCITA_PS'] = \
             pd.to_datetime(demographics['PZ_DATA_NASCITA_PS'], format='%m/%d/%Y')
 
-    demographics['Age'] = demographics['PZ_DATA_NASCITA_PS'].apply(get_age)
+    demographics.loc[:, 'Age'] = demographics['PZ_DATA_NASCITA_PS'].apply(get_age)
     demographics = demographics.drop('PZ_DATA_NASCITA_PS', axis = 1)
     demographics = demographics.rename(columns = {'N_SCHEDA_PS' : 'NOSOLOGICO', 'PZ_SESSO_PS' : 'Gender'})
     demographics['Gender'] = (demographics['Gender'] == 'F').astype(int)
