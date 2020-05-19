@@ -127,9 +127,9 @@ best_params = BEST_PARAMS_AND_SEEDS[prediction]['xgboost']['best_params'] #param
 if i == 0: #mortality_with_lab
         comorbidities = comorb.copy()
 
-        # u.create_and_save_pickle(xgb.XGBClassifier, X_train, X_test, y_train, y_test, best_seed, best_seed, best_params, categorical, #Save on the website
-        #                                 symptoms, comorbidities, prediction, website_path + '/mortality/model_with_lab.pkl', 
-        #                                 data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
+        u.create_and_save_pickle(xgb.XGBClassifier, X_train, X_test, y_train, y_test, best_seed, best_seed, best_params, categorical, #Save on the website
+                                        symptoms, comorbidities, prediction, website_path + '/mortality/model_with_lab.pkl', 
+                                        data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
 
         # for current_seed in range(1, len_seed + 1):
         for j in range(len(algorithms)):
@@ -146,9 +146,9 @@ if i == 0: #mortality_with_lab
 if i == 1: #mortality_without_lab
         comorbidities = comorb.copy()
 
-        # u.create_and_save_pickle(xgb.XGBClassifier, X_train, X_test, y_train, y_test, best_seed, best_seed, best_params, categorical, #Save on the website
-        #                                 symptoms, comorbidities, prediction, website_path + '/mortality/model_without_lab.pkl', 
-        #                                 data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
+        u.create_and_save_pickle(xgb.XGBClassifier, X_train, X_test, y_train, y_test, best_seed, best_seed, best_params, categorical, #Save on the website
+                                        symptoms, comorbidities, prediction, website_path + '/mortality/model_without_lab.pkl', 
+                                        data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
 
         # for current_seed in range(1, len_seed + 1):
         for j in range(len(algorithms)):
@@ -165,9 +165,9 @@ if i == 1: #mortality_without_lab
 if i == 2: #infection_with_lab
         comorbidities = []
 
-        # u.create_and_save_pickle(xgb.XGBClassifier, X_train, X_test, y_train, y_test, best_seed, best_seed, best_params, categorical, #Save on the website
-        #                                 symptoms, comorbidities, prediction, website_path + '/infection/model_with_lab.pkl', 
-        #                                 data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
+        u.create_and_save_pickle(xgb.XGBClassifier, X_train, X_test, y_train, y_test, best_seed, best_seed, best_params, categorical, #Save on the website
+                                        symptoms, comorbidities, prediction, website_path + '/infection/model_with_lab.pkl', 
+                                        data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
 
         # for current_seed in range(1, len_seed + 1):
         for j in range(len(algorithms)):
@@ -184,9 +184,9 @@ if i == 2: #infection_with_lab
 if i == 3: #infection_without_lab
         comorbidities = []
 
-        # u.create_and_save_pickle(xgb.XGBClassifier, X_train, X_test, y_train, y_test, best_seed, best_seed, best_params, categorical, #Save on the website
-        #                                 symptoms, comorbidities, prediction, website_path + '/infection/model_without_lab.pkl', 
-        #                                 data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
+        u.create_and_save_pickle(xgb.XGBClassifier, X_train, X_test, y_train, y_test, best_seed, best_seed, best_params, categorical, #Save on the website
+                                        symptoms, comorbidities, prediction, website_path + '/infection/model_without_lab.pkl', 
+                                        data_save = True, data_in_pickle = False, folder_path = post_processing_path + '/xgboost/')
 
         # for current_seed in range(1, len_seed + 1):
         for j in range(len(algorithms)):

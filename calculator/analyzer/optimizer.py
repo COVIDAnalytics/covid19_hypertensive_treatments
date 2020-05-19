@@ -72,7 +72,6 @@ def optimizer(algorithm, name_param, X, y, cv = 40, n_calls = 500, name_algo = '
                     Real(10**-6, 0.4, "uniform", name ='minbucket'), 
                     Real(10**-12, 0.7, "uniform", name ='cp')]
 
-
     @use_named_args(space)
     def objective(**params):
 
