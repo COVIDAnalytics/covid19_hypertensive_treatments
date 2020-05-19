@@ -102,7 +102,7 @@ X_train = impute_missing(X_train)
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'xgboost')
+best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 400, name_algo = 'xgboost')
 
 # Train RF
 # algorithm = o.algorithms[1]
