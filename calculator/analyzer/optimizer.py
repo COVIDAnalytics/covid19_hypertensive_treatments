@@ -20,7 +20,7 @@ from skopt import gp_minimize
 def performance(l):
     return np.mean(l), np.median(l), np.min(l), np.max(l), np.round(np.std(l),2)
 
-name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "alpha"]
+name_param_xgb = ["n_estimators", "learning_rate", "max_depth", "min_child_weight", "gamma", "colsample_bytree", "lambda"]
 name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_split", "max_features"]
 name_param_cart = ["max_depth", "min_weight_fraction_leaf", "min_samples_leaf", "min_samples_split", "min_impurity_decrease", "criterion"]
 name_param_lr = ["penalty", "tol", "C", "solver"]
@@ -39,7 +39,7 @@ def optimizer(algorithm, name_param, X, y, cv = 10, seed_len = 40, n_calls = 500
                     Real(10**-7, 10**0, 'uniform', name='min_child_weight'),
                     Real(10**-7, 20, 'uniform', name='gamma'),
                     Real(10**-2, 10**-0, "uniform", name='colsample_bytree'),
-                    Real(10**-7, 20, 'uniform', name='alpha')]
+                    Real(10**-7, 20, 'uniform', name='lambda')]
 
     elif name_algo == 'rf':
         n_features = len(X.columns)
