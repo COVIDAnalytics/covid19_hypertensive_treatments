@@ -29,7 +29,7 @@ name_param_oct = ["max_depth", "criterion", "minbucket", "cp"]
 algorithms = [xgb.XGBClassifier, RandomForestClassifier, DecisionTreeClassifier, LogisticRegression]
 name_params = [name_param_xgb, name_param_rf, name_param_cart, name_param_lr, name_param_oct]
 
-def optimizer(algorithm, name_param, X, y, cv = 2000, n_calls = 500, name_algo = 'xgboost'):
+def optimizer(algorithm, name_param, X, y, cv = 800, n_calls = 500, name_algo = 'xgboost'):
 
     if name_algo == 'xgboost':
         n_features = len(X.columns)
