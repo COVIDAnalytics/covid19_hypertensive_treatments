@@ -115,16 +115,16 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_siz
 # best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'xgboost')
 
 # Train RF
-algorithm = o.algorithms[1]
-name_param = o.name_params[1]
+# algorithm = o.algorithms[1]
+# name_param = o.name_params[1]
 
-best_rf, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'rf')
+# best_rf, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'rf')
 
 # Train CART
-# algorithm = o.algorithms[2]
-# name_param = o.name_params[2]
+algorithm = o.algorithms[2]
+name_param = o.name_params[2]
 
-# best_cart, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'cart')
+best_cart, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'cart')
 
 # Train Logistic regression
 # algorithm = o.algorithms[3]
