@@ -29,7 +29,7 @@ name_param_oct = ["max_depth", "criterion", "minbucket", "cp"]
 algorithms = [xgb.XGBClassifier, RandomForestClassifier, DecisionTreeClassifier, LogisticRegression]
 name_params = [name_param_xgb, name_param_rf, name_param_cart, name_param_lr, name_param_oct]
 
-def optimizer(algorithm, name_param, X, y, cv = 1000, n_calls = 500, name_algo = 'xgboost'):
+def optimizer(algorithm, name_param, X, y, cv = 2000, n_calls = 500, name_algo = 'xgboost'):
 
     if name_algo == 'xgboost':
         n_features = len(X.columns)
@@ -78,7 +78,7 @@ def optimizer(algorithm, name_param, X, y, cv = 1000, n_calls = 500, name_algo =
         if name_algo != 'oct':
             model = algorithm()
             model.set_params(**params)
-            score = np.min(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"))
+            score = np.mean(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"))
 
         else:
             from julia.api import Julia
@@ -106,7 +106,7 @@ def optimizer(algorithm, name_param, X, y, cv = 1000, n_calls = 500, name_algo =
     best_model.set_params(**best_params)
 
     print('Number of folds = ', cv)
-    print('Maximize the minimum AUC')
+    print('Maximize the average AUC')
     seed = 30
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
     model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) #gets in sample performance
