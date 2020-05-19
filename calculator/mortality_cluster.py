@@ -101,25 +101,25 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_siz
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'xgboost')
+best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'xgboost')
 
 # Train RF
 # algorithm = o.algorithms[1]
 # name_param = o.name_params[1]
 
-# best_rf, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'rf')
+# best_rf, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'rf')
 
 # Train CART
 # algorithm = o.algorithms[2]
 # name_param = o.name_params[2]
 
-# best_cart, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'cart')
+# best_cart, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'cart')
 
 # Train Logistic regression
 # algorithm = o.algorithms[3]
 # name_param = o.name_params[3]
 
-# best_lr, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'lr')
+# best_lr, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'lr')
 
 # Train OCT
 # from julia.api import Julia
@@ -129,7 +129,7 @@ best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_c
 # algorithm = iai.OptimalTreeClassifier
 # name_param = o.name_params[4]
 
-# best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 200, name_algo = 'oct')
+# best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'oct')
 
 
 X_train = impute_missing(X_train)
