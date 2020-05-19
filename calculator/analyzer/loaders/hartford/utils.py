@@ -8,20 +8,20 @@ import datetime
 
 # from analyzer.utils import remove_missing
 
-RENAMED_ADMISSION_COLUMNS = {
-'PAT_MRN_ID':'PATIENT ID', 
-    'EDAD/AGE':'Age',
-    'SEXO/SEX':'Gender',
-'DIAG_TYPE'
-    'MOTIVO_ALTA/DESTINY_DISCHARGE_ING':'Outcome',
-    'HOSP_ADMSN_TIME':'Date_Admission',
-    'F_INGRESO/ADMISSION_DATE_URG/EMERG':'Date_Emergency'}
+# RENAMED_ADMISSION_COLUMNS = {
+# 'PAT_MRN_ID':'PATIENT ID', 
+#     'EDAD/AGE':'Age',
+#     'SEXO/SEX':'Gender',
+# 'DIAG_TYPE'
+#     'MOTIVO_ALTA/DESTINY_DISCHARGE_ING':'Outcome',
+#     'HOSP_ADMSN_TIME':'Date_Admission',
+#     'F_INGRESO/ADMISSION_DATE_URG/EMERG':'Date_Emergency'}
 
-VITAL_COLUMNS ={
-    'PATIENT ID',
-    'Body Temperature',
-    'Cardiac Frequency'   
-    }
+# VITAL_COLUMNS ={
+#     'PATIENT ID',
+#     'Body Temperature',
+#     'Cardiac Frequency'   
+#     }
 
 DEMOGRAPHICS_COLUMNS={'PATIENT ID','Gender','Age'}
 
@@ -33,8 +33,8 @@ TREATMENT_COLS = ['VENT_ORDER', 'O2_DEVICE', 'INV_FLOW', 'INV_O2_CONCENTRATION',
 RENAMED_VITALS_MEASUREMENTS  = {'MIN_SPO2':'SaO2', # approximate matchh
     'MAX_TEMP':'Body Temperature', 
     'MAX_RR':'Respiratory Frequency', 
-    'MAX_SYSTOLIC':'Systolic Blood Pressure'}
-    #  'max_pulse':'Cardiac Frequency'
+    'MAX_SYSTOLIC':'Systolic Blood Pressure',
+    'max_pulse':'Cardiac Frequency'}
 
 RENAMED_LAB_MEASUREMENTS = {'PAO2':'ABG: PaO2', 
     'PH':'ABG: pH', 
@@ -60,7 +60,7 @@ RENAMED_LAB_MEASUREMENTS = {'PAO2':'ABG: PaO2',
     'GLUCOSE':'Glycemia_1',
     'GLUCOSE_POC':'Glycemia_1',
     'INR':'Prothrombin Time (INR)',
-    'UREA_NITROGEN':'Blood Urea Nitrogen (BUN)' 
+    'UREA_NITROGEN':'Blood Urea Nitrogen (BUN)',
     'WHITE_BLOOD_CELL':'CBC: Leukocytes'}
     ## Expanded Extract
     # 'ABG: standard bicarbonate (sHCO3)'
@@ -75,13 +75,6 @@ HHC_EXTRA = ['LYMPHS_ABS', 'LDH',
 
 CREMONA_EXTRA = [ 
     'DIAG_TYPE',  # options: COVID_RESEARCH_DX, ENC_DX, RSN_FOR_VISIT
-    'Total Bilirubin', # in Order
-    'Blood Urea Nitrogen (BUN)' # in Orders]
-    'CBC: Leukocytes', # in Orders
-    'CBC: Red cell Distribution Width (RDW)', # in Orders
-    'Cholinesterase',
-    'Glycemia',
-    'Prothrombin Time (INR)',
     'ABG: standard bicarbonate (sHCO3)'
     'ABG: Base Excess',
     'Activated Partial Thromboplastin Time (aPTT)'
