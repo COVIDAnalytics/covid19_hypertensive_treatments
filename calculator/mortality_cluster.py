@@ -96,6 +96,7 @@ if jobid == 1:
 
 seed = 30
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+X_train = impute_missing(X_train)
 
 # Train XGB
 # algorithm = o.algorithms[0]
@@ -132,7 +133,6 @@ name_param = o.name_params[4]
 best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 300, name_algo = 'oct')
 
 
-X_train = impute_missing(X_train)
 X_test = impute_missing(X_test)
 
 best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params)

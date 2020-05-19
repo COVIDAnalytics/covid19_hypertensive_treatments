@@ -204,9 +204,10 @@ def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
 
     return df
 
-def create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params, categorical, symptoms, comorbidities, name, pickle_path, data_save = False, data_in_pickle = False, folder_path = '../../covid19_clean_data/'):
-    numeric = [i for i in X.columns if i not in categorical + symptoms + comorbidities]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = current_seed) #split in training and test
+def create_and_save_pickle(algorithm, X_train, X_test, y_train, y_test, current_seed, best_seed, 
+                            best_params, categorical, symptoms, comorbidities, name, pickle_path, 
+                            data_save = False, data_in_pickle = False, folder_path = '../../covid19_clean_data/'):
+    numeric = [i for i in X_train.columns if i not in categorical + symptoms + comorbidities]
 
     X_train = impute_missing(X_train) #impute training set
     X_test = impute_missing(X_test) #impute test set
@@ -217,9 +218,9 @@ def create_and_save_pickle(algorithm, X, y, current_seed, best_seed, best_params
     if data_save:
         train, test = save_data(X_train, y_train, X_test, y_test, name, folder_path) #save training and test
 
-    best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, current_seed, best_params) # get best learner and performances
-    json = export_features_json(X, numeric, categorical,  symptoms, comorbidities) #create json
-    cols = X.columns
+    best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) # get best learner and performances
+    json = export_features_json(X_train, numeric, categorical,  symptoms, comorbidities) #create json
+    cols = X_train.columns
 
     imputer = KNNImputer() #create imputer
     imputer = imputer.fit(X_train)
