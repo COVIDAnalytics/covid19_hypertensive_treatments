@@ -99,10 +99,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_siz
 X_train = impute_missing(X_train)
 
 # Train XGB
-algorithm = o.algorithms[0]
-name_param = o.name_params[0]
+# algorithm = o.algorithms[0]
+# name_param = o.name_params[0]
 
-best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 400, name_algo = 'xgboost')
+# best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 400, name_algo = 'xgboost')
 
 # Train RF
 # algorithm = o.algorithms[1]
@@ -123,14 +123,14 @@ best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_c
 # best_lr, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'lr')
 
 # Train OCT
-# from julia.api import Julia
-# jl = Julia(compiled_modules=False)
-# from interpretableai import iai
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
+from interpretableai import iai
 
-# algorithm = iai.OptimalTreeClassifier
-# name_param = o.name_params[4]
+algorithm = iai.OptimalTreeClassifier
+name_param = o.name_params[4]
 
-# best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 40, n_calls = 300, name_algo = 'oct')
+best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 40, n_calls = 300, name_algo = 'oct')
 
 
 X_test = impute_missing(X_test)
