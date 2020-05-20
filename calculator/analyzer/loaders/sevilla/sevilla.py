@@ -218,10 +218,18 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
 
     #Drop columns that only contain NA values
     labs = labs.dropna(axis=1, how='all')
+    
+    labs = pd.read_csv('%s/Sara Gonzalez Garcia - Analiticas v2.csv' % path, sep=',' , encoding= 'unicode_escape')
+
 
     #Filter to only patients that are in the inclusion criteria
     #df3 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['ï»¿ID', 'FECHA'])
     #dataset_admissions['PATIENT ID'][dataset_admissions['PATIENT ID'].isin(labs['ï»¿ID'])]
+    
+    pats = dataset_admissions['PATIENT ID'][dataset_admissions['PATIENT ID'].isin(labs['ï»¿id_ITCBIO'])]
+    df3 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['ï»¿id_ITCBIO', 'fecha'])
+    
+    df4 = df[df['PATIENT ID'].isin(pats)]
            
     # Lab values
     #dataset_labs = df[LAB_METRICS]
