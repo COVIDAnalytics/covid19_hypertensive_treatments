@@ -130,7 +130,7 @@ best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_c
 # algorithm = iai.OptimalTreeClassifier
 # name_param = o.name_params[4]
 
-# best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 300, name_algo = 'oct')
+# best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 40, n_calls = 300, name_algo = 'oct')
 
 
 X_test = impute_missing(X_test)
