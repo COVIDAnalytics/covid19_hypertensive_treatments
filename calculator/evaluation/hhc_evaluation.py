@@ -30,7 +30,7 @@ imputer= model_file['imputer']
 
 df_hhc = pd.read_csv("/home/hwiberg/research/COVID_risk/covid19_hartford/hhc_20200518.csv")
 
-df_hhc = df_hhc.loc[~df_hhc['Date_Admission'].str.startswith("05"),:]
+# df_hhc = df_hhc.loc[~df_hhc['Date_Admission'].str.startswith("05"),:]
 
 if model_lab == "with_lab":
 	df_hhc.rename(columns={'SaO2':'ABG: Oxygen Saturation (SaO2)'}, inplace = True)
