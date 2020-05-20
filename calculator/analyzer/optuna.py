@@ -2,20 +2,13 @@ import numpy as np
 import pandas as pd 
 
 from sklearn.model_selection import cross_val_score
-from skopt.space import Real, Integer, Categorical
-from skopt.utils import use_named_args
+import optuna
 
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
-import mlflow.sklearn
 import xgboost as xgb
 import copy
 from analyzer.learners import scores, train_and_evaluate
 
 from analyzer.utils import top_features, remove_dir, impute_missing
-from skopt import gp_minimize
 
 def performance(l):
     return np.mean(l), np.median(l), np.min(l), np.max(l), np.round(np.std(l),2)
@@ -115,3 +108,25 @@ def optimizer(algorithm, name_param, X, y, cv = 400, n_calls = 500, name_algo = 
         top_features(model, X)
     
     return best_model, best_params
+
+cv = 10
+def objective(trial):
+
+    param = {"n_estimators": trial.suggest_int("n_estimators", 10, 900),
+        "learning_rate": trial.suggest_loguniform("learning_rate", 1e-8, 1.0),
+        "max_depth": trial.suggest_int("max_depth", 3, 10),
+        "min_child_weight": trial.suggest_uniform("min_child_weight", 1e-8, 1.0),
+        "gamma": trial.suggest_uniform("gamma", 1e-8, 5),
+        "colsample_bytree": trial.suggest_uniform("colsample_bytree", 1e-2, 1),
+        "lambda": trial.suggest_uniform("lambda", 1e-8, 5),
+        "eval_metric": "auc"}
+
+    # Add a callback for pruning.
+    model = xgb.XGBClassifier()
+    model.set_params(**param)
+    score = np.quantile(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"), 0.25)
+    return score
+    
+study = optuna.create_study(direction="maximize")
+study.optimize(objective, n_trials=20)
+print(study.best_trial)
