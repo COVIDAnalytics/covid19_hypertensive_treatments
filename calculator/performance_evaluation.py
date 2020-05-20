@@ -26,7 +26,8 @@ model_labs = ['with_lab','without_lab']
 seeds = list(range(30, 31))
 
 #Extract the seed
-SEED = 30
+
+SEED = [30]
 SPINE_COLOR = 'gray'
 model_type = 'mortality'
 sensitivity_threshold = 0.9

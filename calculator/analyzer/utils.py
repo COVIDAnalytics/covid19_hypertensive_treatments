@@ -112,8 +112,14 @@ def impute_missing(df, type = 'knn'):
     df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
     return df
 
+categorical = ['Gender'] 
+comorbidities = ['Cardiac dysrhythmias',
+                'Chronic kidney disease',
+                'Coronary atherosclerosis and other heart disease', 'Diabetes',
+                'Essential hypertension']
+symptoms = []
 
-def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file_name):
+def export_features_json(X, numeric, categorical,  symptoms, comorbidities):
     data = {'numeric': [],
             'categorical': [],
             'checkboxes': [],
@@ -141,22 +147,36 @@ def export_features_json(X, numeric, categorical,  symptoms, comorbidities, file
         data['multidrop'][0]["index"].append(list(X.columns).index(comorbidities[i]))
         data['multidrop'][0]["vals"].append(comorbidities[i])
     data['multidrop'][0]["explanation"].append("Select the existing chronic diseases or conditions.")
-
-
-    with open(file_name, 'w') as outfile:
-        json.dump(data, outfile)
-
     return data
 
 
-def export_model_imp_json(model, imp, json, cols, path):
+def export_model_imp_json(model, imp, json, cols, seed, accTest, ofsAUC, X_train, X_test, y_train, y_test, path):
     exp = {'model': model,
     'imputer': imp,
     'json': json,
-    'columns': list(cols)}
+    'columns': list(cols),
+    'seed': seed,
+    'Misclassification': np.round(accTest,2),
+    'AUC': np.round(ofsAUC,2),
+    'Size Training': len(X_train),
+    'Size Test': len(X_test),
+    'Percentage Training': np.round(np.mean(y_train),2),
+    'Percentage Test': np.round(np.mean(y_test),2)}
     with open(path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)
     return exp
+
+def save_data(X_train, y_train, X_test, y_test, name, folder_path = '../../covid19_clean_data/'):
+    X_train = impute_missing(X_train)
+    X_test = impute_missing(X_test)
+    train = pd.concat((X_train, y_train), axis = 1)
+    test = pd.concat((X_test, y_test), axis = 1)
+    train.to_csv(folder_path + name + 'train')
+    test.to_csv(folder_path + name + 'test')
+    return 
+    
+
+
 
 
 def store_json(data, file_name):
