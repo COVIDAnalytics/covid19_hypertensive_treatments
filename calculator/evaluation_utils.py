@@ -761,7 +761,7 @@ def get_model_outcomes_algorithm_pickle(alg, model_type, model_lab, results_path
     return y, y_pred, prob_pos
 
 
-def classification_report_table_mlmodels(seeds, model_type, model_labs, results_path, sensitivity_threshold, confidence_level, output_path='.'):
+def classification_report_table_mlmodels_bootstrapping(seeds, model_type, model_labs, results_path, sensitivity_threshold, confidence_level, output_path='.'):
     #Get the data
     cols = ['Algorithm','Model Labs','AUC','Threshold','Accuracy','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
 
@@ -802,6 +802,51 @@ def classification_report_table_mlmodels(seeds, model_type, model_labs, results_
 
     tab.to_csv(os.path.join(output_path, model_type, 'performance_comparison.csv'))
     return tab
+
+
+def classification_report_table_mlmodels(seeds, model_type, model_labs, results_path, sensitivity_threshold, confidence_level, output_path='.'):
+    #Get the data
+    cols = ['Algorithm','Model Labs','AUC','Threshold','Accuracy','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
+
+    algs_list = ['xgboost','lr','cart']
+    tab = pd.DataFrame(columns = cols)
+
+    for model_lab in model_labs:
+        for alg in algs_list:
+
+            tab2 = pd.DataFrame(columns = cols)
+
+            for seedID in seeds:
+                y, y_pred, prob_pos = get_model_outcomes_algorithm_pickle(alg, model_type, model_lab, results_path, seedID)
+                is_fpr, is_tpr, thresh = precision_recall_curve(y, prob_pos)
+                n = len(y)
+
+                colnames = ['AUC','Threshold','Accuracy','Sensitivity','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
+                sum_table = pd.DataFrame(columns = colnames)
+
+                for t in thresh:
+                    y_pred = [1 if m > t else 0 for m in prob_pos]
+                    sum_table.loc[len(sum_table)] = get_scores(y, y_pred, t, prob_pos).loc[0]
+
+
+                df = sum_table[sum_table['Sensitivity'] > sensitivity_threshold]
+                x = df[df['Sensitivity'] == df['Sensitivity'].min()].iloc[0]
+                x2 = pd.Series({'Algorithm':alg, 'Model Labs': model_lab})
+
+                tab2.loc[len(tab2)] = x2.append(x)
+
+            cols2 =  set(cols).intersection(colnames)
+
+            tab3 = get_validation_table_confidence_interval(x, cols2, n)
+            tab3['Algorithm'] = alg
+            tab3['Model Type'] = model_type
+            tab3['Model Labs'] = model_lab
+            tab3 = tab3[tab.columns]
+            tab = tab.append(tab3)
+
+    tab.to_csv(os.path.join(output_path, model_type, 'performance_comparison.csv'))
+    return tab
+
 
 
 def plot_auc_curve_validation(model_type,website_path, model_labs, results_path,
