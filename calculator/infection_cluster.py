@@ -15,7 +15,7 @@ import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 from analyzer.dataset import create_dataset
 from analyzer.utils import impute_missing, train_and_evaluate
-import analyzer.optimizer as o
+import analyzer.optuna as o
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
 jobid = int(jobid)

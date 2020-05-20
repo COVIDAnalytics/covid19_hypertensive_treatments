@@ -3,7 +3,10 @@ import pandas as pd
 
 from sklearn.model_selection import cross_val_score
 import optuna
-
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 import xgboost as xgb
 import copy
 from analyzer.learners import scores, train_and_evaluate
@@ -24,76 +27,36 @@ name_params = [name_param_xgb, name_param_rf, name_param_cart, name_param_lr, na
 
 def optimizer(algorithm, name_param, X, y, cv = 400, n_calls = 500, name_algo = 'xgboost'):
 
-    if name_algo == 'xgboost':
-        n_features = len(X.columns)
-        space  = [Integer(10, 900, name="n_estimators"),
-                    Real(10**-4, 10**0, "log-uniform", name='learning_rate'),
-                    Integer(3, 10, name='max_depth'),
-                    Real(10**-7, 10**0, 'uniform', name='min_child_weight'),
-                    Real(10**-7, 20, 'uniform', name='gamma'),
-                    Real(10**-2, 10**-0, "uniform", name='colsample_bytree'),
-                    Real(10**-7, 20, 'uniform', name='lambda')]
+    def objective(trial):
 
-    elif name_algo == 'rf':
-        n_features = len(X.columns)
-        space  = [Integer(10, 900, name = "n_estimators"),
-                    Integer(3, 10, name='max_depth'),
-                    Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
-                    Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
-                    Categorical(['sqrt', 'log2'], name = 'max_features')]
+        params = {"n_estimators": trial.suggest_int("n_estimators", 10, 900),
+            "learning_rate": trial.suggest_loguniform("learning_rate", 1e-8, 1.0),
+            "max_depth": trial.suggest_int("max_depth", 3, 10),
+            "min_child_weight": trial.suggest_uniform("min_child_weight", 1e-8, 1.0),
+            "gamma": trial.suggest_uniform("gamma", 1e-8, 5),
+            "colsample_bytree": trial.suggest_uniform("colsample_bytree", 1e-2, 1),
+            "lambda": trial.suggest_uniform("lambda", 1e-8, 5),
+            "eval_metric": "auc"}
 
-    elif name_algo == 'cart':
-        n_features = len(X.columns)
-        space  = [Integer(3, 10, name='max_depth'),
-                    Real(0, 0.5, 'uniform', name ='min_weight_fraction_leaf'),
-                    Real(10**-4, 0.5, "uniform", name ='min_samples_leaf'),
-                    Real(10**-4, 0.5, "uniform", name = 'min_samples_split'),
-                    Real(0, 1, 'uniform', name = 'min_impurity_decrease'),
-                    Categorical(['gini', 'entropy'], name = 'criterion')]
+        # Add a callback for pruning.
+        model = algorithm()
+        model.set_params(**params)
+        score = np.mean(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"))
+        #score = np.quantile(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"), 0.25)
 
-    elif name_algo == 'lr':
-        n_features = len(X.columns)
-        space  = [Categorical(['l1','l2', 'none'], name = 'penalty'),
-                    Real(10**-5, 10, 'uniform', name ='tol'),
-                    Real(10**-4, 2, "uniform", name ='C'),
-                    Categorical(['saga'], name = 'solver')]
-
-    elif name_algo == 'oct':
-        n_features = len(X.columns)
-        space  = [Integer(3, 10, name='max_depth'),
-                    Categorical(['gini', 'entropy', 'misclassification'], name = 'criterion'),
-                    Real(10**-6, 0.4, "uniform", name ='minbucket'), 
-                    Real(10**-12, 0.7, "uniform", name ='cp')]
-
-    @use_named_args(space)
-    def objective(**params):
-
-        if name_algo != 'oct':
-            model = algorithm()
-            model.set_params(**params)
-            score = np.mean(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"))
-
-        else:
-            from julia.api import Julia
-            jl = Julia(compiled_modules=False)
-            from interpretableai import iai
-
-            params["max_depth"] = int(params["max_depth"])
-            grid = iai.GridSearch(iai.OptimalTreeClassifier(random_seed = 0), **params) 
-
-            grid.fit_cv(X, y, n_folds=cv, validation_criterion = 'auc')
-            score = float(grid.get_grid_results()[['split' + str(i) + '_valid_score' for i in range(1, cv+1)]].T.mean())
-
-        return - score
-
-    opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 30, n_jobs = -1)
-    best_params = dict(zip(name_param, opt_model.x)) 
+        return score
+        
+    study = optuna.create_study(direction="maximize")
+    study.optimize(objective, n_trials = n_calls)
+    
+    best_params = study.best_params
+    auc = study.best_value
 
     print('The best parameters are:')
     print('\n')
     print(pd.DataFrame(best_params.items(), columns = ['Parameter', 'Value']))
     print('\n')
-    print('Cross-validation AUC = ', - opt_model.fun)
+    print('Cross-validation AUC = ', auc)
 
     best_model = algorithm()
     best_model.set_params(**best_params)
@@ -109,24 +72,3 @@ def optimizer(algorithm, name_param, X, y, cv = 400, n_calls = 500, name_algo = 
     
     return best_model, best_params
 
-cv = 10
-def objective(trial):
-
-    param = {"n_estimators": trial.suggest_int("n_estimators", 10, 900),
-        "learning_rate": trial.suggest_loguniform("learning_rate", 1e-8, 1.0),
-        "max_depth": trial.suggest_int("max_depth", 3, 10),
-        "min_child_weight": trial.suggest_uniform("min_child_weight", 1e-8, 1.0),
-        "gamma": trial.suggest_uniform("gamma", 1e-8, 5),
-        "colsample_bytree": trial.suggest_uniform("colsample_bytree", 1e-2, 1),
-        "lambda": trial.suggest_uniform("lambda", 1e-8, 5),
-        "eval_metric": "auc"}
-
-    # Add a callback for pruning.
-    model = xgb.XGBClassifier()
-    model.set_params(**param)
-    score = np.quantile(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"), 0.25)
-    return score
-    
-study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=20)
-print(study.best_trial)
