@@ -86,7 +86,7 @@ def optimizer(algorithm, name_param, X, y, cv = 200, n_calls = 500, name_algo = 
             from interpretableai import iai
 
             params["max_depth"] = int(params["max_depth"])
-            grid = iai.GridSearch(iai.OptimalTreeClassifier(random_seed = 0), **params) 
+            grid = iai.GridSearch(iai.OptimalTreeClassifier(random_seed = 1), **params) 
 
             grid.fit_cv(X, y, n_folds=cv, validation_criterion = 'auc')
             score = float(grid.get_grid_results()[['split' + str(i) + '_valid_score' for i in range(1, cv+1)]].T.mean())
