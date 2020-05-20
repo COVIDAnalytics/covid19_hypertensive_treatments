@@ -36,6 +36,7 @@ def optimizer(algorithm, name_param, X, y, cv = 400, n_calls = 500, name_algo = 
             "gamma": trial.suggest_uniform("gamma", 1e-8, 5),
             "colsample_bytree": trial.suggest_uniform("colsample_bytree", 1e-2, 1),
             "lambda": trial.suggest_uniform("lambda", 1e-8, 5),
+            "alpha": trial.suggest_uniform("alpha", 1e-8, 5), 
             "eval_metric": "auc"}
 
         # Add a callback for pruning.
