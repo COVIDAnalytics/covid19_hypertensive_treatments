@@ -15,14 +15,13 @@ best_seed = 30
 current_seed = 30
 
 BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': best_seed, 
-                                                        'best_params': {'n_estimators': 900,
-                                                                        'learning_rate': 2.080204e-02,
-                                                                        'max_depth': 10,
-                                                                        'min_child_weight': 1.000000e-07,
-                                                                        'gamma': 4.936753e+00,
-                                                                        'colsample_bytree': 5.528630e-01,
-                                                                        'lambda': 1.000000e-07}},
-
+                                                        'best_params': {'n_estimators': 897,
+                                                                        'learning_rate': 0.537316,
+                                                                        'max_depth': 4,
+                                                                        'min_child_weight': 0.999041,
+                                                                        'gamma': 4.721780,
+                                                                        'colsample_bytree': 0.402615,
+                                                                        'lambda': 7.758215}},
                                                 'cart': {'best_seed': best_seed, 
                                                         'best_params': { 'max_depth': 22,
                                                         'min_weight_fraction_leaf':  0.0095584,
@@ -38,13 +37,13 @@ BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': best_se
 
 
                         'mortality_without_lab': {'xgboost': {'best_seed': best_seed, 
-                                                        'best_params': {'n_estimators': 357,
-                                                                        'learning_rate': 9.958195e-02,
-                                                                        'max_depth': 10,
-                                                                        'min_child_weight': 1.000000e-07,
-                                                                        'gamma': 7.359521e+00,
-                                                                        'colsample_bytree': 3.752731e-01,
-                                                                        'lambda':   1.000000e-07}},
+                                                        'best_params': {'n_estimators': 897,
+                                                                        'learning_rate': 0.537316,
+                                                                        'max_depth': 4,
+                                                                        'min_child_weight': 0.999041,
+                                                                        'gamma': 4.721780,
+                                                                        'colsample_bytree': 0.402615,
+                                                                        'lambda': 7.758215}},
 
                                                 'cart': {'best_seed': best_seed, 
                                                         'best_params': { 'max_depth': 6,
