@@ -64,7 +64,7 @@ if PAPER_TYPE == 'MORTALITY':
         print("Model: %s, %s" % (model_type, model_lab))
         save_path = os.path.join(output_path, model_type, 'model_'+ model_lab)
         imp.feature_importance(model_type, model_lab, website_path, results_path + "xgboost/",
-                               save_path, latex=True, feature_limit=10, dependence_plot=True)
+                               save_path, latex=False, feature_limit=10, dependence_plot=True)
 
 
     # No longer used
