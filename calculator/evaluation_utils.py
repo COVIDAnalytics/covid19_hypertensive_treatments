@@ -32,7 +32,7 @@ import scipy.stats
 from math import sqrt
 import matplotlib
 import subprocess
-import latexcodec
+# import latexcodec
 
 
 def latexify(fig_width=None, fig_height=None, columns=1):

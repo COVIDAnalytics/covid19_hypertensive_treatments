@@ -13,7 +13,7 @@ import shap
 from sklearn import metrics
 
 model_type = "mortality"
-model_lab = "without_lab"
+model_lab = "with_lab"
 website_path = "/home/hwiberg/research/COVID_risk/website/"
 
 print(model_type)
@@ -28,8 +28,9 @@ model = model_file['model']
 columns = model_file['columns']
 imputer= model_file['imputer']
 
-df_hhc = pd.read_csv("/home/hwiberg/research/COVID_risk/covid19_hartford/hhc_20200518.csv")
+df_hhc = pd.read_csv("/home/hwiberg/research/COVID_risk/covid19_hartford/hhc_20200520.csv")
 
+## Filter 
 # df_hhc = df_hhc.loc[~df_hhc['Date_Admission'].str.startswith("05"),:]
 
 if model_lab == "with_lab":
@@ -44,6 +45,8 @@ y = df_hhc['Outcome']
 X = imputer.transform(X_missing)
 df_X = pd.DataFrame(X, columns = columns, dtype=np.float)
 
+# df_X.loc[:,'C-Reactive Protein (CRP)'] = 10*df_X.loc[:,'C-Reactive Protein (CRP)'] 
+#
 # for x in missing_cols:
 # 	df_X.loc[df_X[x]>0, x] = 1
 # 	print(sum(df_X[x]))
