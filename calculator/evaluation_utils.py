@@ -890,10 +890,21 @@ def plot_auc_curve_validation(model_type,website_path, model_labs, results_path,
         y3, y_pred3, prob_pos3 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=False)
         fpr3, tpr3, _ = metrics.roc_curve(y3,  prob_pos3)
         auc3 = metrics.roc_auc_score(y3, prob_pos3)
+        
+        plt.close()
+        
+        #Then we add the validation set 1
+        y4, y_pred4, prob_pos4 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[1])
+        fpr4, tpr4, _ = metrics.roc_curve(y4,  prob_pos4)
+        auc4 = metrics.roc_auc_score(y4, prob_pos4)
+        name4 = "AUC of Sevilla"
+
+
 
         ax.plot(fpr1, tpr1, label=name1+str(round(auc1, 3)))
         ax.plot(fpr2, tpr2, label=name2+str(round(auc2, 3)))
         ax.plot(fpr3, tpr3, label=name3+str(round(auc3, 3)))
+        ax.plot(fpr4, tpr4, label=name4+str(round(auc4, 3)))
         ax.legend(loc=4)
         ax.set_title("Model " + model_lab.replace("_", " "))
         ax.set_ylabel("Sensitivity")
