@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import datetime
+import np
 
 def load_hartford(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, demographics_data = False, swabs_data = False):
 
