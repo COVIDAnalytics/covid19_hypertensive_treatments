@@ -857,7 +857,7 @@ def classification_report_table_mlmodels(seeds, model_type, model_labs, results_
             tab3 = tab3[tab.columns]
             tab = tab.append(tab3)
 
-    tab.to_csv(os.path.join(output_path, model_type, 'performance_comparison.csv'))
+    tab.to_csv(os.path.join(output_path, model_type, 'performance_comparison_threshold'+str(sensitivity_threshold)+'.csv'))
     return tab
 
 
@@ -868,7 +868,7 @@ def plot_auc_curve_validation(model_type,website_path, model_labs, results_path,
     # TODO: Create 2 subplots: ROCs (123) with lab + without lab.
 
     latexify(columns=1)
-    fig, axs = plt.subplots(1, len(model_labs), figsize=(10, 5))
+    fig, axs = plt.subplots(1, len(model_labs), figsize=(20, 10))
     axs = {model_lab: axs[i] for i, model_lab in enumerate(model_labs)}
 
     for model_lab in model_labs:
@@ -907,7 +907,7 @@ def plot_auc_curve_validation(model_type,website_path, model_labs, results_path,
         y4, y_pred4, prob_pos4 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[1])
         fpr4, tpr4, _ = metrics.roc_curve(y4,  prob_pos4)
         auc4 = metrics.roc_auc_score(y4, prob_pos4)
-        name4 = "AUC of Sevilla"
+        name4 = "AUC of Sevilla "
 
 
 
@@ -916,9 +916,9 @@ def plot_auc_curve_validation(model_type,website_path, model_labs, results_path,
         ax.plot(fpr3, tpr3, label=name3+str(round(auc3, 3)))
         ax.plot(fpr4, tpr4, label=name4+str(round(auc4, 3)))
         ax.legend(loc=4)
-        ax.set_title("Model " + model_lab.replace("_", " "))
-        ax.set_ylabel("Sensitivity")
-        ax.set_xlabel("1 - Specificity")
+        ax.set_title("Model " + model_lab.replace("_", " "), fontsize=20)
+        ax.set_ylabel("Sensitivity", fontsize=18)
+        ax.set_xlabel("1 - Specificity", fontsize=18)
 
     fig.savefig(os.path.join(output_path, model_type, "auc_curves.pdf"),
                 bbox_inches='tight')
@@ -1035,7 +1035,7 @@ def plot_calibration_curve_validation(model_type,website_path, model_labs, resul
         ax1.set_ylabel("Fraction of positives")
         ax1.set_ylim([-0.05, 1.05])
         ax1.legend(loc="lower right")
-        ax1.set_title('Calibration plots  (reliability curve)')
+        ax1.set_title('Calibration plots (reliability curve)')
 
         ax2.set_xlabel("Mean predicted value")
         ax2.set_ylabel("Count")
@@ -1043,8 +1043,8 @@ def plot_calibration_curve_validation(model_type,website_path, model_labs, resul
 
         plt.tight_layout()
 
-        with open('../results/mortality/paper_plots/calibration'+'_'+(model_lab)+'_plot.pkl','wb') as fid:
-            pickle.dump(fig, fid)
+        # with open('../results/mortality/paper_plots/calibration'+'_'+(model_lab)+'_plot.pkl','wb') as fid:
+        #     pickle.dump(fig, fid)
 
         plt.savefig('../results/mortality/paper_plots/calibration'+'_'+(model_lab)+'_plot.png', bbox_inches='tight')
         plt.close()

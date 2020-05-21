@@ -281,7 +281,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
                              #  x_jitter=0.1,
                              dot_size=3,
                              show=False)
-        ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
+        ax.set_ylabel("SHAP value")
         ax.set_ylim([-2, 2])
         if feat.split(" ", 1)[0] in ['CRP']:
             ax.set_xscale('log')
