@@ -18,9 +18,12 @@ website_path = '../../website/'
 results_path = '../../covid19_clean_data/'
 output_path = '../results'
 
-validation_paths={'Greece HC':'../../covid19_greece/general_greek_registry.csv', 
-                  'Sevilla':'../../covid19_sevilla/sevilla_clean.csv',
-                  'Hartford': '../../covid19_hartford/predictions'}
+validation_paths=['../../covid19_greece/general_greek_registry.csv', 
+                  '../../covid19_sevilla/sevilla_clean.csv']
+
+# validation_paths={'Greece HC':'../../covid19_greece/general_greek_registry.csv', 
+#                   'Sevilla':'../../covid19_sevilla/sevilla_clean.csv',
+#                   'Hartford': '../../covid19_hartford/predictions'}
 
 #Select the model type
 model_types = ['mortality','infection']
@@ -32,7 +35,7 @@ seeds = list(range(30, 31))
 SEED = [30]
 SPINE_COLOR = 'gray'
 model_type = 'mortality'
-sensitivity_threshold = 0.9
+sensitivity_threshold = 0.8
 confidence_level = 0.95
 
 
@@ -45,7 +48,7 @@ if PAPER_TYPE == 'MORTALITY':
     tab = u.classification_report_table_validation(model_type, website_path, model_labs,
                                                    results_path + "xgboost/", validation_paths,
                                                    sensitivity_threshold,
-                                                   output_path=output_path, print_only = True)
+                                                   output_path=output_path)
 
     # AUC and Sensitivity results with confidence intervals across models
     tab_models = u.classification_report_table_mlmodels(seeds, model_type, model_labs, results_path,

@@ -735,10 +735,13 @@ def classification_report_table_validation(model_type, website_path, model_labs,
         tab2 = create_metrics_table('Testing Set', cols, model_type, model_lab, results_path, seedID, False, sensitivity_threshold)
         tab = tab.append(tab2)
 
-        for val in validation_paths.keys():
-            print("Validation: "+val)
-            tabval = create_metrics_table_validation(val, cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[val], sensitivity_threshold=sensitivity_threshold)
-            tab = tab.append(tabval)
+        tab3 = create_metrics_table_validation('Greek HC', cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[0], sensitivity_threshold=sensitivity_threshold)
+        tab = tab.append(tab3)
+
+        tab4 = create_metrics_table_validation('Sevilla', cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[1], sensitivity_threshold=sensitivity_threshold)
+        tab = tab.append(tab4)
+
+        # for val in validation_paths.keys():
 
     tab.to_csv(os.path.join(output_path, model_type, 'summary_performance_threshold'+str(sensitivity_threshold)+'.csv'), index=False)
 
