@@ -15,10 +15,12 @@ import matplotlib.pyplot as plt
 
 #Paths for data access
 website_path = '../../website/'
-results_path = '../../covid19_clean_data/'
+results_path = '../../COVID_clinical/covid19_clean_data/'
 output_path = '../results'
-validation_path_greece = '../../covid19_greece/general_greek_registry.csv'
-validation_paths=[validation_path_greece]
+validation_path_greece = '../../COVID_clinical/covid19_greece/general_greek_registry.csv'
+validation_path_sevilla = '../../COVID_clinical/covid19_sevilla/sevilla_clean.csv'
+
+validation_paths=[validation_path_greece, validation_path_sevilla]
 
 #Select the model type
 model_types = ['mortality','infection']
