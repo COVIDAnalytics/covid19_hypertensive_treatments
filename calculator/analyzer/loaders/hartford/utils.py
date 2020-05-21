@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
 import datetime
+import re
 
 RENAMED_COLUMNS = {'SEX':'Gender',
     'AGE':'Age',
     'PAT_MRN_ID':'PATIENT_ID',
     'PAT_ENC_CSN_ID':'ENCOUNTER_ID',
+    'PAT_CLASS_CLEAN':'Patient_Class',
     'MORTALITY_CLEAN':'Outcome',
     'HOSP_ADMSN_TIME':'Date_Admission',
     'HOSP_DISCH_TIME':'Date_Discharge',
@@ -48,7 +50,8 @@ ADMISSIONS_COLUMNS = ['PATIENT_ID',
                         'Outcome',
                         'Date_Admission',
                         'Date_Discharge',
-                         'HHC_SITE']
+                         'HHC_SITE',
+                         'Patient_Class']
 
 VITALS_COLUMNS  = ['SaO2', # approximate matchh
                     'Body Temperature', 
@@ -85,7 +88,7 @@ LAB_COLUMNS = ['ABG: PaO2',
 
 COMORBIDITIES_COLUMNS = ['Essential hypertension', 'Diabetes', 
                          'Coronary atherosclerosis and other heart disease', 'Cardiac dysrhythmias',
-                        'Chronic Kidney Disease']
+                        'Chronic kidney disease']
                         
 
 def get_lab_dates(t):
