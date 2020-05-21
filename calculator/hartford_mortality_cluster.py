@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+import analyzer.loaders.hartford.hartford as hartford
 from sklearn.impute import KNNImputer
 import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
@@ -24,6 +25,7 @@ prediction = 'Outcome'
 folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 output_folder = 'predictors/outcome'
 
+print('Hartford All + Spain + Italy')
 name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
 
 extra_data = False
@@ -55,6 +57,9 @@ data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_da
 #Load spanish data
 data_spain = hmfundacion.load_fundacionhm('../data/spain/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data)
 
+data_hartford = hartford.load_hartford('/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_all.csv', 
+  discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
+
 X_cremona, y_cremona = ds.create_dataset(data,
                                       discharge_data,
                                       comorbidities_data,
@@ -73,9 +78,19 @@ X_spain, y_spain =  ds.create_dataset(data_spain,
                                       extra_data,
                                       prediction = prediction)
 
+X_hartford, y_hartford =  ds.create_dataset(data_hartford,
+                                      discharge_data,
+                                      comorbidities_data,
+                                      vitals_data,
+                                      lab_tests,
+                                      demographics_data,
+                                      swabs_data,
+                                      prediction = prediction)
+
+
 # Merge dataset
-X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
-y = pd.concat([y_cremona, y_spain], ignore_index=True)
+X = pd.concat([X_cremona, X_spain, X_hartford], join='inner', ignore_index=True)
+y = pd.concat([y_cremona, y_spain, y_hartford], ignore_index=True)
 
 if jobid == 0:
     X = X[u.SPANISH_ITALIAN_DATA] 
@@ -84,7 +99,7 @@ if jobid == 1:
     X = X.drop(['Systolic Blood Pressure', 'Essential hypertension'], axis = 1)
 
 seed = 30
-X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.15, random_state = seed)
 X_train = impute_missing(X_train)
 
 # Train XGB
