@@ -15,14 +15,14 @@ best_seed = 30
 current_seed = 30
 
 BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': best_seed, 
-                                                        'best_params': {'n_estimators': 545,
-                                                                        'learning_rate': 0.057740,
-                                                                        'max_depth': 9,
-                                                                        'min_child_weight': 0.900648,
-                                                                        'gamma': 3.515893,
-                                                                        'colsample_bytree': 0.089798,
-                                                                        'lambda': 2.600956,
-                                                                        'alpha': 0.000759}
+                                                        'best_params': {'n_estimators': 455,
+                                                                        'learning_rate': 0.272280,
+                                                                        'max_depth': 3,
+                                                                        'min_child_weight': 0.000640,
+                                                                        'gamma': 3.303610,
+                                                                        'colsample_bytree': 0.421856,
+                                                                        'lambda': 3.868990,
+                                                                        'alpha': 0.540640}
                                                                         },
                                                 'cart': {'best_seed': best_seed, 
                                                         'best_params': { 'max_depth': 22,
@@ -39,15 +39,14 @@ BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': best_se
 
 
                         'mortality_without_lab': {'xgboost': {'best_seed': best_seed, 
-                                                        'best_params': {'n_estimators': 658,
-                                                                        'learning_rate': 0.132739,
-                                                                        'max_depth': 5,
-                                                                        'min_child_weight': 0.737608,
-                                                                        'gamma': 2.508889,
-                                                                        'colsample_bytree': 0.284401,
-                                                                        'lambda': 0.207729,
-                                                                        'alpha': 2.557181}},
-
+                                                        'best_params': {'n_estimators': 782,
+                                                                        'learning_rate': 0.087435,
+                                                                        'max_depth': 3,
+                                                                        'min_child_weight': 0.911155,
+                                                                        'gamma': 2.176266,
+                                                                        'colsample_bytree': 0.738884,
+                                                                        'lambda': 3.241885,
+                                                                        'alpha': 1.191485}},
                                                 'cart': {'best_seed': best_seed, 
                                                         'best_params': { 'max_depth': 6,
                                                                         'min_weight_fraction_leaf':  0.0399055,
