@@ -1,7 +1,9 @@
 import pandas as pd
 import os
 import datetime
-import np
+import numpy as np
+
+import analyzer.loaders.hartford.utils as u
 
 def load_hartford(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=True, demographics_data = False, swabs_data = False):
 
@@ -21,7 +23,7 @@ def load_hartford(path, discharge_data = True, comorbidities_data = True, vitals
 
     if comorbidities_data:
         dataset_comorbidities= df[u.COMORBIDITIES_COLUMNS]
-        datasets.append(dataset_comorbidities.set_index(''))
+        datasets.append(dataset_comorbidities)
 
     if vitals_data:
         dataset_vitals = df[u.VITALS_COLUMNS]
@@ -33,7 +35,7 @@ def load_hartford(path, discharge_data = True, comorbidities_data = True, vitals
 
     if demographics_data:
         demographics = df[u.DEMOGRAPHICS_COLUMNS]
-        datasets.append(demographics.set_index('NOSOLOGICO'))
+        datasets.append(demographics)
 
     if swabs_data:
         datasets.append(None)
