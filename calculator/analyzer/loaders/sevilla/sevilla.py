@@ -34,6 +34,8 @@ RENAMED_COLUMNS = {
     'Current smoker (Current_smoker)':'Smoking_history',
     'Current drinker (Current_drinker)':'alcohol_abuse',
     'Cancer (Any) (Cancer_Any)':'Cancer', 
+    'Pulse (beats per min) (Pulse)':'Cardiac Frequency',
+    'Max temperature (Â°C) (Max_temperature_celsius)':'Body Temperature',
     'Systolic blood pressure <90mm Hg (Systolic_blood_pressure_lt_90mm_Hg)':'Systolic Blood Pressure'}
   
 
@@ -164,7 +166,7 @@ def filter_patients(datasets):
 def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=False, demographics_data = True, extra_data = True):
 
     # Load admission info
-    df = pd.read_csv('%s/COVID19_SASpatients_v1.csv' % path, sep=',' , encoding= 'unicode_escape')
+    df = pd.read_csv('%s/Sara Gonzalez Garcia - allPatientsCOVID19 SAS.csv' % path, sep=',' , encoding= 'unicode_escape')
     
     # Filter to only patients for which we know the endpoint  
     df = df[df['Discharged? (Discharged)'].notnull()]
@@ -196,9 +198,6 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     dataset_vitals['Body Temperature'] = dataset_vitals['Body Temperature'].replace('0',np.nan).astype(float)
     #Convert to Fahrenheit
     dataset_vitals['Body Temperature'] = fahrenheit_covert(dataset_vitals['Body Temperature'])
-
-    #Dictionary for cardiac frequency values
-    dataset_vitals[['Cardiac Frequency']] = dataset_vitals[['Cardiac Frequency']].replace(['Yes','No'], [26,19])   
     
     #Dictionary for binary values
     binary_dict = {'Yes': 1,'No': 0}
@@ -219,7 +218,7 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     dataset_admissions[['Outcome']] = dataset_admissions[['Outcome']].replace(['Yes','No'], [1,0])   
      
     #Read in lab metrics
-    labs = pd.read_csv('%s/Sara Gonzalez Garcia - Analiticas v3.csv' % path, sep=';' , encoding= 'unicode_escape')
+    labs = pd.read_csv('%s/Sara Gonzalez Garcia - Analiticas v4 All patients.csv' % path, sep=';' , encoding= 'unicode_escape')
 
     labs['fecha'] = pd.to_datetime(labs['fecha'])
     dataset_admissions['Date_Admission'] = pd.to_datetime(dataset_admissions['Date_Admission'])
