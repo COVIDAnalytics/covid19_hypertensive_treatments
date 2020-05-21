@@ -91,6 +91,7 @@ X_hartford, y_hartford =  ds.create_dataset(data_hartford,
 # Merge dataset
 X = pd.concat([X_cremona, X_spain, X_hartford], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain, y_hartford], ignore_index=True)
+X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o2_col)
 
 # Shuffle
 np.random.seed(SEED)
@@ -112,7 +113,7 @@ X_train = impute_missing(X_train)
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'xgboost')
+best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'xgboost')
 
 # Train RF
 # algorithm = o.algorithms[1]

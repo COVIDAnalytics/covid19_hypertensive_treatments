@@ -76,6 +76,7 @@ X_spain, y_spain =  ds.create_dataset(data_spain,
 # Merge dataset
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
+X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o2_col)
 
 # Shuffle
 np.random.seed(SEED)
@@ -92,6 +93,7 @@ if jobid == 1:
 seed = 30
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
 X_train = impute_missing(X_train)
+
 
 # Train XGB
 algorithm = o.algorithms[0]
