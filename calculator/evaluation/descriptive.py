@@ -98,6 +98,33 @@ summary_table.to_csv('../results/summary_tables/descriptive_derivation_greece.cs
 # summary_table.to_csv('../results/summary_tables/descriptive_derivation_hartford.csv',
 #                       index = False)
 
+
+#%% Hartford by type
+
+df_hhc = pd.read_csv("/home/hwiberg/research/COVID_risk/covid19_hartford/hhc_20200520.csv")
+
+if model_lab == "with_lab":
+ 	df_hhc.rename(columns={'SaO2':'ABG: Oxygen Saturation (SaO2)'}, inplace = True)
+
+df_hhc.replace({'Alive':0,'Expired':1}, inplace = True)
+df_hhc.rename({'Chronic Kidney Disease':'Chronic kidney disease'})
+
+
+# df_hhc = df_hhc.reindex(columns = [columns+['Patient_Class','Outcome']])
+
+data_a = df_hhc.query('Patient_Class == "Inpatient"')
+data_b = df_hhc.query('Patient_Class != "Inpatient"')
+
+
+data = pd.concat([data_a, data_b])
+summary_table = u.pairwise_compare(data_a, data_b, features,
+                                title_mapping = u.title_mapping,
+                                filter_A = 'Inpatient', filter_B = 'Other')
+
+summary_table.to_csv('../results/summary_tables/descriptive_derivation_hartford_byclass.csv',
+                      index = False)
+
+
 #%% Plot CRP values
 import matplotlib.pyplot as plt
 

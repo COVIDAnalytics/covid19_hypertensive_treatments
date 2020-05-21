@@ -12,9 +12,52 @@ import shap
 
 from sklearn import metrics
 
+import analyzer.dataset as ds
+import analyzer.loaders.hartford.hartford as hartford
+
+version = "inpatient"; site = "all"
+
 model_type = "mortality"
-model_lab = "without_lab"
+model_lab = "with_lab"
 website_path = "/home/hwiberg/research/COVID_risk/website/"
+prediction = 'Outcome'
+
+name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
+
+extra_data = False
+demographics_data = True
+
+if model_lab == "with_lab":
+    discharge_data = True
+    comorbidities_data = True
+    vitals_data = True
+    lab_tests = True
+    swabs_data = False
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
+    print(name_datasets[mask])
+elif model_lab == "without_lab":
+    discharge_data = True
+    comorbidities_data = True
+    vitals_data = True
+    lab_tests = False
+    swabs_data = False
+    mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
+    print(name_datasets[mask])
+
+
+data_hartford = hartford.load_hartford('/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_'+version+'_'+site+'.csv', 
+  discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
+
+
+X_hartford, y_hartford =  ds.create_dataset(data_hartford,
+                                      discharge_data,
+                                      comorbidities_data,
+                                      vitals_data,
+                                      lab_tests,
+                                      demographics_data,
+                                      swabs_data,
+                                      prediction = prediction)
+
 
 print(model_type)
 print(model_lab)
@@ -28,27 +71,24 @@ model = model_file['model']
 columns = model_file['columns']
 imputer= model_file['imputer']
 
-df_hhc = pd.read_csv("/home/hwiberg/research/COVID_risk/covid19_hartford/hhc_20200518.csv")
-
-# df_hhc = df_hhc.loc[~df_hhc['Date_Admission'].str.startswith("05"),:]
-
 if model_lab == "with_lab":
-	df_hhc.rename(columns={'SaO2':'ABG: Oxygen Saturation (SaO2)'}, inplace = True)
+	X_hartford.rename(columns={'SaO2':'ABG: Oxygen Saturation (SaO2)'}, inplace = True)
 
 ## Identify missing columns
-missing_cols = list(set(columns).difference(df_hhc.columns))
+missing_cols = list(set(columns).difference(X_hartford.columns))
 
-X_missing = df_hhc.reindex(columns = columns)
-y = df_hhc['Outcome']
+X_missing = X_hartford.reindex(columns = columns)
 
 X = imputer.transform(X_missing)
 df_X = pd.DataFrame(X, columns = columns, dtype=np.float)
 
+# df_X.loc[:,'C-Reactive Protein (CRP)'] = 10*df_X.loc[:,'C-Reactive Protein (CRP)'] 
+#
 # for x in missing_cols:
 # 	df_X.loc[df_X[x]>0, x] = 1
 # 	print(sum(df_X[x]))
 
 preds = model.predict_proba(df_X)[:,1]
 
-auc = metrics.roc_auc_score(y, preds)
+auc = metrics.roc_auc_score(y_hartford, preds)
 auc

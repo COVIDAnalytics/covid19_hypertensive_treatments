@@ -32,8 +32,8 @@ import scipy.stats
 from math import sqrt
 import matplotlib
 import subprocess
-import latexcodec
-import latexipy
+# import latexcodec
+
 
 def latexify(fig_width=None, fig_height=None, columns=1):
     """Set up matplotlib's RC params for LaTeX plotting.
