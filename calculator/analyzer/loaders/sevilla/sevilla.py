@@ -11,6 +11,7 @@ import datetime
 import numpy as np
 import pickle
 import analyzer.dataset as ds
+from datetime import datetime
 
 
 #path = '../../../Dropbox (Personal)/COVID_clinical/covid19_sevilla'
@@ -35,41 +36,26 @@ RENAMED_COLUMNS = {
     'Cancer (Any) (Cancer_Any)':'Cancer', 
     'Systolic blood pressure <90mm Hg (Systolic_blood_pressure_lt_90mm_Hg)':'Systolic Blood Pressure'}
   
-# LABS_RENAMED_COLUMNS = {
-#     'Glucosa(mg/dL)'
-    
-    
-    
-    
-#     }  
 
-
-#     {'HF':'Cardiac dysrhythmias',
-#     'Liver_dis':'Liver disfunction',
-#     'RR_adm':'Respiratory Frequency',
-#     'GLU_PRIMERA/FIRST_URG/EMERG':'Glycemia',
-#     'SBP_adm':'Systolic Blood Pressure',
-#     'Tbil_adm':'Total Bilirubin',
-#     'WBC_adm':'CBC: Leukocytes', #needs to be divided by 1000
-#     'AST_adm':'Aspartate Aminotransferase (AST)',
-#     'ALT_adm':'Alanine Aminotransferase (ALT)',
-#     'CRP_adm':'C-Reactive Protein (CRP)',
-#     'INR_adm':'Prothrombin Time (INR)',
-#     'PLT_adm':'CBC: Platelets',
-#     'Creat_adm':'Blood Creatinine',
-#     'DD_adm':'D-Dimer',
-#     'Urea_adm':'Urea',
-#     'lympho_adm':'CBC: Lymphocytes',
-#     'Hb_adm':'CBC: Hemoglobin',
-#     'PCT_adm':'Procalcitonin (PCT)',
-#     'FERR_adm':'Ferritinin',
-#     'LDH_adm':'LDH',
-#     'Creat_adm':'Blood Creatinine',
-#     'fibr_adm':'fibrinogen',
-#     'CPK_adm':'Creatinine Kinase',
-#     'UricAcid_adm':'Uric acid',
-#     'trop_adm':'troponin'}
-
+LABS_RENAMED_COLUMNS = {
+    'Glucosa':'Glycemia',
+    'Alanina transaminasa':'Alanine Aminotransferase (ALT)',
+    'Aspartato transaminasa':'Aspartate Aminotransferase (AST)',
+    'Potasio':'Potassium Blood Level',
+    'Plaquetas (recuento)':'CBC: Platelets',
+    'Urea':'Urea',
+    'Creatinina':'Blood Creatinine',
+    'Creatina quinasa':'Creatinine Kinase',
+    'Sodio':'Blood Sodium',
+    'Calcio':'Blood Calcium',
+    'Hemoglobina':'CBC: Hemoglobin',
+    'ProteÃ\xadna C reactiva':'C-Reactive Protein (CRP)',
+    'Volumen corpuscular medio':'CBC: Mean Corpuscular Volume (MCV)',
+    'Tiempo de protrombina normalizado (INR)':'Prothrombin Time (INR)',    
+    'Leucocitos (recuento)':'CBC: Leukocytes',
+    'Linfocitos (recuento)':'CBC: Lymphocytes',
+    'Colinesterasa':'Cholinesterase',
+    'DÃ\xadmero-D':'D-Dimer'}  
 
 
 DEMOGRAPHICS_COLUMNS = ['PATIENT ID','Age','Gender']
@@ -89,21 +75,11 @@ VITALS_COLUMNS = ['PATIENT ID','Body Temperature', 'Cardiac Frequency']
 
 EXTRA_COLUMNS = ['PATIENT ID',
                  'Cardiac dysrhythmias',
-                 'Liver disfunction']
-                 
-                 
-                 
-                 # 'Cholinesterase',              
-                 # 'Blood Calcium',            
-                 # 'Blood Amylase',            
-                 # 'Activated Partial Thromboplastin Time (aPTT)',            
-                 # 'CBC: Mean Corpuscular Volume (MCV)',
-                 # 'Blood Sodium',
-                 # 'Potassium Blood Level',
-                 # 'Glycemia']
-
+                 'Liver disfunction']                            
 
 LAB_METRICS = ['PATIENT ID',
+               'Glycemia',
+               'Potassium Blood Level',
                'ABG: Oxygen Saturation (SaO2)',
                'CBC: Leukocytes',
                'Aspartate Aminotransferase (AST)',
@@ -114,14 +90,13 @@ LAB_METRICS = ['PATIENT ID',
                'Blood Creatinine',
                'CBC: Hemoglobin',
                'CBC: Lymphocytes',
-               'Procalcitonin (PCT)',
-               'Ferritinin',
-               'LDH',
-               'Blood Creatinine',
                'Total Bilirubin',
+               'Blood Sodium',
+               'Blood Calcium',
                'D-Dimer',
                'Creatinine Kinase',
-               'troponin',
+               'CBC: Mean Corpuscular Volume (MCV)',
+               'Cholinesterase',
                'Urea']
 
 def create_dataset_v2(data_dict, discharge_data = True,
@@ -162,6 +137,10 @@ def create_dataset_v2(data_dict, discharge_data = True,
 
     return X, y
 
+def fahrenheit_covert(temp_celsius):
+    temp_fahrenheit = ((temp_celsius * 9)/5)+ 32
+    return temp_fahrenheit
+
 
 def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=False, demographics_data = True, extra_data = True):
 
@@ -193,6 +172,12 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     #Vital values
     dataset_vitals = df[VITALS_COLUMNS]
     
+    
+    #Reformatting the vital values at the emergency department
+    dataset_vitals['Body Temperature'] = dataset_vitals['Body Temperature'].replace('0',np.nan).astype(float)
+    #Convert to Fahrenheit
+    dataset_vitals['Body Temperature'] = fahrenheit_covert(dataset_vitals['Body Temperature'])
+
     #Dictionary for cardiac frequency values
     dataset_vitals[['Cardiac Frequency']] = dataset_vitals[['Cardiac Frequency']].replace(['Yes','No'], [26,19])   
     
@@ -214,20 +199,106 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     dataset_admissions[['Outcome']] = dataset_admissions[['Outcome']].replace(['Yes','No'], [1,0])   
      
     #Read in lab metrics
-    labs = pd.read_csv('%s/Analiticas_SASpatientesv1.csv' % path, sep=',' , encoding= 'unicode_escape')
+    labs = pd.read_csv('%s/Sara Gonzalez Garcia - Analiticas v3.csv' % path, sep=';' , encoding= 'unicode_escape')
 
-    #Drop columns that only contain NA values
-    labs = labs.dropna(axis=1, how='all')
+    labs['fecha'] = pd.to_datetime(labs['fecha'])
+    dataset_admissions['Date_Admission'] = pd.to_datetime(dataset_admissions['Date_Admission'])
+
+       
+    labs['nombre'] = labs['nombre'].replace(LABS_RENAMED_COLUMNS)
+
+    #Limit to only rows for the ones known in Italy
+    labs = labs.loc[labs['nombre'].isin(LAB_METRICS)]
+    labs['valor'] = labs['valor'].str.extract('(\d+(?:\.\d+)?)', expand=False).astype(float)
+
+    #Convert to wide format
+    df2 = labs.pivot_table(index=['id_paciente','fecha'], columns='nombre', values='valor')
+    df2=pd.DataFrame(df2.to_records())
     
-    labs = pd.read_csv('%s/Sara Gonzalez Garcia - Analiticas v2.csv' % path, sep=',' , encoding= 'unicode_escape')
+    #Createe Blood Urea Nitrogen from Urea
+    df2['Blood Urea Nitrogen (BUN)'] = df2['Urea']/2.14
+    
+    #Lymphocytes to higher scale
+    df2['CBC: Lymphocytes'] = df2['CBC: Lymphocytes']*1000
+     
+    #Drop Urea
+    df2 = df2.drop(columns=['Urea'])
+
+    dfa = pd.merge(dataset_admissions, df2, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['id_paciente', 'fecha'])   
+    
+    dataset_admissions['Date_Admission2'] = dataset_admissions['Date_Admission']+ pd.DateOffset(1)
+    dfb = pd.merge(dataset_admissions, df2, how='inner', left_on=['PATIENT ID','Date_Admission2'], right_on=['id_paciente', 'fecha'])   
+
+    dataset_admissions['Date_Admission3'] = dataset_admissions['Date_Admission']+ pd.DateOffset(-1)
+    dfc = pd.merge(dataset_admissions, df2, how='inner', left_on=['PATIENT ID','Date_Admission3'], right_on=['id_paciente', 'fecha'])   
+
+    dataset_admissions['Date_Admission4'] = dataset_admissions['Date_Admission']+ pd.DateOffset(2)
+    dfd = pd.merge(dataset_admissions, df2, how='inner', left_on=['PATIENT ID','Date_Admission4'], right_on=['id_paciente', 'fecha'])   
+
+    s1 = pd.Series(dfa.id_paciente.unique())    
+
+          
 
 
+
+
+    
+    #First we will do the entire extraction based on the day of admission and then we will try other dates
+    df2 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['id_paciente', 'fecha'])   
+
+ 
+
+    
+    
+    
+    
+    
     #Filter to only patients that are in the inclusion criteria
     #df3 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['ï»¿ID', 'FECHA'])
     #dataset_admissions['PATIENT ID'][dataset_admissions['PATIENT ID'].isin(labs['ï»¿ID'])]
     
-    pats = dataset_admissions['PATIENT ID'][dataset_admissions['PATIENT ID'].isin(labs['ï»¿id_ITCBIO'])]
-    df3 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['ï»¿id_ITCBIO', 'fecha'])
+    pats = dataset_admissions[dataset_admissions['PATIENT ID'].isin(labs['id_paciente'])]
+    df3 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['id_paciente', 'fecha'])   
+    len(df3.id_paciente.unique())
+    
+    dataset_admissions['Date_Admission2'] =     dataset_admissions['Date_Admission']+ pd.DateOffset(1)
+    df4 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission2'], right_on=['id_paciente', 'fecha'])  
+    len(df4.id_paciente.unique())
+    
+    dataset_admissions['Date_Admission3'] =     dataset_admissions['Date_Admission']+ pd.DateOffset(-1)
+    df5 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission3'], right_on=['id_paciente', 'fecha'])  
+    len(df5.id_paciente.unique())
+    
+    dataset_admissions['Date_Admission4'] =     dataset_admissions['Date_Admission']+ pd.DateOffset(+2)
+    df6 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission4'], right_on=['id_paciente', 'fecha'])  
+    len(df6.id_paciente.unique())
+
+    
+    s1 = pd.Series(df3.id_paciente.unique())    
+    s2 = pd.Series(df4.id_paciente.unique())
+    s3 = pd.Series(df5.id_paciente.unique())
+    s4 = pd.Series(df5.id_paciente.unique())    
+    s = s1.append(s2).append(s3).append(s4)
+    
+    len(s.unique())
+    
+    # 111 patients out of which 73 have lab values
+    
+    
+    [datetime.strptime(x, '%d/%m/%Y') for x in labs['fecha']]
+    
+    labs['fecha']+ pd.DateOffset(1)
+    
+
+
+    x = 'Linfocitos (recuento)'
+    len(df2['id_paciente'][df2['nombre']==x].unique())
+    pd.to_numeric(df2['valor'][df2['nombre']==x]).describe()
+
+
+    
+    labs[labs["id_paciente"].isin(['31987'])]
+    
     
     df4 = df[df['PATIENT ID'].isin(pats)]
            
