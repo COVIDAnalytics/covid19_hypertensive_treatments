@@ -43,12 +43,7 @@ RENAMED_COLUMNS = {'SEX':'Gender',
 
 DEMOGRAPHICS_COLUMNS= ['Gender','Age']
 
-ADMISSIONS_COLUMNS = ['PATIENT_ID',
-                        'ENCOUNTER_ID',
-                        'Outcome',
-                        'Date_Admission',
-                        'Date_Discharge',
-                         'HHC_SITE']
+ADMISSIONS_COLUMNS = ['Outcome']
 
 VITALS_COLUMNS  = ['SaO2', # approximate matchh
                     'Body Temperature', 
@@ -86,7 +81,7 @@ LAB_COLUMNS = ['ABG: PaO2',
 COMORBIDITIES_COLUMNS = ['Essential hypertension', 'Diabetes', 
                          'Coronary atherosclerosis and other heart disease', 'Cardiac dysrhythmias',
                         'Chronic Kidney Disease']
-                        
+
 
 def get_lab_dates(t):
     # TODO: Find better way to do so. Nested try-except is not nice.
