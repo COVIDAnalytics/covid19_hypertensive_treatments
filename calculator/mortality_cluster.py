@@ -25,6 +25,7 @@ prediction = 'Outcome'
 folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 output_folder = 'predictors/outcome'
 
+print('Hartford All + Spain + Italy')
 name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
 
 extra_data = False
@@ -56,7 +57,7 @@ data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_da
 #Load spanish data
 data_spain = hmfundacion.load_fundacionhm('../data/spain/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data)
 
-data_hartford = hartford.load_hartford('/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_other.csv', 
+data_hartford = hartford.load_hartford('/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_all.csv', 
   discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
 
 X_cremona, y_cremona = ds.create_dataset(data,
@@ -98,14 +99,14 @@ if jobid == 1:
     X = X.drop(['Systolic Blood Pressure', 'Essential hypertension'], axis = 1)
 
 seed = 30
-X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.15, random_state = seed)
 X_train = impute_missing(X_train)
 
 # Train XGB
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'xgboost')
+best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 400, name_algo = 'xgboost')
 
 # Train RF
 # algorithm = o.algorithms[1]
