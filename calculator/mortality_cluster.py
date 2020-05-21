@@ -56,6 +56,8 @@ data = cremona.load_cremona('../data/cremona/', discharge_data, comorbidities_da
 #Load spanish data
 data_spain = hmfundacion.load_fundacionhm('../data/spain/', discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data)
 
+data_hartford = hartford.load_hartford('/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_other.csv', 
+  discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
 
 X_cremona, y_cremona = ds.create_dataset(data,
                                       discharge_data,
@@ -75,18 +77,19 @@ X_spain, y_spain =  ds.create_dataset(data_spain,
                                       extra_data,
                                       prediction = prediction)
 
+X_hartford, y_hartford =  ds.create_dataset(data_hartford,
+                                      discharge_data,
+                                      comorbidities_data,
+                                      vitals_data,
+                                      lab_tests,
+                                      demographics_data,
+                                      swabs_data,
+                                      prediction = prediction)
+
 
 # Merge dataset
-X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
-y = pd.concat([y_cremona, y_spain], ignore_index=True)
-
-X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o2_col)
-
-# Shuffle
-np.random.seed(SEED)
-idx = np.arange(len(X)); np.random.shuffle(idx)
-X = X.loc[idx]
-y = y.loc[idx]
+X = pd.concat([X_cremona, X_spain, X_hartford], join='inner', ignore_index=True)
+y = pd.concat([y_cremona, y_spain, y_hartford], ignore_index=True)
 
 if jobid == 0:
     X = X[u.SPANISH_ITALIAN_DATA] 
