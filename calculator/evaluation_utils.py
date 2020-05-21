@@ -555,51 +555,59 @@ def classification_report_table_bootstrap(seeds, model_types, model_labs, result
 def get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_path):
 
     #Load validation population
-    val_df = pd.read_csv(validation_path , encoding= 'unicode_escape')
-    #Filter to only patients for which the outcome is known.
-    val_df = val_df.loc[val_df['Outcome'].isin([0,1])]
-
-    if model_lab == 'without_lab':
-        val_df = val_df.rename(columns={'ABG: Oxygen Saturation (SaO2)':'SaO2'})
-
-    if val_df['Body Temperature'].mean() < 45:
-        val_df['Body Temperature'] = ((val_df['Body Temperature']/5)*9)+32
-
-    #Load model corresponding to model_type and lab
-    with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
-        model_file = pickle.load(file)
-
-    seedID = model_file['best seed']
-
-    #Load model corresponding to model_type and lab
-    with open(results_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
-        model_file = pickle.load(file)
-
-    #Extract the inputs of the model
-    model = model_file['model']
-    features = model_file['json']
-    columns = model_file['columns']
-    imputer= model_file['imputer']
-    test = model_file['test']
-
-    if model_type == 'mortality':
-        y = test['Outcome']
-    else:
-        y=test['Swab']
-
-    X = test.iloc[:,0:(len(test.columns)-1)]
-
-    #Select only the relevant columns
-    val_X0 = val_df[X.columns]
-    val_y =  val_df['Outcome']
-
-    val_X = pd.DataFrame(imputer.transform(val_X0))
-    val_X.columns = list(val_X0.columns.values)
-
-    y_pred = model.predict(val_X)
-    prob_pos = model.predict_proba(val_X)[:, 1]
-
-    return val_y,y_pred, prob_pos
+    if 'predictions' in validation_path:
+        val_df = pd.read_csv(validation_path+'_'+model_type+'_'+model_lab+'.csv', encoding= 'unicode_escape')
+        y = val_df['y']
+        prob_pos = val_df['prob_pos']
+        y_pred = prob_pos.apply(lambda x: 1 if x >= 0.5 else 0)
+        return y, y_pred, prob_pos 
+    
+    else:    
+        val_df = pd.read_csv(validation_path, encoding= 'unicode_escape')
+        #Filter to only patients for which the outcome is known.
+        val_df = val_df.loc[val_df['Outcome'].isin([0,1])]
+    
+        if model_lab == 'without_lab':
+            val_df = val_df.rename(columns={'ABG: Oxygen Saturation (SaO2)':'SaO2'})
+    
+        if val_df['Body Temperature'].mean() < 45:
+            val_df['Body Temperature'] = ((val_df['Body Temperature']/5)*9)+32
+    
+        #Load model corresponding to model_type and lab
+        with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
+            model_file = pickle.load(file)
+    
+        seedID = model_file['best seed']
+    
+        #Load model corresponding to model_type and lab
+        with open(results_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
+            model_file = pickle.load(file)
+    
+        #Extract the inputs of the model
+        model = model_file['model']
+        features = model_file['json']
+        columns = model_file['columns']
+        imputer= model_file['imputer']
+        test = model_file['test']
+    
+        if model_type == 'mortality':
+            y = test['Outcome']
+        else:
+            y=test['Swab']
+    
+        X = test.iloc[:,0:(len(test.columns)-1)]
+    
+        #Select only the relevant columns
+        val_X0 = val_df[X.columns]
+        val_y =  val_df['Outcome']
+    
+        val_X = pd.DataFrame(imputer.transform(val_X0))
+        val_X.columns = list(val_X0.columns.values)
+    
+        y_pred = model.predict(val_X)
+        prob_pos = model.predict_proba(val_X)[:, 1]
+    
+        return val_y,y_pred, prob_pos
 
 def get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option):
 
@@ -708,7 +716,7 @@ def create_metrics_table_validation(cohort, cols, model_type, model_lab, website
 
 
 
-def classification_report_table_validation(model_type, website_path, model_labs, results_path, validation_paths, sensitivity_threshold, output_path='.'):
+def classification_report_table_validation(model_type, website_path, model_labs, results_path, validation_paths, sensitivity_threshold, output_path='.', print_only = False):
 
     #Get the data
     cols = ['Model Type','Model Labs','Cohort','N','AUC','Threshold','Accuracy','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
@@ -727,13 +735,15 @@ def classification_report_table_validation(model_type, website_path, model_labs,
         tab2 = create_metrics_table('Testing Set', cols, model_type, model_lab, results_path, seedID, False, sensitivity_threshold)
         tab = tab.append(tab2)
 
-        tab3 = create_metrics_table_validation('Greek HC', cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[0], sensitivity_threshold=sensitivity_threshold)
-        tab = tab.append(tab3)
-        
-        tab4 = create_metrics_table_validation('Sevilla', cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[1], sensitivity_threshold=sensitivity_threshold)
-        tab = tab.append(tab4)
+        for val in validation_paths.keys():
+            print("Validation: "+val)
+            tabval = create_metrics_table_validation(val, cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[val], sensitivity_threshold=sensitivity_threshold)
+            tab = tab.append(tabval)
 
-    tab.to_csv(os.path.join(output_path, model_type, 'summary_performance.csv'), index=False)
+    if print_only:
+        print(tab)
+    else:
+        tab.to_csv(os.path.join(output_path, model_type, 'summary_performance.csv'), index=False)
 
     return tab
 

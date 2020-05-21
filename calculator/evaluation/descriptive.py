@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pickle
+import os
 
 import evaluation.descriptive_utils as u
 import analyzer.dataset as ds
@@ -62,6 +63,7 @@ if model_lab == 'without_lab':
     val_df = val_df.rename(columns={'ABG: Oxygen Saturation (SaO2)':'SaO2'})
 if val_df['Body Temperature'].mean() < 45:
     val_df['Body Temperature'] = ((val_df['Body Temperature']/5)*9)+32
+val_df[]
     
 data_b = val_df.reindex(columns = columns+['Outcome'])
 
@@ -69,59 +71,55 @@ summary_table = u.pairwise_compare(data_a, data_b, features,
                                 title_mapping = u.title_mapping,
                                 filter_A = 'Derivation', filter_B = 'Greece')
 
-summary_table.to_csv('../results/summary_tables/descriptive_derivation_greece.csv',
-                      index = False)
-
-
-#%% Hartford
-# data_a = X.copy()
-# data_a['Outcome'] = y
-
-# df_hhc = pd.read_csv("/home/hwiberg/research/COVID_risk/covid19_hartford/hhc_20200518.csv")
-
-# if model_lab == "with_lab":
-# 	df_hhc.rename(columns={'SaO2':'ABG: Oxygen Saturation (SaO2)'}, inplace = True)
-
-# df_hhc.replace({'Alive':0,'Expired':1}, inplace = True)
-
-# X_missing = df_hhc.reindex(columns = columns)
-# y_hhc = df_hhc['Outcome']
-
-# data_b = X_missing.copy()
-# data_b['Outcome'] = y_hhc
-
-# data = pd.concat([data_a, data_b])
-# summary_table = pairwise_compare(data, data_a, data_b, features,
-#                                 title_mapping = title_mapping,
-#                                 filter_A = 'Derivation', filter_B = 'Hartford')
-
-# summary_table.to_csv('../results/summary_tables/descriptive_derivation_hartford.csv',
+# summary_table.to_csv('../results/summary_tables/descriptive_derivation_greece.csv',
 #                       index = False)
 
 
-#%% Hartford by type
+#%% Hartford
+data_a = X.copy()
+data_a['Outcome'] = y
 
-df_hhc = pd.read_csv("/home/hwiberg/research/COVID_risk/covid19_hartford/hhc_20200520.csv")
+df_hhc = pd.read_csv("/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_all.csv")
 
 if model_lab == "with_lab":
  	df_hhc.rename(columns={'SaO2':'ABG: Oxygen Saturation (SaO2)'}, inplace = True)
 
 df_hhc.replace({'Alive':0,'Expired':1}, inplace = True)
-df_hhc.rename({'Chronic Kidney Disease':'Chronic kidney disease'})
 
+X_missing = df_hhc.reindex(columns = columns)
+y_hhc = df_hhc['Outcome']
+
+data_b = X_missing.copy()
+data_b['Outcome'] = y_hhc
+
+summary_table = u.pairwise_compare(data_a, data_b, features,
+                                title_mapping = u.title_mapping,
+                                filter_A = 'Derivation', filter_B = 'Hartford')
+
+summary_table.to_csv('../results/summary_tables/descriptive_derivation_hartford.csv',
+                      index = False)
+
+
+#%% Hartford by type
+
+df_hhc = pd.read_csv("/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_other.csv")
+
+if model_lab == "with_lab":
+ 	df_hhc.rename(columns={'SaO2':'ABG: Oxygen Saturation (SaO2)'}, inplace = True)
+
+df_hhc.replace({'Alive':0,'Expired':1}, inplace = True)
 
 # df_hhc = df_hhc.reindex(columns = [columns+['Patient_Class','Outcome']])
 
-data_a = df_hhc.query('Patient_Class == "Inpatient"')
-data_b = df_hhc.query('Patient_Class != "Inpatient"')
-
+data_a = df_hhc.query('Outcome == 1')
+data_b = df_hhc.query('Outcome == 0')
 
 data = pd.concat([data_a, data_b])
 summary_table = u.pairwise_compare(data_a, data_b, features,
                                 title_mapping = u.title_mapping,
-                                filter_A = 'Inpatient', filter_B = 'Other')
+                                filter_A = 'Non-Survivors', filter_B = 'Survivors')
 
-summary_table.to_csv('../results/summary_tables/descriptive_derivation_hartford_byclass.csv',
+summary_table.to_csv('../results/summary_tables/descriptive_derivation_hartford_other_byoutcome.csv',
                       index = False)
 
 
