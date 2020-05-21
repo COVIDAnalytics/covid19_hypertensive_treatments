@@ -18,7 +18,9 @@ website_path = '../../website/'
 results_path = '../../covid19_clean_data/'
 output_path = '../results'
 validation_path_greece = '../../covid19_greece/general_greek_registry.csv'
-validation_paths=[validation_path_greece]
+validation_path_sevilla = '../../covid19_sevilla/sevilla_clean.csv'
+
+validation_paths=[validation_path_greece, validation_path_sevilla]
 
 #Select the model type
 model_types = ['mortality','infection']

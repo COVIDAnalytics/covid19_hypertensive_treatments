@@ -24,7 +24,7 @@ RENAMED_COLUMNS = {
     'Diabetes (Diabetes)':'Diabetes',
     'Hypertension (Hypertension)':'Essential hypertension',    
     'Coronary heart disease (Coronary_heart_disease)':'Coronary atherosclerosis and other heart disease',
-    'Chronic kidney/renal disease (Chronic_kidney_renal_disease)':'Chronic renal disfunction',
+    'Chronic kidney/renal disease (Chronic_kidney_renal_disease)':'Chronic kidney disease',
     'Date/Time of Hospital Admission (Date_Time_of_Hospital_Admission)':'Date_Admission',
     'Death':'Outcome',
     'Oxygen Saturation':'ABG: Oxygen Saturation (SaO2)',
@@ -34,6 +34,8 @@ RENAMED_COLUMNS = {
     'Current smoker (Current_smoker)':'Smoking_history',
     'Current drinker (Current_drinker)':'alcohol_abuse',
     'Cancer (Any) (Cancer_Any)':'Cancer', 
+    'Pulse (beats per min) (Pulse)':'Cardiac Frequency',
+    'Max temperature (Â°C) (Max_temperature_celsius)':'Body Temperature',
     'Systolic blood pressure <90mm Hg (Systolic_blood_pressure_lt_90mm_Hg)':'Systolic Blood Pressure'}
   
 
@@ -55,7 +57,8 @@ LABS_RENAMED_COLUMNS = {
     'Leucocitos (recuento)':'CBC: Leukocytes',
     'Linfocitos (recuento)':'CBC: Lymphocytes',
     'Colinesterasa':'Cholinesterase',
-    'DÃ\xadmero-D':'D-Dimer'}  
+    'DÃ\xadmero-D':'D-Dimer',
+    'Bilirrubina total':'Total Bilirubin'}  
 
 
 DEMOGRAPHICS_COLUMNS = ['PATIENT ID','Age','Gender']
@@ -65,7 +68,7 @@ ADMISSION_COLUMNS = ['PATIENT ID','Date_Admission','Outcome']
 
 COMORBIDITIES_COLUMNS = ['PATIENT ID','Essential hypertension', 'Diabetes', 
                  'Coronary atherosclerosis and other heart disease',
-                 'Chronic renal disfunction',
+                 'Chronic kidney disease',
                  'COPD','Smoking_history',
                  'alcohol_abuse',
                  'Cancer']
@@ -97,6 +100,7 @@ LAB_METRICS = ['PATIENT ID',
                'Creatinine Kinase',
                'CBC: Mean Corpuscular Volume (MCV)',
                'Cholinesterase',
+               'Blood Urea Nitrogen (BUN)',
                'Urea']
 
 def create_dataset_v2(data_dict, discharge_data = True,
@@ -142,10 +146,27 @@ def fahrenheit_covert(temp_celsius):
     return temp_fahrenheit
 
 
+def filter_patients(datasets):
+
+    patients = datasets[0].index.astype(np.int64)
+
+    # Get common patients
+    for d in datasets[1:]:
+        patients = d[d.index.astype(np.int64).isin(patients)].index.unique()
+
+
+    # Remove values not in patients (in place)
+    for d in datasets:
+        d.drop(d[~d.index.astype(np.int64).isin(patients)].index, inplace=True)
+
+    return patients
+
+
+
 def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=False, demographics_data = True, extra_data = True):
 
     # Load admission info
-    df = pd.read_csv('%s/COVID19_SASpatients_v1.csv' % path, sep=',' , encoding= 'unicode_escape')
+    df = pd.read_csv('%s/Sara Gonzalez Garcia - allPatientsCOVID19 SAS.csv' % path, sep=',' , encoding= 'unicode_escape')
     
     # Filter to only patients for which we know the endpoint  
     df = df[df['Discharged? (Discharged)'].notnull()]
@@ -177,9 +198,6 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     dataset_vitals['Body Temperature'] = dataset_vitals['Body Temperature'].replace('0',np.nan).astype(float)
     #Convert to Fahrenheit
     dataset_vitals['Body Temperature'] = fahrenheit_covert(dataset_vitals['Body Temperature'])
-
-    #Dictionary for cardiac frequency values
-    dataset_vitals[['Cardiac Frequency']] = dataset_vitals[['Cardiac Frequency']].replace(['Yes','No'], [26,19])   
     
     #Dictionary for binary values
     binary_dict = {'Yes': 1,'No': 0}
@@ -191,6 +209,7 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     #Add SaO2 in Vitals
     if not lab_tests:
         dataset_vitals['SaO2'] = df['ABG: Oxygen Saturation (SaO2)']
+        LAB_METRICS.remove('ABG: Oxygen Saturation (SaO2)')
  
     #Change gender decoding    
     dataset_demographics[['Gender']] = dataset_demographics[['Gender']].replace(['Female','Male'], [1,0])   
@@ -199,10 +218,11 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     dataset_admissions[['Outcome']] = dataset_admissions[['Outcome']].replace(['Yes','No'], [1,0])   
      
     #Read in lab metrics
-    labs = pd.read_csv('%s/Sara Gonzalez Garcia - Analiticas v3.csv' % path, sep=';' , encoding= 'unicode_escape')
+    labs = pd.read_csv('%s/Sara Gonzalez Garcia - Analiticas v4 All patients.csv' % path, sep=';' , encoding= 'unicode_escape')
 
     labs['fecha'] = pd.to_datetime(labs['fecha'])
     dataset_admissions['Date_Admission'] = pd.to_datetime(dataset_admissions['Date_Admission'])
+    df['Date_Admission'] = pd.to_datetime(df['Date_Admission'])
 
        
     labs['nombre'] = labs['nombre'].replace(LABS_RENAMED_COLUMNS)
@@ -221,9 +241,6 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     #Lymphocytes to higher scale
     df2['CBC: Lymphocytes'] = df2['CBC: Lymphocytes']*1000
      
-    #Drop Urea
-    df2 = df2.drop(columns=['Urea'])
-
     dfa = pd.merge(dataset_admissions, df2, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['id_paciente', 'fecha'])   
     
     dataset_admissions['Date_Admission2'] = dataset_admissions['Date_Admission']+ pd.DateOffset(1)
@@ -235,73 +252,24 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
     dataset_admissions['Date_Admission4'] = dataset_admissions['Date_Admission']+ pd.DateOffset(2)
     dfd = pd.merge(dataset_admissions, df2, how='inner', left_on=['PATIENT ID','Date_Admission4'], right_on=['id_paciente', 'fecha'])   
 
-    s1 = pd.Series(dfa.id_paciente.unique())    
+    pats_b = dataset_admissions['PATIENT ID'][(dataset_admissions['PATIENT ID'].isin(dfb['PATIENT ID'])) & (~dataset_admissions['PATIENT ID'].isin(dfa['PATIENT ID']))]        
+    df_f = dfa.append(dfb[dfb['PATIENT ID'].isin(pats_b)])    
+    
+    pats_c = dataset_admissions['PATIENT ID'][(dataset_admissions['PATIENT ID'].isin(dfc['PATIENT ID'])) & (~dataset_admissions['PATIENT ID'].isin(df_f['PATIENT ID']))]
+    df_f = df_f.append(dfc[dfc['PATIENT ID'].isin(pats_c)])    
 
-          
+    pats_d = dataset_admissions['PATIENT ID'][(dataset_admissions['PATIENT ID'].isin(dfd['PATIENT ID'])) & (~dataset_admissions['PATIENT ID'].isin(df_f['PATIENT ID']))]
+    df_f = df_f.append(dfd[dfd['PATIENT ID'].isin(pats_d)])  
+    
+    if lab_tests:
+        df_sao2 = pd.merge(df_f, df, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['PATIENT ID','Date_Admission'])   
+        df_f['ABG: Oxygen Saturation (SaO2)'] = df_sao2['ABG: Oxygen Saturation (SaO2)']
+     
+    dataset_labs = df_f[LAB_METRICS]
 
-
-
-
-    
-    #First we will do the entire extraction based on the day of admission and then we will try other dates
-    df2 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['id_paciente', 'fecha'])   
-
- 
-
-    
-    
-    
-    
-    
-    #Filter to only patients that are in the inclusion criteria
-    #df3 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['ï»¿ID', 'FECHA'])
-    #dataset_admissions['PATIENT ID'][dataset_admissions['PATIENT ID'].isin(labs['ï»¿ID'])]
-    
-    pats = dataset_admissions[dataset_admissions['PATIENT ID'].isin(labs['id_paciente'])]
-    df3 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission'], right_on=['id_paciente', 'fecha'])   
-    len(df3.id_paciente.unique())
-    
-    dataset_admissions['Date_Admission2'] =     dataset_admissions['Date_Admission']+ pd.DateOffset(1)
-    df4 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission2'], right_on=['id_paciente', 'fecha'])  
-    len(df4.id_paciente.unique())
-    
-    dataset_admissions['Date_Admission3'] =     dataset_admissions['Date_Admission']+ pd.DateOffset(-1)
-    df5 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission3'], right_on=['id_paciente', 'fecha'])  
-    len(df5.id_paciente.unique())
-    
-    dataset_admissions['Date_Admission4'] =     dataset_admissions['Date_Admission']+ pd.DateOffset(+2)
-    df6 = pd.merge(dataset_admissions, labs, how='inner', left_on=['PATIENT ID','Date_Admission4'], right_on=['id_paciente', 'fecha'])  
-    len(df6.id_paciente.unique())
-
-    
-    s1 = pd.Series(df3.id_paciente.unique())    
-    s2 = pd.Series(df4.id_paciente.unique())
-    s3 = pd.Series(df5.id_paciente.unique())
-    s4 = pd.Series(df5.id_paciente.unique())    
-    s = s1.append(s2).append(s3).append(s4)
-    
-    len(s.unique())
-    
-    # 111 patients out of which 73 have lab values
-    
-    
-    [datetime.strptime(x, '%d/%m/%Y') for x in labs['fecha']]
-    
-    labs['fecha']+ pd.DateOffset(1)
-    
-
-
-    x = 'Linfocitos (recuento)'
-    len(df2['id_paciente'][df2['nombre']==x].unique())
-    pd.to_numeric(df2['valor'][df2['nombre']==x]).describe()
-
-
-    
-    labs[labs["id_paciente"].isin(['31987'])]
-    
-    
-    df4 = df[df['PATIENT ID'].isin(pats)]
-           
+    #Drop Urea
+    dataset_labs = dataset_labs.drop(columns=['Urea'])
+        
     # Lab values
     #dataset_labs = df[LAB_METRICS]
     dataset_extra = dataset_admissions['PATIENT ID'].to_frame()
@@ -311,38 +279,42 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
         if not i =='PATIENT ID':
             dataset_extra[i] = np.nan
 
-    name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals','demographics', 'extras']) #'lab', 
-    dataset_array = np.asarray([discharge_data, comorbidities_data, vitals_data, demographics_data, extra_data])#lab_tests
+    name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals','lab', 'demographics','extras']) #, 
+    dataset_array = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, extra_data])#
 
     # Set index
     dataset_admissions.set_index('PATIENT ID', inplace=True)
     dataset_comorbidities.set_index('PATIENT ID', inplace=True)
     dataset_vitals.set_index('PATIENT ID', inplace=True)
-    #dataset_labs.set_index('PATIENT ID', inplace=True)
+    dataset_labs.set_index('PATIENT ID', inplace=True)
     dataset_demographics.set_index('PATIENT ID', inplace=True)
     dataset_extra.set_index('PATIENT ID', inplace=True)
 
-    datasets = []
+    list_datasets = np.asarray([dataset_admissions, dataset_comorbidities, dataset_vitals, dataset_labs, dataset_demographics, dataset_extra])
 
+    # Filter patients common to all datasets
+    patients = filter_patients(list_datasets[dataset_array])
+
+    datasets = []
 
     # Create final dataset
     if discharge_data:
-        datasets.append(dataset_admissions)
+        datasets.append(dataset_admissions[dataset_admissions.index.isin(patients)])
     
     if comorbidities_data:
-        datasets.append(dataset_comorbidities)
+        datasets.append(dataset_comorbidities[dataset_comorbidities.index.isin(patients)])
     
     if vitals_data:
-        datasets.append(dataset_vitals)
+        datasets.append(dataset_vitals[dataset_vitals.index.isin(patients)])
     
-    #if lab_tests:
-     #   datasets.append(dataset_labs)
+    if lab_tests:
+        datasets.append(dataset_labs[dataset_labs.index.isin(patients)])
 
     if demographics_data:
-        datasets.append(dataset_demographics)
+        datasets.append(dataset_demographics[dataset_demographics.index.isin(patients)])
 
     if extra_data:
-        datasets.append(dataset_extra)
+        datasets.append(dataset_extra[dataset_extra.index.isin(patients)])
 
     datasets = np.asarray(datasets)
 
@@ -352,7 +324,7 @@ def load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_
 
 ##############
 
-lab_tests = False
+lab_tests = True
 swabs_data = False
 discharge_data = True
 comorbidities_data = True
@@ -365,7 +337,8 @@ prediction = 'Outcome'
 
 path = '../../../Dropbox (Personal)/COVID_clinical/covid19_sevilla'
 
-data = load_sevilla(path, discharge_data = True, comorbidities_data = True, vitals_data = True, lab_tests=False, demographics_data = True, extra_data = True)
+
+data = load_sevilla(path, discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data , extra_data )
 
 X_sevilla, y_sevilla = create_dataset_v2(data,
                                       discharge_data,
@@ -380,7 +353,7 @@ X_sevilla, y_sevilla = create_dataset_v2(data,
 sevilla = X_sevilla
 sevilla['Outcome'] = y_sevilla
 
-sevilla.to_csv(path+'/clean_data_no_labs.csv')
+sevilla.to_csv(path+'/sevilla_clean.csv')
 
 
 
