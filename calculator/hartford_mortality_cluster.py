@@ -92,6 +92,12 @@ X_hartford, y_hartford =  ds.create_dataset(data_hartford,
 X = pd.concat([X_cremona, X_spain, X_hartford], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain, y_hartford], ignore_index=True)
 
+# Shuffle
+np.random.seed(SEED)
+idx = np.arange(len(X)); np.random.shuffle(idx)
+X = X.loc[idx]
+y = y.loc[idx]
+
 if jobid == 0:
     X = X[u.SPANISH_ITALIAN_DATA] 
 
@@ -99,14 +105,14 @@ if jobid == 1:
     X = X.drop(['Systolic Blood Pressure', 'Essential hypertension'], axis = 1)
 
 seed = 30
-X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.15, random_state = seed)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
 X_train = impute_missing(X_train)
 
 # Train XGB
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 400, name_algo = 'xgboost')
+best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 450, name_algo = 'xgboost')
 
 # Train RF
 # algorithm = o.algorithms[1]
