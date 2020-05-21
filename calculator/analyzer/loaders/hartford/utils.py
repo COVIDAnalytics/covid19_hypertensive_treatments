@@ -74,8 +74,7 @@ LAB_COLUMNS = ['ABG: PaO2',
     'Total Bilirubin', 
     'CBC: Red cell Distribution Width (RDW)', 
     'Cholinesterase',
-    'Glycemia_1',
-    'Glycemia_2',
+    'Glycemia',
     'Prothrombin Time (INR)',
     'Blood Urea Nitrogen (BUN)',
     'CBC: Leukocytes']
@@ -108,11 +107,11 @@ def clean_labs(l):
 def clean_patient_class(c):
     if pd.isnull(c):
         return np.NaN
-    elif bool(re.match("inpatient", c.lower())):
+    elif bool(re.match(".*inpatient", c.lower())):
         return "Inpatient"
-    elif bool(re.match("outpatient", c.lower())):
+    elif bool(re.match(".*outpatient", c.lower())):
         return "Outpatient"
-    elif bool(re.match("emergency", c.lower())):
+    elif bool(re.match(".*emergency", c.lower())):
         return "Emergency"
     else:
         return "Other"
