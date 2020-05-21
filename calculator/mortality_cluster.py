@@ -77,6 +77,12 @@ X_spain, y_spain =  ds.create_dataset(data_spain,
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
 
+# Shuffle
+np.random.seed(SEED)
+idx = np.arange(len(X)); np.random.shuffle(idx)
+X = X.loc[idx]
+y = y.loc[idx]
+
 if jobid == 0:
     X = X[u.SPANISH_ITALIAN_DATA] 
 
