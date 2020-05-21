@@ -716,7 +716,7 @@ def create_metrics_table_validation(cohort, cols, model_type, model_lab, website
 
 
 
-def classification_report_table_validation(model_type, website_path, model_labs, results_path, validation_paths, sensitivity_threshold, output_path='.', print_only = False):
+def classification_report_table_validation(model_type, website_path, model_labs, results_path, validation_paths, sensitivity_threshold, output_path='.'):
 
     #Get the data
     cols = ['Model Type','Model Labs','Cohort','N','AUC','Threshold','Accuracy','Specificity','Precision','Negative predictive value','False positive rate','False negative rate','False discovery rate']
@@ -740,10 +740,7 @@ def classification_report_table_validation(model_type, website_path, model_labs,
             tabval = create_metrics_table_validation(val, cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[val], sensitivity_threshold=sensitivity_threshold)
             tab = tab.append(tabval)
 
-    if print_only:
-        print(tab)
-    else:
-        tab.to_csv(os.path.join(output_path, model_type, 'summary_performance.csv'), index=False)
+    tab.to_csv(os.path.join(output_path, model_type, 'summary_performance_threshold'+str(sensitivity_threshold)+'.csv'), index=False)
 
     return tab
 
