@@ -18,7 +18,7 @@ import analyzer.loaders.hartford.hartford as hartford
 version = "inpatient"; site = "all"
 
 model_type = "mortality"
-model_lab = "without_lab"
+model_lab = "with_lab"
 website_path = "/home/hwiberg/research/COVID_risk/website/"
 prediction = 'Outcome'
 

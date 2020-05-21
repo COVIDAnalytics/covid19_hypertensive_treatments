@@ -27,6 +27,8 @@ def load_hartford(path, discharge_data = True, comorbidities_data = True, vitals
 
     if vitals_data:
         dataset_vitals = df[u.VITALS_COLUMNS]
+        if lab_tests:
+            dataset_vitals.rename(columns={'SaO2':'ABG: Oxygen Saturation (SaO2)'}, inplace = True)
         datasets.append(dataset_vitals)
 
     if lab_tests:
