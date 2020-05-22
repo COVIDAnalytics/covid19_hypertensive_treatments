@@ -73,18 +73,14 @@ def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/
 
   #Load model corresponding to model_type and lab
 
+
+# import evaluation.hhc_evaluation as hhc
+
 # version = "inpatient"; site = "main"
 # data_path = '/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_'+version+'_'+site+'.csv'
-# result_path = '../../covid19_hartford/'
 
 # model_type = "mortality"
-# model_lab = "with_lab"
+# model_lab = "without_lab"
 
 # res = hhc.get_hartford_predictions(model_type, model_lab, data_path)
-# res.to_csv(result_path+'predictions_'+model_type+'_'+model_lab+'.csv')
-
-
-
-
-
-
+# res.to_csv("../../covid19_hartford/predictions/"+model_type+"_"+model_lab+"_"+site+".csv")

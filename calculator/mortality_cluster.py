@@ -84,12 +84,13 @@ X_hartford, y_hartford =  ds.create_dataset(data_hartford,
                                       swabs_data,
                                       prediction = prediction)
 
-
+X_hartford['Location'] = 'Hartford'
 # Merge dataset
 X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
 y = pd.concat([y_cremona, y_spain], ignore_index=True)
 
-X, bounds_dict = ds.filter_outliers(X)
+X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o2_col)
+
 store_json(bounds_dict, 'mortality_bounds.json')
 
 
