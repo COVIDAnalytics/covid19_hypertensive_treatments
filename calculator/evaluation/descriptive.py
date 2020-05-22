@@ -39,19 +39,19 @@ summary_table.to_csv('../results/summary_tables/descriptive_derivation_bysurviva
                       index = False)
 
 #%% Country Split
-data = X.copy()
-data['Outcome'] = y
+# data = X.copy()
+# data['Outcome'] = y
 
-data_a= data.query('Location == "Cremona"')
-data_b = data.query('Location == "Spain"')
+# data_a= data.query('Location == "Cremona"')
+# data_b = data.query('Location == "Spain"')
 
-data = pd.concat([data_a, data_b])
-summary_table = u.pairwise_compare(data_a, data_b, features,
-                                title_mapping = u.title_mapping_summary, row_order = u.row_order,
-                                filter_A = 'Cremona', filter_B = 'Spain')
+# data = pd.concat([data_a, data_b])
+# summary_table = u.pairwise_compare(data_a, data_b, features,
+#                                 title_mapping = u.title_mapping_summary, row_order = u.row_order,
+#                                 filter_A = 'Cremona', filter_B = 'Spain')
 
-summary_table.to_csv('../results/summary_tables/descriptive_derivation_bycountry.csv',
-                      index = False)
+# summary_table.to_csv('../results/summary_tables/descriptive_derivation_bycountry.csv',
+#                       index = False)
       
                 
 
@@ -74,8 +74,8 @@ summary_table = u.pairwise_compare(data_a, data_gr, features,
                                 title_mapping = u.title_mapping_summary, row_order = u.row_order,
                                 filter_A = 'Derivation', filter_B = 'Greece')
 
-# summary_table.to_csv('../results/summary_tables/descriptive_derivation_greece.csv',
-#                       index = False)
+summary_table.to_csv('../results/summary_tables/descriptive_derivation_greece.csv',
+                      index = False)
 
 #%% Sevilla
 data_sev = pd.read_csv("../../covid19_sevilla/sevilla_clean.csv")
@@ -84,6 +84,9 @@ data_sev = data_sev.reindex(columns = columns+['Outcome'])
 summary_table = u.pairwise_compare(data_a, data_sev, features,
                                 title_mapping = u.title_mapping_summary, row_order = u.row_order,
                                 filter_A = 'Derivation', filter_B = 'Sevilla')
+
+summary_table.to_csv('../results/summary_tables/descriptive_derivation_sevilla.csv',
+                      index = False)
 
 
 #%% Compare to all validation

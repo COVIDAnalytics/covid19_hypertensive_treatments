@@ -15,12 +15,6 @@ from sklearn import metrics
 import analyzer.dataset as ds
 import analyzer.loaders.hartford.hartford as hartford
 
-version = "inpatient"; site = "other"
-data_path = '/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_'+version+'_'+site+'.csv'
-
-model_type = "mortality"
-model_lab = "with_lab"
-
 def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/home/hwiberg/research/COVID_risk/website/"):
   with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
     model_file = pickle.load(file)
@@ -75,14 +69,13 @@ def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/
   #Load model corresponding to model_type and lab
 
 
+import evaluation.hhc_evaluation as hhc
 
-# df_X.loc[:,'C-Reactive Protein (CRP)'] = 10*df_X.loc[:,'C-Reactive Protein (CRP)'] 
-#
-# for x in missing_cols:
-# 	df_X.loc[df_X[x]>0, x] = 1
-# 	print(sum(df_X[x]))
+version = "inpatient"; site = "main"
+data_path = '/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_'+version+'_'+site+'.csv'
 
+model_type = "mortality"
+model_lab = "without_lab"
 
-
-
-
+res = hhc.get_hartford_predictions(model_type, model_lab, data_path)
+res.to_csv("../../covid19_hartford/predictions/"+model_type+"_"+model_lab+"_"+site+".csv")

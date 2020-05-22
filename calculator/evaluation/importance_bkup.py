@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May 21 20:39:10 2020
+
+@author: hollywiberg
+"""
+
 import pandas as pd
 import pickle
 import shap
@@ -232,7 +240,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     ## Calculate SHAP values (for each observation x feature)
     explainer = shap.TreeExplainer(model,
-                                   # data=X_test,
+                                   data=X_test,
                                    );
     shap_values = explainer.shap_values(X);
 
@@ -281,10 +289,8 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
                              #  x_jitter=0.1,
                              dot_size=3,
                              show=False)
-        # ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
-        ax.set_ylabel("SHAP value")
-        print("SHAP bounds: ", str(shap_values.min()), ", ", str(shap_values.max()))
-        ax.set_ylim([shap_values.min()-.1, shap_values.max()+.1])
+        ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
+        ax.set_ylim([-2, 2])
         if feat.split(" ", 1)[0] in ['CRP']:
             ax.set_xscale('log')
 

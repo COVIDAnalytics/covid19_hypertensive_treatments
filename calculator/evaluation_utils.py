@@ -32,7 +32,7 @@ import scipy.stats
 from math import sqrt
 import matplotlib
 import subprocess
-# import latexcodec
+import latexcodec
 
 
 def latexify(fig_width=None, fig_height=None, columns=1):
@@ -735,13 +735,9 @@ def classification_report_table_validation(model_type, website_path, model_labs,
         tab2 = create_metrics_table('Testing Set', cols, model_type, model_lab, results_path, seedID, False, sensitivity_threshold)
         tab = tab.append(tab2)
 
-        tab3 = create_metrics_table_validation('Greek HC', cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[0], sensitivity_threshold=sensitivity_threshold)
-        tab = tab.append(tab3)
-
-        tab4 = create_metrics_table_validation('Sevilla', cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[1], sensitivity_threshold=sensitivity_threshold)
-        tab = tab.append(tab4)
-
-        # for val in validation_paths.keys():
+        for val in validation_paths.keys():
+            tab4 = create_metrics_table_validation(val, cols, model_type, model_lab, website_path, results_path, validation_path = validation_paths[val], sensitivity_threshold=sensitivity_threshold)
+            tab = tab.append(tab4)
 
     tab.to_csv(os.path.join(output_path, model_type, 'summary_performance_threshold'+str(sensitivity_threshold)+'.csv'), index=False)
 
@@ -868,18 +864,17 @@ def plot_auc_curve_validation(model_type,website_path, model_labs, results_path,
     # TODO: Create 2 subplots: ROCs (123) with lab + without lab.
 
     latexify(columns=1)
-    fig, axs = plt.subplots(1, len(model_labs), figsize=(20, 10))
-    axs = {model_lab: axs[i] for i, model_lab in enumerate(model_labs)}
+    print("model labs: ", model_labs)
+    
+    if len(model_labs) > 1:
+        fig, axs = plt.subplots(1, len(model_labs), figsize=(10, 5))
+        axs = {model_lab: axs[i] for i, model_lab in enumerate(model_labs)}
+    else: 
+        fig, ax = plt.subplots(1, figsize=(10, 10))
 
     for model_lab in model_labs:
-        ax = axs[model_lab]
-
-        #Then we add the validation set 1
-        y1, y_pred1, prob_pos1 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[0])
-        fpr1, tpr1, _ = metrics.roc_curve(y1,  prob_pos1)
-        auc1 = metrics.roc_auc_score(y1, prob_pos1)
-        name1 = "AUC of Greek HC "
-        #  plt.close()
+        if len(model_labs) > 1:
+            ax = axs[model_lab]   
 
         #Load model corresponding to model_type and lab
         with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
@@ -893,35 +888,45 @@ def plot_auc_curve_validation(model_type,website_path, model_labs, results_path,
         y2, y_pred2, prob_pos2 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=True)
         fpr2, tpr2, _ = metrics.roc_curve(y2,  prob_pos2)
         auc2 = metrics.roc_auc_score(y2, prob_pos2)
-        plt.close()
+        # plt.close()
+        ax.plot(fpr2, tpr2, label=name2+str(round(auc2, 3)))
 
         #Then we add the testing set
         name3 = "AUC of Testing Set "
         y3, y_pred3, prob_pos3 = get_model_outcomes_pickle_flexible(model_type, model_lab, results_path, seedID, train_option=False)
         fpr3, tpr3, _ = metrics.roc_curve(y3,  prob_pos3)
         auc3 = metrics.roc_auc_score(y3, prob_pos3)
+        ax.plot(fpr3, tpr3, label=name3+str(round(auc3, 3)))
         
-        plt.close()
+        # plt.close()
         
         #Then we add the validation set 1
-        y4, y_pred4, prob_pos4 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[1])
-        fpr4, tpr4, _ = metrics.roc_curve(y4,  prob_pos4)
-        auc4 = metrics.roc_auc_score(y4, prob_pos4)
-        name4 = "AUC of Sevilla "
+        
+        for val in validation_paths.keys():
+            y4, y_pred4, prob_pos4 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths[val])
+            fpr4, tpr4, _ = metrics.roc_curve(y4,  prob_pos4)
+            auc4 = metrics.roc_auc_score(y4, prob_pos4)
+            name4 = "AUC of " + val + " "
+            ax.plot(fpr4, tpr4, label=name4+str(round(auc4, 3)))
 
-
-
-        ax.plot(fpr1, tpr1, label=name1+str(round(auc1, 3)))
-        ax.plot(fpr2, tpr2, label=name2+str(round(auc2, 3)))
-        ax.plot(fpr3, tpr3, label=name3+str(round(auc3, 3)))
-        ax.plot(fpr4, tpr4, label=name4+str(round(auc4, 3)))
-        ax.legend(loc=4)
-        ax.set_title("Model " + model_lab.replace("_", " "), fontsize=20)
-        ax.set_ylabel("Sensitivity", fontsize=18)
-        ax.set_xlabel("1 - Specificity", fontsize=18)
+        #Then we add the validation set 1
+        # y1, y_pred1, prob_pos1 = get_model_outcomes_pickle_validation(model_type, model_lab, website_path, results_path, validation_paths['Greek HC'])
+        # fpr1, tpr1, _ = metrics.roc_curve(y1,  prob_pos1)
+        # auc1 = metrics.roc_auc_score(y1, prob_pos1)
+        # name1 = "AUC of Greek HC "
+        # ax.plot(fpr1, tpr1, label=name1+str(round(auc1, 3)))
+        #  plt.close()
+        
+        ax.legend(loc=4, prop={'size':12})
+        if len(model_labs) > 1:
+            ax.set_title("Model " + model_lab.replace("_", " "), fontsize = 18)
+        ax.set_ylabel("Sensitivity", fontsize = 16)
+        ax.set_xlabel("1 - Specificity", fontsize = 16)
 
     fig.savefig(os.path.join(output_path, model_type, "auc_curves.pdf"),
                 bbox_inches='tight')
+    
+    plt.close()
 
 def plot_precision_recall_curve_validation(model_type,website_path, model_labs, results_path, validation_paths):
 
@@ -1046,8 +1051,8 @@ def plot_calibration_curve_validation(model_type,website_path, model_labs, resul
         # with open('../results/mortality/paper_plots/calibration'+'_'+(model_lab)+'_plot.pkl','wb') as fid:
         #     pickle.dump(fig, fid)
 
-        plt.savefig('../results/mortality/paper_plots/calibration'+'_'+(model_lab)+'_plot.png', bbox_inches='tight')
-        plt.close()
+        # plt.savefig('../results/mortality/paper_plots/calibration'+'_'+(model_lab)+'_plot.png', bbox_inches='tight')
+        # plt.close()
 
 
 
