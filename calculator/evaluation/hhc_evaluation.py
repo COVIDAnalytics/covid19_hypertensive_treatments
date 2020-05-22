@@ -15,12 +15,6 @@ from sklearn import metrics
 import analyzer.dataset as ds
 import analyzer.loaders.hartford.hartford as hartford
 
-version = "inpatient"; site = "other"
-data_path = '/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_'+version+'_'+site+'.csv'
-
-model_type = "mortality"
-model_lab = "with_lab"
-
 def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/home/hwiberg/research/COVID_risk/website/"):
   with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
     model_file = pickle.load(file)
@@ -31,6 +25,7 @@ def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/
   name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
   extra_data = False
   demographics_data = True
+  
   if model_lab == "with_lab":
     discharge_data = True
     comorbidities_data = True
@@ -38,7 +33,7 @@ def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/
     lab_tests = True
     swabs_data = False
     mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
-      print(name_datasets[mask])
+    print(name_datasets[mask])
   elif model_lab == "without_lab":
     discharge_data = True
     comorbidities_data = True
@@ -47,12 +42,15 @@ def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/
     swabs_data = False
     mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
     print(name_datasets[mask])
+    
   if model_type == 'mortality':
     prediction = 'Outcome'
-  elif: model_type == 'infection':
+  elif model_type == 'infection':
     prediction = 'Swab'
+    
   data_hartford = hartford.load_hartford(data_path, 
     discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
+    
   X_hartford, y_hartford =  ds.create_dataset(data_hartford,
                                         discharge_data,
                                         comorbidities_data,
@@ -61,6 +59,7 @@ def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/
                                         demographics_data,
                                         swabs_data,
                                         prediction = prediction)
+                                        
   ## Identify missing columns
   missing_cols = list(set(columns).difference(X_hartford.columns))
   print("Missing Column Count: "+str(len(missing_cols)))
@@ -70,17 +69,20 @@ def get_hartford_predictions(model_type, model_lab, data_path, website_path = "/
   preds = model.predict_proba(df_X)[:,1]
   auc = metrics.roc_auc_score(y_hartford, preds)
   print("AUC: "+str(auc))
-  return hhc_preds = pd.DataFrame({'y': y_hartford, 'prob_pos' = preds})
+  return pd.DataFrame({'y': y_hartford, 'prob_pos': preds})
 
   #Load model corresponding to model_type and lab
 
+# version = "inpatient"; site = "main"
+# data_path = '/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_'+version+'_'+site+'.csv'
+# result_path = '../../covid19_hartford/'
 
+# model_type = "mortality"
+# model_lab = "with_lab"
 
-# df_X.loc[:,'C-Reactive Protein (CRP)'] = 10*df_X.loc[:,'C-Reactive Protein (CRP)'] 
-#
-# for x in missing_cols:
-# 	df_X.loc[df_X[x]>0, x] = 1
-# 	print(sum(df_X[x]))
+# res = hhc.get_hartford_predictions(model_type, model_lab, data_path)
+# res.to_csv(result_path+'predictions_'+model_type+'_'+model_lab+'.csv')
+
 
 
 

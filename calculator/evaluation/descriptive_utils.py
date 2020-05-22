@@ -109,8 +109,7 @@ title_mapping_summary = {
 
 #%% Load function
 
-def get_dataset_preload(model_type, model_lab, columns, imputer, impute = False, 
-                combine = True):
+def get_dataset_preload(model_type, model_lab):
     data_cremona = pd.read_csv('../../covid19_clean_data/clean_data/cremona_'+model_type+'_'+model_lab+'.csv')
     X_cremona = data_cremona.drop('Outcome', axis = 1); y_cremona = data_cremona['Outcome']
     X_cremona['Location'] = 'Cremona'
@@ -213,7 +212,7 @@ def descriptive_table(data, features, short_version = False):
 def pairwise_compare(data_a, data_b, features, title_mapping = None, row_order = None,
                      filter_A = 'Group A', filter_B = 'Group B'):
     
-    data = pd.concat([data_a, data_b])
+    data = pd.concat([data_a, data_b], join = 'inner', ignore_index = True)
     
     describe_all  = descriptive_table(data, features, short_version = True)
     describe_a = descriptive_table(data_a, features, short_version = True)
