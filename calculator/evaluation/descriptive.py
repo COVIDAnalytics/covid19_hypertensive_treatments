@@ -5,6 +5,7 @@ import os
 
 import evaluation.descriptive_utils as u
 import analyzer.dataset as ds
+import analyzer.loaders.hartford.hartford as hartford
 
 from scipy import stats
 
@@ -29,8 +30,10 @@ data['Outcome'] = y
 
 data_a= data.query('Outcome == 1')
 data_b = data.query('Outcome == 0')
-summary_table = u.pairwise_compare(data_a, data_b, features, title_mapping = u.title_mapping,
+summary_table = u.pairwise_compare(data_a, data_b, features, 
+                                   title_mapping = u.title_mapping_summary, row_order = u.row_order,
                                  filter_A = 'Non-Survivor', filter_B = 'Survivor')
+
 
 summary_table.to_csv('../results/summary_tables/descriptive_derivation_bysurvival.csv',
                       index = False)
@@ -44,12 +47,13 @@ data_b = data.query('Location == "Spain"')
 
 data = pd.concat([data_a, data_b])
 summary_table = u.pairwise_compare(data_a, data_b, features,
-                                title_mapping = u.title_mapping,
+                                title_mapping = u.title_mapping_summary, row_order = u.row_order,
                                 filter_A = 'Cremona', filter_B = 'Spain')
 
 summary_table.to_csv('../results/summary_tables/descriptive_derivation_bycountry.csv',
                       index = False)
-
+      
+                
 
 #%% Greece
 
@@ -63,17 +67,39 @@ if model_lab == 'without_lab':
     val_df = val_df.rename(columns={'ABG: Oxygen Saturation (SaO2)':'SaO2'})
 if val_df['Body Temperature'].mean() < 45:
     val_df['Body Temperature'] = ((val_df['Body Temperature']/5)*9)+32
-val_df[]
     
-data_b = val_df.reindex(columns = columns+['Outcome'])
+data_gr = val_df.reindex(columns = columns+['Outcome'])
 
-summary_table = u.pairwise_compare(data_a, data_b, features,
-                                title_mapping = u.title_mapping,
+summary_table = u.pairwise_compare(data_a, data_gr, features,
+                                title_mapping = u.title_mapping_summary, row_order = u.row_order,
                                 filter_A = 'Derivation', filter_B = 'Greece')
 
 # summary_table.to_csv('../results/summary_tables/descriptive_derivation_greece.csv',
 #                       index = False)
 
+#%% Sevilla
+data_sev = pd.read_csv("../../covid19_sevilla/sevilla_clean.csv")
+data_sev = data_sev.reindex(columns = columns+['Outcome'])
+
+summary_table = u.pairwise_compare(data_a, data_sev, features,
+                                title_mapping = u.title_mapping_summary, row_order = u.row_order,
+                                filter_A = 'Derivation', filter_B = 'Sevilla')
+
+
+#%% Compare to all validation
+describe_cremona = u.descriptive_table(data.query('Location == "Cremona"'), features, short_version = True)
+describe_spain = u.descriptive_table(data.query('Location == "Spain"'), features, short_version = True)
+describe_greece = u.descriptive_table(data_gr, features, short_version = True)
+describe_sevilla = u.descriptive_table(data_sev, features, short_version = True)
+
+full = pd.concat([describe_cremona, describe_spain, describe_greece, describe_sevilla], axis = 1)
+
+full = full.reindex(u.row_order)
+full.reset_index(inplace = True)
+full['index'] = full['index'].replace(u.title_mapping_summary, inplace=False)
+
+full.loc['Filter',:] = [np.nan, 'Cremona', 'Cremona', 'Spain', 'Spain', 'Greece', 'Greece', 'Sevilla', 'Sevilla']
+full.to_csv("../results/descriptive_all_sites.csv")
 
 #%% Hartford
 data_a = X.copy()
@@ -93,11 +119,11 @@ data_b = X_missing.copy()
 data_b['Outcome'] = y_hhc
 
 summary_table = u.pairwise_compare(data_a, data_b, features,
-                                title_mapping = u.title_mapping,
+                                title_mapping = u.title_mapping, row_order = u.row_order,
                                 filter_A = 'Derivation', filter_B = 'Hartford')
 
 summary_table.to_csv('../results/summary_tables/descriptive_derivation_hartford.csv',
-                      index = False)
+                      index = True)
 
 
 #%% Hartford by type
@@ -116,11 +142,11 @@ data_b = df_hhc.query('Outcome == 0')
 
 data = pd.concat([data_a, data_b])
 summary_table = u.pairwise_compare(data_a, data_b, features,
-                                title_mapping = u.title_mapping,
+                                title_mapping = u.title_mapping, row_order = u.row_order,
                                 filter_A = 'Non-Survivors', filter_B = 'Survivors')
 
 summary_table.to_csv('../results/summary_tables/descriptive_derivation_hartford_other_byoutcome.csv',
-                      index = False)
+                      index = True)
 
 
 #%% Plot CRP values
