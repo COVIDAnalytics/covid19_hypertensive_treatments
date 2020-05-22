@@ -122,16 +122,16 @@ X_train = impute_missing(X_train)
 # best_rf, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'rf')
 
 # Train CART
-algorithm = o.algorithms[2]
-name_param = o.name_params[2]
+# algorithm = o.algorithms[2]
+# name_param = o.name_params[2]
 
-best_cart, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'cart')
+# best_cart, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'cart')
 
 # Train Logistic regression
-# algorithm = o.algorithms[3]
-# name_param = o.name_params[3]
+algorithm = o.algorithms[3]
+name_param = o.name_params[3]
 
-# best_lr, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'lr')
+best_lr, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'lr')
 
 # Train OCT
 # from julia.api import Julia
