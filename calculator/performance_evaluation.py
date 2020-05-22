@@ -67,7 +67,7 @@ if PAPER_TYPE == 'MORTALITY':
                                 output_path=output_path)
 
     # SHAP Features plots
-    for model_type, model_lab in itertools.product(model_types, model_labs):
+    # for model_type, model_lab in itertools.product(model_types, model_labs):
         # for model_type, model_lab in itertools.product(['mortality'],['without_lab']):
         print("Model: %s, %s" % (model_type, model_lab))
         save_path = os.path.join(output_path, model_type, 'model_'+ model_lab)
