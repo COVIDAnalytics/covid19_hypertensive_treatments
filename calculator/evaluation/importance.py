@@ -232,7 +232,8 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     ## Calculate SHAP values (for each observation x feature)
     explainer = shap.TreeExplainer(model,
-                                   # data=X_test,
+                                   data=X_test,
+                                   model_output="probability",
                                    );
     shap_values = explainer.shap_values(X);
 
@@ -270,6 +271,11 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     feat_display = np.array(X.columns)[sort_idx]
     feat_display = np.delete(feat_display, np.argwhere(feat_display == "Age"))
 
+    letters = ["(b)", "(c)", "(d)"]
+    import string
+    letters = ["(" + s + ")" for s in list(string.ascii_lowercase)[1:max_display+1]]
+
+    shap_values_abs = np.maximum(np.abs(shap_values.min()-.05), np.abs(shap_values.max()+0.05))
     for idx in range(max_display):
         ax = axs[idx]
         feat = feat_display[idx]
@@ -284,7 +290,13 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
         # ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
         ax.set_ylabel("SHAP value")
         print("SHAP bounds: ", str(shap_values.min()), ", ", str(shap_values.max()))
-        ax.set_ylim([shap_values.min()-.1, shap_values.max()+.1])
+        ax.set_ylim([-shap_values_abs, shap_values_abs])
+        ax.text(0.1, 0.95, letters[idx],
+                horizontalalignment='center',
+                verticalalignment='center',
+                transform=ax.transAxes,
+                weight='bold',
+        )
         if feat.split(" ", 1)[0] in ['CRP']:
             ax.set_xscale('log')
 
@@ -313,6 +325,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
 
     fig.savefig(os.path.join(save_path, 'feature_plot' + suffix_filter+'.pdf'),  bbox_inches='tight')
 
+
     plt.close()
     shap.summary_plot(shap_values, X, show=False,
                       max_display=10,
@@ -320,7 +333,14 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
                       feature_names=[c[:c.find("(")] if c.find("(") != -1 else c for c in X.columns],
                       plot_type="violin")
     f = plt.gcf()
-    plt.xlabel('SHAP value (impact on model output) \n {(logarithm of model output odds)}')
+    ax = plt.gca()
+    ax.text(0, 1, "(a)",
+            horizontalalignment='center',
+            verticalalignment='center',
+            transform=ax.transAxes,
+            weight='bold',
+            )
+    plt.xlabel('SHAP value (impact on model output)')
     f.savefig(os.path.join(save_path, 'summary_plot' + suffix_filter + '.pdf'),
             bbox_inches='tight'
             )
