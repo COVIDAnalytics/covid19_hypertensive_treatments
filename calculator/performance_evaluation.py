@@ -18,10 +18,10 @@ website_path = '../../website/'
 results_path = '../../covid19_clean_data/'
 output_path = '../results'
 
-# validation_paths=['../../covid19_greece/general_greek_registry.csv', 
+# validation_paths=['../../covid19_greece/general_greek_registry.csv',
 #                   '../../covid19_sevilla/sevilla_clean.csv']
 
-validation_paths={'Greek HC':'../../covid19_greece/general_greek_registry.csv', 
+validation_paths={'Greek HC':'../../covid19_greece/general_greek_registry.csv',
                   'Sevilla':'../../covid19_sevilla/sevilla_clean.csv',
                    'Hartford': '../../covid19_hartford/predictions/main'}
 
@@ -45,30 +45,29 @@ PAPER_TYPE = 'MORTALITY'  # OR PNAS
 
 if PAPER_TYPE == 'MORTALITY':
 
-    ## Tables
-    # AUC and Sensitivity results with confidence intervals
-    for sensitivity_threshold in threshold_list:
-        tab = u.classification_report_table_validation(model_type, website_path, model_labs,
-                                                       results_path + "xgboost/", validation_paths,
-                                                       sensitivity_threshold,
-                                                       output_path=output_path)
-    
-        # AUC and Sensitivity results with confidence intervals across models
-        tab_models = u.classification_report_table_mlmodels(seeds, model_type, model_labs, results_path,
-                                                            sensitivity_threshold, confidence_level,
-                                                            output_path=output_path)
-
-    ### PLOTS ###
-
-    # AUC Curves
-    u.plot_auc_curve_validation(model_type, website_path,
-                                ['with_lab'], results_path + 'xgboost/',
-                                validation_paths,
-                                output_path=output_path)
+    #  ## Tables
+    #  # AUC and Sensitivity results with confidence intervals
+    #  for sensitivity_threshold in threshold_list:
+    #      tab = u.classification_report_table_validation(model_type, website_path, model_labs,
+    #                                                     results_path + "xgboost/", validation_paths,
+    #                                                     sensitivity_threshold,
+    #                                                     output_path=output_path)
+    #
+    #      # AUC and Sensitivity results with confidence intervals across models
+    #      tab_models = u.classification_report_table_mlmodels(seeds, model_type, model_labs, results_path,
+    #                                                          sensitivity_threshold, confidence_level,
+    #                                                          output_path=output_path)
+    #
+    #  ### PLOTS ###
+    #
+    #  # AUC Curves
+    #  u.plot_auc_curve_validation(model_type, website_path,
+    #                              ['with_lab'], results_path + 'xgboost/',
+    #                              validation_paths,
+    #                              output_path=output_path)
 
     # SHAP Features plots
-    # for model_type, model_lab in itertools.product(model_types, model_labs):
-        # for model_type, model_lab in itertools.product(['mortality'],['without_lab']):
+    for model_type, model_lab in itertools.product(model_types, model_labs):
         print("Model: %s, %s" % (model_type, model_lab))
         save_path = os.path.join(output_path, model_type, 'model_'+ model_lab)
         imp.feature_importance(model_type, model_lab, website_path, results_path + "xgboost/",
