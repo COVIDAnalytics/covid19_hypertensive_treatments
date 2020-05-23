@@ -320,7 +320,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
                       feature_names=[c[:c.find("(")] if c.find("(") != -1 else c for c in X.columns],
                       plot_type="violin")
     f = plt.gcf()
-    plt.xlabel('SHAP value (impact on model output) \n {(log(relative risk or mortality))}')
+    plt.xlabel('SHAP value (impact on model output) \n {(logarithm of model output odds)}')
     f.savefig(os.path.join(save_path, 'summary_plot' + suffix_filter + '.pdf'),
             bbox_inches='tight'
             )
