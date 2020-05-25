@@ -251,14 +251,14 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     #  gs.update(wspace=0.5)  # Reduce space
 
     # New way with just subplots
-    max_display = np.minimum(len(X.columns) - 1, 9)   # -1 because we remove age
+    max_display = np.minimum(len(X.columns) - 1, 6)   # -1 because we remove age
     n_cols = 3
     if latex:
         latexify(columns=1)
 
 
     fig, axs = plt.subplots(np.ceil(max_display/n_cols).astype(np.int64), n_cols,
-                            figsize=(10, 10), constrained_layout=True
+                            figsize=(10, 6), constrained_layout=True
                             #  facecolor='w', edgecolor='k'
                             )
 
