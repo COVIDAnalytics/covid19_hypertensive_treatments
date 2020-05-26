@@ -7,7 +7,7 @@ import analyzer.loaders.hartford.hartford as hartford
 
 from scipy import stats
 #%%
-row_order = ['Filter', 'Patient Count', 
+row_order_mortality = ['Filter', 'Patient Count', 'Outcome',
     'Age',
     'Gender',
     'Cardiac Frequency',
@@ -109,7 +109,7 @@ title_mapping_summary = {
 
 #%% Load function
 
-def get_dataset_preload(model_type, model_lab, hartford = False, filter_type = 'new'):
+def get_dataset_preload(model_type, model_lab, include_hartford = False, filter_type = 'new'):
     data_cremona = pd.read_csv('../../covid19_clean_data/clean_data/cremona_'+model_type+'_'+model_lab+'.csv')
     X_cremona = data_cremona.drop('Outcome', axis = 1); y_cremona = data_cremona['Outcome']
     X_cremona['Location'] = 'Cremona'
@@ -143,7 +143,7 @@ def get_dataset_preload(model_type, model_lab, hartford = False, filter_type = '
         mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
         print(name_datasets[mask])
     
-    if hartford:
+    if include_hartford:
         data_hartford = hartford.load_hartford('/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_other.csv', 
           discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
         
@@ -173,10 +173,10 @@ def get_dataset_preload(model_type, model_lab, hartford = False, filter_type = '
 
     return X, y
 
-def descriptive_table(data, features, short_version = False, digits = 2):
+def descriptive_table(data, features, short_version = False, digits = 1, outcome = 'Outcome'):
 
     cols_numeric = [i['name'] for i in features['numeric']]
-    cols_categoric = [i['name'] for i in features['categorical']] + features['multidrop'][0]['vals']
+    cols_categoric = [i['name'] for i in features['categorical']] + features['multidrop'][0]['vals']+[outcome]
     
     summary_numeric = np.transpose(data[cols_numeric].describe())
     summary_numeric['Type'] = 'Numeric'
