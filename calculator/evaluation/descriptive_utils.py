@@ -109,7 +109,7 @@ title_mapping_summary = {
 
 #%% Load function
 
-def get_dataset_preload(model_type, model_lab):
+def get_dataset_preload(model_type, model_lab, hartford = False, filter_type = 'new'):
     data_cremona = pd.read_csv('../../covid19_clean_data/clean_data/cremona_'+model_type+'_'+model_lab+'.csv')
     X_cremona = data_cremona.drop('Outcome', axis = 1); y_cremona = data_cremona['Outcome']
     X_cremona['Location'] = 'Cremona'
@@ -143,43 +143,51 @@ def get_dataset_preload(model_type, model_lab):
         mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
         print(name_datasets[mask])
     
-    data_hartford = hartford.load_hartford('/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_other.csv', 
-      discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
+    if hartford:
+        data_hartford = hartford.load_hartford('/nfs/sloanlab003/projects/cov19_calc_proj/hartford/hhc_inpatient_other.csv', 
+          discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data)
+        
+        X_hartford, y_hartford =  ds.create_dataset(data_hartford,
+                                              discharge_data,
+                                              comorbidities_data,
+                                              vitals_data,
+                                              lab_tests,
+                                              demographics_data,
+                                              swabs_data,
+                                              prediction = prediction)
+        
+        X_hartford['Location'] = 'Hartford'
+        # Merge dataset
+        
+        X = pd.concat([X_cremona, X_spain, X_hartford], join='inner', ignore_index=True)
+        y = pd.concat([y_cremona, y_spain, y_hartford], ignore_index=True)
+    else: 
+        X = pd.concat([X_cremona, X_spain], join='inner', ignore_index=True)
+        y = pd.concat([y_cremona, y_spain], ignore_index=True)
     
-    X_hartford, y_hartford =  ds.create_dataset(data_hartford,
-                                          discharge_data,
-                                          comorbidities_data,
-                                          vitals_data,
-                                          lab_tests,
-                                          demographics_data,
-                                          swabs_data,
-                                          prediction = prediction)
-    
-    X_hartford['Location'] = 'Hartford'
-    # Merge dataset
-    
-    X = pd.concat([X_cremona, X_spain, X_hartford], join='inner', ignore_index=True)
-    y = pd.concat([y_cremona, y_spain, y_hartford], ignore_index=True)
-
-    X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o2_col)
+    if filter_type == 'old':
+        print("Applying old feature filtering")
+        X, bounds_dict = ds.filter_outliers(X, o2 = None)
+    else: 
+         X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o2_col)
 
     return X, y
 
-def descriptive_table(data, features, short_version = False):
+def descriptive_table(data, features, short_version = False, digits = 2):
 
     cols_numeric = [i['name'] for i in features['numeric']]
     cols_categoric = [i['name'] for i in features['categorical']] + features['multidrop'][0]['vals']
     
     summary_numeric = np.transpose(data[cols_numeric].describe())
     summary_numeric['Type'] = 'Numeric'
-    summary_numeric['output'] = round(summary_numeric['50%'],2).map(str) + " (" + round(summary_numeric['25%'],2).map(str) + "-" + round(summary_numeric['75%'],2).map(str) + ")"
+    summary_numeric['output'] = round(summary_numeric['50%'],digits).map(str) + " (" + round(summary_numeric['25%'],digits).map(str) + "-" + round(summary_numeric['75%'],digits).map(str) + ")"
     
     summary_categoric = np.transpose(data[cols_categoric].describe())
     summary_categoric['Type'] = 'Categoric'
-    summary_categoric['output'] = round(summary_categoric['count']*summary_categoric['mean']).map(str) + " (" + round(summary_categoric['mean']*100,2).map(str) + "%)"
+    summary_categoric['output'] = round(summary_categoric['count']*summary_categoric['mean']).map(str) + " (" + round(summary_categoric['mean']*100,digits).map(str) + "%)"
     
     summary_full = summary_numeric.append(summary_categoric)
-    summary_full['Missing_Pct'] = round((1 - summary_full['count']/data.shape[0])*100,2).map(str)+'%'
+    summary_full['Missing_Pct'] = round((1 - summary_full['count']/data.shape[0])*100,digits).map(str)+'%'
     # summary_full.drop(["count"], axis = 1, inplace = True)
     summary_full.columns = ['Count', 'Mean', 'Standard Deviation', 
                             'Minimum', '25th Percentile', '50th Percentile',
@@ -210,13 +218,13 @@ def descriptive_table(data, features, short_version = False):
 #     return summary_full
 
 def pairwise_compare(data_a, data_b, features, title_mapping = None, row_order = None,
-                     filter_A = 'Group A', filter_B = 'Group B'):
+                     filter_A = 'Group A', filter_B = 'Group B', digits = 2):
     
     data = pd.concat([data_a, data_b], join = 'inner', ignore_index = True)
     
-    describe_all  = descriptive_table(data, features, short_version = True)
-    describe_a = descriptive_table(data_a, features, short_version = True)
-    describe_b = descriptive_table(data_b, features, short_version = True)
+    describe_all  = descriptive_table(data, features, short_version = True, digits = digits)
+    describe_a = descriptive_table(data_a, features, short_version = True, digits = digits)
+    describe_b = descriptive_table(data_b, features, short_version = True, digits = digits)
     
     describe_subgroups = describe_a.merge(describe_b, how = 'left', 
                      left_index = True, right_index = True,
