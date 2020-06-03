@@ -57,7 +57,7 @@ BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': best_se
                                                                         'C': 1.11926, 
                                                                         'solver': 'saga'}}},
 
-                        'infection_with_lab': {'xgboost': {'best_seed': best_seed, 
+                        'infection_with_lab': {'xgboost': {'best_seed': 30, 
                                                         'best_params': {'n_estimators': 635,
                                                                         'learning_rate': 0.031542,
                                                                         'max_depth': 10,
@@ -79,7 +79,7 @@ BEST_PARAMS_AND_SEEDS = {'mortality_with_lab': {'xgboost': {'best_seed': best_se
                                                                         'C': 2,
                                                                         'solver': 'saga'}}},
 
-                        'infection_without_lab': {'xgboost': {'best_seed': best_seed, 
+                        'infection_without_lab': {'xgboost': {'best_seed': 6, 
                                                         'best_params': {'n_estimators': 900,
                                                                         'learning_rate': 1.951791e-02,
                                                                         'max_depth': 10,
@@ -159,7 +159,9 @@ if i == 1: #mortality_without_lab
                 u.create_and_save_pickle(algorithm, X_train, X_test, y_train, y_test, current_seed, best_seed, best_params, categorical, #Save for post processing
                                         symptoms, comorbidities, prediction, post_processing_path + '/' + algorithm_name + '/' + prediction + '/seed' + str(current_seed) + '.pkl', 
                                         data_save = False, data_in_pickle = True, folder_path = post_processing_path + '/' + algorithm_name + '/')
-
+"""
+Remember that for the infection models we still have to do train_test_split according to the best seed
+"""
 if i == 2: #infection_with_lab
         comorbidities = []
 
