@@ -1,4 +1,5 @@
 index,Output,Percent Missing,Output_A,Percent Missing_A,Output_B,Percent Missing_B,p-Value
+Outcome,,,,,,,
 Filter,All,,Non-Survivor,,Survivor,,
 Patient Count,3062,,760,,2302,,
 Age,68.0 (57.0-79.0),1.6%,80.0 (73.0-85.0),1.45%,64.0 (54.0-74.0),1.65%,1.6765609930170665e-176

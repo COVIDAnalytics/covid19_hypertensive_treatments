@@ -1,4 +1,5 @@
 import pandas as pd
+import string
 import pickle
 import shap
 import matplotlib.pyplot as plt
@@ -125,14 +126,14 @@ def latexify(fig_width=None, fig_height=None, columns=1):
     # minipage. You need to use subplots.
     params = {'backend': 'ps',
               'text.latex.preamble': ['\\usepackage{gensymb}'],
-              'axes.labelsize': 12, # fontsize for x and y labels (was 12 and before 10)
-              'axes.titlesize': 12,
-              'font.size': 12, # was 12 and before 10
-              'legend.fontsize': 12, # was 12 and before 10
-              'xtick.labelsize': 12,
-              'ytick.labelsize': 12,
+              'axes.labelsize': 11, # fontsize for x and y labels (was 12 and before 10)
+              'axes.titlesize': 11,
+              'font.size': 11, # was 12 and before 10
+              'legend.fontsize': 11, # was 12 and before 10
+              'xtick.labelsize': 11,
+              'ytick.labelsize': 11,
               'text.usetex': True,
-              'figure.figsize': [fig_width,fig_height],
+              'figure.figsize': [fig_width, fig_height],
               'font.family': 'serif'
     }
 
@@ -254,11 +255,11 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     max_display = np.minimum(len(X.columns) - 1, 9)   # -1 because we remove age
     n_cols = 3
     if latex:
-        latexify(columns=1)
+        latexify(columns=2)
 
 
     fig, axs = plt.subplots(np.ceil(max_display/n_cols).astype(np.int64), n_cols,
-                            figsize=(10, 10), constrained_layout=True
+                            figsize=(10, 6), constrained_layout=True
                             #  facecolor='w', edgecolor='k'
                             )
 
@@ -271,9 +272,14 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     feat_display = np.array(X.columns)[sort_idx]
     feat_display = np.delete(feat_display, np.argwhere(feat_display == "Age"))
 
+    # Letters for paper labels
     letters = ["(b)", "(c)", "(d)"]
-    import string
-    letters = ["(" + s + ")" for s in list(string.ascii_lowercase)[1:max_display+1]]
+    letters = ["\\textbf{(" + s + ")}" for s in list(string.ascii_lowercase)[1:max_display+1]]
+
+
+    # Reference ranges
+    ref_ranges = pd.read_csv('./evaluation/reference_ranges.csv',
+                             index_col='name')
 
     shap_values_abs = np.maximum(np.abs(shap_values.min()-.05), np.abs(shap_values.max()+0.05))
     for idx in range(max_display):
@@ -291,23 +297,31 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
         ax.set_ylabel("SHAP value")
         print("SHAP bounds: ", str(shap_values.min()), ", ", str(shap_values.max()))
         ax.set_ylim([-shap_values_abs, shap_values_abs])
+
         ax.text(0.1, 0.95, letters[idx],
                 horizontalalignment='center',
                 verticalalignment='center',
                 transform=ax.transAxes,
                 weight='bold',
         )
-        if feat.split(" ", 1)[0] in ['CRP']:
-            ax.set_xscale('log')
+        #  short_name = feat.split(" ", 1)[0]
+        #  if short_name in 'C-Reactive Protein' or \
+        #          short_name in 'Aspartate Aminotransferase':
+        #      ax.set_xscale('log')
 
         # Remove colorbar
         ax.collections[0].colorbar.remove()
 
-        #  import ipdb; ipdb.set_trace()
         ax.hlines(y=0, xmin=X[feat].min(), xmax=X[feat].max(),
                   color="#cccccc", lw=0.5, linestyle="dotted", zorder=-1)
 
-    #  fig.subplots_adjust(right=0.8)
+        # Add reference range
+
+        ax.axvspan(ref_ranges.loc[feat]['min'], ref_ranges.loc[feat]['max'],
+                   zorder=-1, alpha=0.1, color='gray')
+        #  for k in ['min', 'max']:
+        #      ax.vlines(x=ref_ranges.loc[feat][k], ymin=-shap_values_abs, ymax=shap_values_abs,
+        #                color="k", lw=0.5, linestyle="dashdot")
 
 
     # Plot colorbar on the right
@@ -334,7 +348,7 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
                       plot_type="violin")
     f = plt.gcf()
     ax = plt.gca()
-    ax.text(0, 1, "(a)",
+    ax.text(0, 1, "\\textbf{(a)}",
             horizontalalignment='center',
             verticalalignment='center',
             transform=ax.transAxes,
