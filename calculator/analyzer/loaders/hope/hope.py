@@ -13,7 +13,9 @@ import pickle
 
 
 
-pathfull = '../../../Dropbox (Personal)/COVID_clinical/covid19_hope/IVAN J NUNEZ GIL - HOPEDATABASE 5.5.20V3.8AGNI.sav'
+#pathfull = '../../../Dropbox (Personal)/COVID_clinical/covid19_hope/IVAN J NUNEZ GIL - HOPEDATABASE 5.5.20V3.8AGNI.sav'
+pathfull = '../../../Dropbox (Personal)/COVID_clinical/covid19_hope/HOPEDATABASE 5.5.20V3.9AGNI.sav'
+
 path  = '../../../Dropbox (Personal)/COVID_clinical/covid19_hope'
 df, meta = pyreadstat.read_sav(pathfull)
 df.to_csv(path+'/hope_data.csv')
