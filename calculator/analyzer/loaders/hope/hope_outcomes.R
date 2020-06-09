@@ -23,5 +23,10 @@ df_clean %>% group_by(COUNTRY) %>%
             DEATH_PCT = mean(DEATH))%>%
   arrange(desc(Patient_Count))
 
-df_clean %>% group_by(COUNTRY) 
+df_clean %>% 
+  filter(COUNTRY %in% c("Italy", "ECUADOR", "Germany")) %>%
+  group_by(CHLOROQINE, ANTIVIRAL, ANTICOAG) %>%
+  summarize(Patient_Count = n(),
+            DEATH_PCT = mean(DEATH))
+  
                
