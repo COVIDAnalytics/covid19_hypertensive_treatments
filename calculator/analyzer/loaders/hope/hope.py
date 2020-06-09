@@ -104,6 +104,13 @@ DATES = ['DT_BORN2', 'DT_ONSETSYMPTOMS2',
 
 df.groupby(COVID_DRUGS).size()
 
+
+df['ANTICOAG'] = df['IN_ANTICOAGLDURINGADMISSION']
+df['ANTICOAG'][df['ANTICOAG']>1] = 1
+
+treat = df.groupby(['IN_USEOFCLOROQUINEORSIMILARDURINGADMISSION',
+           'IN_USEOFANTIVIRALDRUGSDURINGADMISSION','ANTICOAG']).size()
+
 covid_info = df[COVID_DRUGS].describe()
 proc_info = df[PROCEDURES].describe()
 
