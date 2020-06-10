@@ -68,4 +68,5 @@ t <- df %>% select(PROCEDURES) %>% summary() %>% as.data.frame() %>%
   spread(key = "Value", value = "Frequency") %>%
   mutate(Proportion = as.numeric(YES)/n)
 
-sum(df[df$IN_ECMO_SIMILAR_SUPPORT == "YES","DEATH"] == "YES", na.rm = TRUE)
+sum(df[df$IN_CIRCULATORYORECMOSUPPORT == "YES","DEATH"] == "YES", na.rm = TRUE)
+157/252
