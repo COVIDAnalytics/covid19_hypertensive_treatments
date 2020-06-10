@@ -12,7 +12,7 @@ save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 #In case you would like to regenerate the data uncomment this code
 #df<-create_data(save_path) 
 
-df = read.csv(paste(save_path,"hope_data_clean.csv",sep = ""), header=TRUE)
+df = read.csv(paste(save_path,"hope_data_clean.csv",sep = ""), header=TRUE, stringsAsFactors = FALSE)
 data <- filter_columns (df)  
 data <-  clean_columns(data)
 str(data)
@@ -39,5 +39,8 @@ data %>%
   geom_histogram()
 
 data %>%
-  ggplot(aes(x = ARTERIALBLOODGASPH, group = COUNTRY)) +
+  ggplot(aes(x = ARTERIALBLOODGASPH, 
+             fill = COUNTRY, color = COUNTRY
+         )) +
+  # xlim(c(0,10)) +
   geom_histogram()
