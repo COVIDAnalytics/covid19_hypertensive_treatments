@@ -172,7 +172,7 @@ create_data<-function(save_path){
                 'DT_LASTFOLLOWUPDATE','DT_DEATHORICU', 'DT_DEATH',
                 'DT_TEST_COVID')
   setnames(df, old = DATES, new = DATES_new)
-  cols_include = c(DATES_new, DEMOGRAPHICS_new, COMORBIDITIES_new, 
+  cols_include = c(LOCATION_new, DATES_new, DEMOGRAPHICS_new, COMORBIDITIES_new, 
                    DRUGS_ADMISSIONS_new, COVID_DRUGS_NEW, VITALS_NEW,
                    BINARY_LABS_VITALS_ADMISSION_NEW, CONTINUE_LABS_ADMISSION_new,
                    XRAY_RESULTS_new, PROCEDURES_new, OUTCOMES_new)
