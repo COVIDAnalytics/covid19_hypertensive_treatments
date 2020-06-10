@@ -7,6 +7,10 @@ library(scales)
 
 filter_columns<-function(df){
 #Categories of features
+
+LOCATION = c('HOSPITAL','COUNTRY')
+  
+
 DEMOGRAPHICS = c('GENDER','RACE','PREGNANT','WEIGHT','HEIGHT', 'AGE')
 
 COMORBIDITIES = c('DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY',
@@ -77,13 +81,11 @@ DATES = c('DT_ONSETSYMPTOMS','DT_TEST_COVID',
 
 #df <- read.csv("~/Dropbox (Personal)/COVID_clinical/covid19_hope/hope_data_clean.csv", header=TRUE)
 
-cols_include = c(DATES, DEMOGRAPHICS, COMORBIDITIES, 
+cols_include = c(LOCATION, DATES, DEMOGRAPHICS, COMORBIDITIES, 
                  DRUGS_ADMISSIONS, VITALS,
                  BINARY_LABS_VITALS_ADMISSION, CONTINUE_LABS_ADMISSION,
                  XRAY_RESULTS, ADD_COVID19_TREATMENTS)
 data<-df[,cols_include]
-
-df[,VITALS]
 
 return(data)
 }

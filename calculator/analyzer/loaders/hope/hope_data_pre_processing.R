@@ -30,3 +30,5 @@ str(fl_data)
 na_counts = t(fl_data %>%
   select(everything()) %>% 
   summarise_all(funs(100*sum(is.na(.))/nrow(fl_data))))
+
+
