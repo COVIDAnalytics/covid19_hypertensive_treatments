@@ -7,8 +7,8 @@ library(reshape2)
 #source("hope_features.R")
 source("hope_data_cleaning.R")
 
-# save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
-save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
+save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
+# save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 #In case you would like to regenerate the data uncomment this code
 #df<-create_data(save_path) 
 

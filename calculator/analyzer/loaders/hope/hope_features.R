@@ -37,12 +37,12 @@ create_data<-function(save_path){
                     'IN_RENALINSUF','IN_ANYLUNGDISEASE', 'AF', 'VIH', 
                     'TBPASSED', 'IN_ANYHEARTDISEASE',
                     'CO_MAINHEARTDISEASE',
-                    'IN_ANYCEREBROVASCULARDISEASE', 'IN_CONECTIVEDISEASE',"IN_ANYLUNGDISEASE",
+                    'IN_ANYCEREBROVASCULARDISEASE', 'IN_CONECTIVEDISEASE',
                     'IN_LIVER_DISEASE', 'IN_ANYCANCER')
   COMORBIDITIES_new = c('DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY',
                         'SMOKING','RENALINSUF','ANYLUNGDISEASE', 'AF', 'VIH', 
                         'TBPASSED', 'ANYHEARTDISEASE','MAINHEARTDISEASE',
-                        'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE','LUNGDISEASE',
+                        'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE',
                         'LIVER_DISEASE', 'CANCER')
   setnames(df, old = COMORBIDITIES, new = COMORBIDITIES_new)
   df[,COMORBIDITIES_new] = convert_zero_one(df, COMORBIDITIES_new)
