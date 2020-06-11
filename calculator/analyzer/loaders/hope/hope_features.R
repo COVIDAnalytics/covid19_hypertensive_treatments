@@ -18,6 +18,9 @@ convert_zero_one<-function(dat, columns){
 create_data<-function(save_path){
   df <- read.csv(paste(save_path,"hope_data.csv", sep=""), header=TRUE)
   
+  i <- sapply(df, is.factor)
+  df[i] <- lapply(df[i], as.character)
+  
   #Split columns in categories
   LOCATION = c('INV_HOSPITAL1','INV_COUNTRY1')
   LOCATION_new = c('HOSPITAL','COUNTRY')
@@ -34,12 +37,12 @@ create_data<-function(save_path){
                     'IN_RENALINSUF','IN_ANYLUNGDISEASE', 'AF', 'VIH', 
                     'TBPASSED', 'IN_ANYHEARTDISEASE',
                     'CO_MAINHEARTDISEASE',
-                    'IN_ANYCEREBROVASCULARDISEASE', 'IN_CONECTIVEDISEASE',
+                    'IN_ANYCEREBROVASCULARDISEASE', 'IN_CONECTIVEDISEASE',"IN_ANYLUNGDISEASE",
                     'IN_LIVER_DISEASE', 'IN_ANYCANCER')
   COMORBIDITIES_new = c('DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY',
                         'SMOKING','RENALINSUF','ANYLUNGDISEASE', 'AF', 'VIH', 
                         'TBPASSED', 'ANYHEARTDISEASE','MAINHEARTDISEASE',
-                        'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE',
+                        'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE','LUNGDISEASE',
                         'LIVER_DISEASE', 'CANCER')
   setnames(df, old = COMORBIDITIES, new = COMORBIDITIES_new)
   df[,COMORBIDITIES_new] = convert_zero_one(df, COMORBIDITIES_new)
