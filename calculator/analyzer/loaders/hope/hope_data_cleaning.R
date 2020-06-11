@@ -180,6 +180,8 @@ remove_outliers <- function(x, na.rm = TRUE, ...) {
   y
 } 
 
+
+
 filter_outliers<-function(data, filter_lb, filter_ub){
   #Create a dataframe with the bounds and the median
   bounds_df = data.frame(feature=character(),
@@ -199,4 +201,39 @@ filter_outliers<-function(data, filter_lb, filter_ub){
   
   return(d)
 }
+
+filter_outliers<-function(data, filter_lb, filter_ub){
+  #Create a dataframe with the bounds and the median
+  bounds_df = data.frame(feature=character(),
+                         median_val=numeric(), 
+                         lb=numeric(),
+                         up=numeric())
+  
+  #Select the appropriate columns
+  nums <- unlist(lapply(data, is.numeric))  
+  vals = apply(data,2,function(x) { all(length(unique(x)) >7) })
+  cols_filter = (nums & vals)
+  #Create a matrix with the applied filters
+  bounds_df = apply(data[,cols_filter],2,function(x) { quantile(x, c(filter_lb, .5, filter_ub), na.rm = TRUE)  })
+  data[,cols_filter] = apply(data[,cols_filter],2,remove_outliers)
+  
+  d = list(data, bounds_df)
+  
+  return(d)
+}
+
+filter_missing<-function(data, threshold){
+  na_counts = t(data %>%
+                  select(everything()) %>% 
+                  summarise_all(funs(sum(is.na(.))/nrow(data)))) %>% 
+    as.data.frame() %>%
+    mutate(Feature = row.names(.)) %>%
+    select(Feature, Missing_Proportion = V1)
+  cols_filled = na_counts %>% filter(Missing_Proportion <= threshold) %>% pull(Feature)
+  print("Excluded Columns: ")
+  print(paste(setdiff(names(data), cols_filled), collapse = ", "))
+  d = list(data[cols_filled], na_counts)
+  return(d)
+}
+
 
