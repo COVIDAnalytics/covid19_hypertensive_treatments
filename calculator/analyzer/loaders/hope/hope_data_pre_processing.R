@@ -13,9 +13,11 @@ save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 #df<-create_data(save_path) 
 
 df = read.csv(paste(save_path,"hope_data_clean.csv",sep = ""), header=TRUE, stringsAsFactors = FALSE)
-data <- filter_columns (df)  
+data <- filter_columns(df)  
 data <-  clean_columns(data)
 str(data)
+
+data %>% group_by(ANTICOAGULANTS, ANTIVIRAL, CLOROQUINE, REGIMEN) %>% summarize(n())
 
 #Filtering outliers
 filter_lb=0.01
@@ -26,21 +28,27 @@ fl_data = filter_output[[1]]
 outliers_table = filter_output[[2]]
 str(fl_data)
 
-#Count the extent of missing data
-na_counts = t(fl_data %>%
-  select(everything()) %>% 
-  summarise_all(funs(100*sum(is.na(.))/nrow(fl_data)))) 
+# Remove missing data
+missing_threshold = 0.4
+filter_missing = filter_missing(fl_data, missing_threshold)
+fl_data = filter_missing[[1]]
+na_counts = filter_missing[[2]]
 
-na_counts
+SELECTED_TREATMENTS <- c('CLOROQUINE',
+                         'ANTIVIRAL',
+                         'ANTICOAGULANTS')
 
-data %>%
-  ggplot(aes(x = ARTERIALBLOODGAS02SATURATION)) +
-  xlim(c(0,100)) +
-  geom_histogram()
+cols_nonX = c(SELECTED_TREATMENTS, 'REGIMEN', 'DEATH', 'COMORB_DEATH')
+col_order = c(setdiff(names(fl_data), cols_nonX), cols_nonX)
+fl_data <- fl_data[col_order]
 
-data %>%
-  ggplot(aes(x = ARTERIALBLOODGASPH, 
-             fill = COUNTRY, color = COUNTRY
-         )) +
+write.csv(fl_data, paste(save_path,"hope_data_clean_filtered.csv",sep = ""),
+          row.names = FALSE)
+
+
+fl_data %>%
+  ggplot(aes(x = ONSET_DATE_DIFF, fill = COUNTRY, color = COUNTRY)) +
   # xlim(c(0,10)) +
   geom_histogram()
+
+df %>% filter(grepl("remdesivir", tolower(df$OTHER_RELEVANT_COVID19_DRUGS))) 

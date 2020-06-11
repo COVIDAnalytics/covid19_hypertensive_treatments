@@ -81,10 +81,16 @@ DATES = c('DT_ONSETSYMPTOMS','DT_TEST_COVID',
 
 #df <- read.csv("~/Dropbox (Personal)/COVID_clinical/covid19_hope/hope_data_clean.csv", header=TRUE)
 
+SELECTED_TREATMENTS <- c('CLOROQUINE',
+                         'ANTIVIRAL',
+                         'ANTICOAGULANTS')
+  
+SELECTED_OUTCOMES <- c('HEARTFAILURE', 'RENALFAILURE','SEPSIS', 'EMBOLIC_EVENT','DEATH')
+
 cols_include = c(LOCATION, DATES, DEMOGRAPHICS, COMORBIDITIES, 
                  DRUGS_ADMISSIONS, VITALS,
                  BINARY_LABS_VITALS_ADMISSION, CONTINUE_LABS_ADMISSION,
-                 XRAY_RESULTS, ADD_COVID19_TREATMENTS)
+                 XRAY_RESULTS, ADD_COVID19_TREATMENTS, SELECTED_TREATMENTS, SELECTED_OUTCOMES)
 data<-df[,cols_include]
 
 return(data)
@@ -94,9 +100,9 @@ return(data)
 
 clean_columns<-function(data){
 data <- data %>%
-          mutate(ONSET_DATE_DIFF = as.Date(DT_HOSPITAL_ADMISSION) -as.Date(DT_ONSETSYMPTOMS))%>%
+          mutate(ONSET_DATE_DIFF = as.numeric(as.Date(DT_HOSPITAL_ADMISSION) -as.Date(DT_ONSETSYMPTOMS)))%>%
           mutate(ONSET_DATE_DIFF = replace(ONSET_DATE_DIFF, ONSET_DATE_DIFF<0, NA))%>%
-          mutate(TEST_DATE_DIFF = as.Date(DT_HOSPITAL_ADMISSION) -as.Date(DT_TEST_COVID))%>%
+          mutate(TEST_DATE_DIFF = as.numeric(as.Date(DT_HOSPITAL_ADMISSION) -as.Date(DT_TEST_COVID)))%>%
           mutate(TEST_DATE_DIFF = replace(TEST_DATE_DIFF, TEST_DATE_DIFF<0, NA))%>%
           select(-DT_ONSETSYMPTOMS, -DT_TEST_COVID)%>%
           mutate(DT_HOSPITAL_ADMISSION = as.Date(DT_HOSPITAL_ADMISSION))
@@ -145,6 +151,22 @@ data <- data %>%
          MAXTEMPERATURE_ADMISSION = replace(MAXTEMPERATURE_ADMISSION, MAXTEMPERATURE_ADMISSION==">38", NA),
          MAXTEMPERATURE_ADMISSION = as.numeric(as.character(MAXTEMPERATURE_ADMISSION)))
 
+data <- data %>%
+  mutate(CLOROQUINE = coalesce(CLOROQUINE, 0),
+         ANTIVIRAL = coalesce(ANTIVIRAL, 0),
+         ANTICOAGULANTS = if_else(coalesce(ANTICOAGULANTS, 0) > 0, 1, 0)) %>%
+  mutate(REGIMEN = if_else(CLOROQUINE == 0, "Non-Chloroquine", ## No Chloroquine
+                           if_else(ANTIVIRAL == 0,
+                                   if_else(ANTICOAGULANTS == 0, "Chloroquine Only",
+                                           "Chloroquine and Anticoagulants"),
+                                   if_else(ANTICOAGULANTS == 0, "Chloroquine and Antivirals",
+                                           "All"))))
+                                           
+
+data <- data %>%
+  mutate(COMORB_DEATH = pmax(HEARTFAILURE, RENALFAILURE,SEPSIS, EMBOLIC_EVENT,DEATH, na.rm = TRUE)) %>%
+  select(-c('HEARTFAILURE', 'RENALFAILURE','SEPSIS', 'EMBOLIC_EVENT'))
+
 return(data)
 }
 
@@ -175,6 +197,40 @@ filter_outliers<-function(data, filter_lb, filter_ub){
   
   d = list(data, bounds_df)
   
+  return(d)
+}
+
+filter_outliers<-function(data, filter_lb, filter_ub){
+  #Create a dataframe with the bounds and the median
+  bounds_df = data.frame(feature=character(),
+                         median_val=numeric(), 
+                         lb=numeric(),
+                         up=numeric())
+  
+  #Select the appropriate columns
+  nums <- unlist(lapply(data, is.numeric))  
+  vals = apply(data,2,function(x) { all(length(unique(x)) >7) })
+  cols_filter = (nums & vals)
+  #Create a matrix with the applied filters
+  bounds_df = apply(data[,cols_filter],2,function(x) { quantile(x, c(filter_lb, .5, filter_ub), na.rm = TRUE)  })
+  data[,cols_filter] = apply(data[,cols_filter],2,remove_outliers)
+  
+  d = list(data, bounds_df)
+  
+  return(d)
+}
+
+filter_missing<-function(data, threshold){
+  na_counts = t(data %>%
+                  select(everything()) %>% 
+                  summarise_all(funs(sum(is.na(.))/nrow(data)))) %>% 
+    as.data.frame() %>%
+    mutate(Feature = row.names(.)) %>%
+    select(Feature, Missing_Proportion = V1)
+  cols_filled = na_counts %>% filter(Missing_Proportion <= threshold) %>% pull(Feature)
+  print("Excluded Columns: ")
+  print(paste(setdiff(names(data), cols_filled), collapse = ", "))
+  d = list(data[cols_filled], na_counts)
   return(d)
 }
 

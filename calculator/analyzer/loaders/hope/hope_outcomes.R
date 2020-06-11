@@ -4,7 +4,7 @@ library(foreign)
 # df <- read.csv("~/Dropbox (MIT)/COVID_risk/covid19_hope/hope_data_clean.csv", 
 #                stringsAsFactors = FALSE, encoding="UTF-8")
 
-df <- read.spss("~/Dropbox (MIT)/COVID_risk/covid19_hope/HOPEDATABASE 5.5.20V3.9AGNI.sav", to.data.frame=TRUE)
+df_raw <- read.spss("~/Dropbox (MIT)/COVID_risk/covid19_hope/HOPEDATABASE 5.5.20V3.9AGNI.sav", to.data.frame=TRUE)
 n = dim(df)[1]
 
 df_clean <- df %>% mutate(COUNTRY = trimws(INV_COUNTRY1), 
