@@ -45,6 +45,23 @@ fl_data <- fl_data[col_order]
 write.csv(fl_data, paste(save_path,"hope_data_clean_filtered.csv",sep = ""),
           row.names = FALSE)
 
+# Missing Data Imputation
+
+treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS','REGIMEN')
+outcomes = c('DEATH','COMORB_DEATH')
+
+group1 = c("SPAIN")
+group2 = c("ECUADOR","Germany","Italy")
+reps = 1
+maxiterations = 10
+
+derivation_cohort = imputation(fl_data, reps, maxiterations, group1, treatments, outcomes)
+validation_cohort = imputation(fl_data, reps, maxiterations, group2, treatments, outcomes)
+  
+data_imputed = rbind(derivation_cohort, validation_cohort) 
+write.csv(data_imputed, paste(save_path,"hope_data_clean_imputed.csv",sep = ""),
+          row.names = FALSE)
+
 
 fl_data %>%
   ggplot(aes(x = ONSET_DATE_DIFF, fill = COUNTRY, color = COUNTRY)) +

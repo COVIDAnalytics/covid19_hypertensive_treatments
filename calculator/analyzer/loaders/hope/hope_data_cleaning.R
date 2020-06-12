@@ -4,6 +4,9 @@ library(foreign)
 library(data.table)
 library(reshape2)
 library(scales)
+library(mice)
+library(caret)
+library(imputeMissings)
 
 filter_columns<-function(df){
 #Categories of features
@@ -154,9 +157,9 @@ data <- data %>%
          MAXTEMPERATURE_ADMISSION = as.numeric(as.character(MAXTEMPERATURE_ADMISSION)))
 
 data <- data %>%
-  mutate(CLOROQUINE = coalesce(CLOROQUINE, 0),
-         ANTIVIRAL = coalesce(ANTIVIRAL, 0),
-         ANTICOAGULANTS = if_else(coalesce(ANTICOAGULANTS, 0) > 0, 1, 0)) %>%
+  mutate(CLOROQUINE = coalesce(CLOROQUINE, 0L),
+         ANTIVIRAL = coalesce(ANTIVIRAL, 0L),
+         ANTICOAGULANTS = if_else(coalesce(ANTICOAGULANTS, 0L) > 0, 1, 0)) %>%
   mutate(REGIMEN = if_else(CLOROQUINE == 0, "Non-Chloroquine", ## No Chloroquine
                            if_else(ANTIVIRAL == 0,
                                    if_else(ANTICOAGULANTS == 0, "Chloroquine Only",
@@ -235,5 +238,32 @@ filter_missing<-function(data, threshold){
   d = list(data[cols_filled], na_counts)
   return(d)
 }
+
+imputation <- function(dat, reps, maxiterations, group, treatments, outcomes){
+  
+  #Select the appropriate columns to impute
+  DF = dat %>% 
+          filter(COUNTRY %in% group)%>%
+          select(-treatments,-outcomes)
+  
+  #Convert characters to factors
+  DF[sapply(DF, is.character)] <- lapply(DF[sapply(DF, is.character)], as.factor)
+  
+  #Impute the data first with PMM
+  tempData <- mice(DF,m=reps,maxit=maxiterations,meth='cart',seed=500)
+  completedData <- complete(tempData,1)
+  
+  #Impute categorical values with the mode in case they were left NA
+  completedData = impute(completedData,method = "median/mode", flag=FALSE)
+  
+  #Combine back the data into the aggregate columns
+  rel_dat = dat%>% filter(COUNTRY %in% group)
+  
+  completedData[,treatments] = rel_dat[,treatments]
+  completedData[,outcomes] = rel_dat[,outcomes]
+
+  return(completedData)
+}
+
 
 
