@@ -7,8 +7,8 @@ library(reshape2)
 #source("hope_features.R")
 source("hope_data_cleaning.R")
 
-save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
-# save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
+# save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
+save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 #In case you would like to regenerate the data uncomment this code
 #df<-create_data(save_path) 
 
@@ -30,9 +30,9 @@ str(fl_data)
 
 # Remove missing data
 missing_threshold = 0.4
-filter_missing = filter_missing(fl_data, missing_threshold)
-fl_data = filter_missing[[1]]
-na_counts = filter_missing[[2]]
+filtered_missing = filter_missing(fl_data, missing_threshold)
+fl_data = filtered_missing[[1]]
+na_counts = filtered_missing[[2]]
 
 SELECTED_TREATMENTS <- c('CLOROQUINE',
                          'ANTIVIRAL',
