@@ -62,7 +62,6 @@ data_imputed = rbind(derivation_cohort, validation_cohort)
 write.csv(data_imputed, paste(save_path,"hope_data_clean_imputed.csv",sep = ""),
           row.names = FALSE)
 
-
 fl_data %>%
   ggplot(aes(x = ONSET_DATE_DIFF, fill = COUNTRY, color = COUNTRY)) +
   # xlim(c(0,10)) +

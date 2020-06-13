@@ -8,6 +8,88 @@ library(mice)
 library(caret)
 library(imputeMissings)
 
+#Define variable categories
+
+LOCATION = c('HOSPITAL','COUNTRY')
+
+
+DEMOGRAPHICS = c('GENDER','RACE','PREGNANT','WEIGHT','HEIGHT', 'AGE')
+
+COMORBIDITIES = c('DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY',
+                  'SMOKING','RENALINSUF','ANYLUNGDISEASE', 'AF', 'VIH', 
+                  'TBPASSED', 'ANYHEARTDISEASE','MAINHEARTDISEASE',
+                  'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE',
+                  'LIVER_DISEASE', 'CANCER')
+
+DRUGS_ADMISSIONS = c('HOME_OXIGEN_THERAPY', 'IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
+                     'IN_ORALANTICOAGL',  'IN_ACEI_ARB', 'IN_BETABLOCKERS',
+                     'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED',
+                     'IN_DVITAMINSUPLEMENT','IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT')
+
+COVID19_TREATMENTS = c('CORTICOSTEROIDS',
+                       'CLOROQUINE',
+                       'ANTIVIRAL',
+                       'INTERFERONOR',
+                       'TOCILIZUMAB', 
+                       'ANTIBIOTICS',
+                       'ACEI_ARBS', 
+                       'ANTICOAGULANTS',
+                       'ANTICOAGULANTS_TYPE',
+                       'OTHER_RELEVANT_COVID19_DRUGS',
+                       'CLOROQUINE_DATE', 
+                       'ANTIVIRAL_DATE',
+                       'TOCILIZUMAB_DATE')
+
+ADD_COVID19_TREATMENTS = c('CORTICOSTEROIDS',
+                           'INTERFERONOR',
+                           'TOCILIZUMAB', 
+                           'ANTIBIOTICS',
+                           'ACEI_ARBS')
+
+#Column: 'OTHER_RELEVANT_COVID19_DRUGS' might give us some additional details
+
+VITALS = c('FAST_BREATHING','MAXTEMPERATURE_ADMISSION','SAT02_BELOW92')
+
+BINARY_LABS_VITALS_ADMISSION = c('DDDIMER_B',
+                                 'PROCALCITONIN_B', 'PCR_B', 'TN_B',
+                                 'TRANSAMINASES_B', 'FERRITINE_B',
+                                 'TRIGLYCERIDES_B', 'LDL_B',
+                                 'BLOOD_PRESSURE_ABNORMAL_B')
+
+CONTINUE_LABS_ADMISSION = c('CREATININE','ARTERIALBLOODGASPH',
+                            'ARTERIALBLOODGASPA02', 'ARTERIALBLOODGASPAC02',
+                            'ARTERIALBLOODGAS02SATURATION','SODIUM',
+                            'LEUCOCYTES', 'LYMPHOCYTES',
+                            'HEMOGLOBIN','PLATELETS',
+                            'GLASGOW_COMA_SCORE')
+
+XRAY_RESULTS = c('CHESTXRAY_BNORMALITY')
+
+O2_PROCEDURES = c('X02DURINGADMISSION', 'HIGHFLOWNASALCANNULA',
+                  'NONINVASIVEMECHANICALVENTILATION',
+                  'INVASIVEMECHANICALVENTILATION', 'DAYS_ON_MECHANICALVENTILATION',
+                  'PRONEDURINGADMISSION', 'CIRCULATORYORECMOSUPPORT',
+                  'ECMO_SIMILAR_SUPPORT')
+
+OUTCOMES = c('ICUADMISSION','RESPIRATORY_INSUFFICIENCY',
+             'HEARTFAILURE', 'RENALFAILURE',
+             'UPPER_RESPIRATORY_TRACT_INFECTION', 'PNEUMONIA',
+             'SEPSIS', 'SYSTEMIC_INFLAMATORY_REPONSE_SYNDROME',
+             'ANYRELEVANT_BLEEDING', 'HEMOPTYSIS', 'EMBOLIC_EVENT',
+             'CO_DEATHCAUSE', 'DEATH','DISCHARGE_TO','FOLLOWUPDAYS')
+
+DATES = c('DT_ONSETSYMPTOMS','DT_TEST_COVID',
+          'DT_HOSPITAL_ADMISSION')
+
+#df <- read.csv("~/Dropbox (Personal)/COVID_clinical/covid19_hope/hope_data_clean.csv", header=TRUE)
+
+SELECTED_TREATMENTS <- c('CLOROQUINE',
+                         'ANTIVIRAL',
+                         'ANTICOAGULANTS')
+
+SELECTED_OUTCOMES <- c('HEARTFAILURE', 'RENALFAILURE','SEPSIS', 'EMBOLIC_EVENT','DEATH')
+
+
 filter_columns<-function(df){
 #Categories of features
 
@@ -249,7 +331,7 @@ imputation <- function(dat, reps, maxiterations, group, treatments, outcomes){
   #Convert characters to factors
   DF[sapply(DF, is.character)] <- lapply(DF[sapply(DF, is.character)], as.factor)
   
-  #Impute the data first with PMM
+  #Impute the data first with CART
   tempData <- mice(DF,m=reps,maxit=maxiterations,meth='cart',seed=500)
   completedData <- complete(tempData,1)
   
