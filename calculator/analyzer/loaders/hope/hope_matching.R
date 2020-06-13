@@ -12,56 +12,6 @@ library(gurobi)
 
 source("hope_data_cleaning.R")
 
-#Set the path
-save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
-
-#Read in the data
-data = read.csv(paste(save_path, "hope_data_clean_imputed.csv",sep=""), header = TRUE)
-
-#Countries to include
-groups = c("SPAIN")
-treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS','REGIMEN')
-outcomes = c('DEATH','COMORB_DEATH')
-#Filter the appropriate dataframe
-df = data %>%filter(COUNTRY %in% groups) %>% dplyr::select(-outcomes, DT_HOSPITAL_ADMISSION)
-
-# Split based on the treatments column
-out <- split( df , f = df$REGIMEN )
-
-# Select columns based on which the matching will take place
-# We will start by the following but we can adjust. 
-
-cols_include = c(DEMOGRAPHICS, COMORBIDITIES, 
-                 DRUGS_ADMISSIONS, VITALS,
-                 BINARY_LABS_VITALS_ADMISSION, CONTINUE_LABS_ADMISSION,
-                 XRAY_RESULTS)
-
-#Select only columns based on which we will match
-out = lapply(out, function(x) subset(x, select = intersect(cols_include, colnames(x))))
-
-#We will need to one hot encode every subdataframe
-dmy_out = lapply(out, function(x) dummyVars(" ~ .", data = x))
-one_hot_out = mapply(function(x, y) data.frame(predict(x, newdata = y)), dmy_out, out)
-
-one_hot_out = list()                                            
-for (i in 1:length(out)) {
-  one_hot_out[[i]] = data.frame(predict(dmy_out[[i]], newdata = out[[i]]))
-}
-
-#Question: Should we exclude one of the options as it is determined by the rest of the columns?
-one_hot_out[[1]]$treatment = 0 
-one_hot_out[[2]]$treatment = 1 
-
-treatment = c(one_hot_out[[1]]$treatment, one_hot_out[[2]]$treatment)
-t_ind = treatment
-t_ind
-mdt = rbind(one_hot_out[[1]], one_hot_out[[2]])
-
-#################################
-# Step 1: use cardinality matching to find the largest sample of matched pairs for which
-# all the covariates are finely balanced.
-#################################
-
 # Discretize covariates
 quantiles = function(covar, n_q) {
   p_q = seq(0, 1, 1/n_q)
@@ -74,38 +24,126 @@ quantiles = function(covar, n_q) {
   return(covar_out)
 }
 
-quantiles(mdt$AGE, 5)
-bin_cols = apply(mdt,2,function(x) { all(na.omit(x) %in% 0:1) })
+matching_process<-function(data, reference_df, matched_df, t_max, solver, approximate){
+  
+  #Create a treatment column
+  data[[reference_df]]$treatment = 0
+  data[[matched_df]]$treatment = 1
+  
+  t_ind = c(data[[reference_df]]$treatment, data[[matched_df]]$treatment)
+  mdt = rbind(data[[reference_df]], data[[matched_df]])
+  
+  #Find all binary columns
+  bin_cols = apply(mdt,2,function(x) { all(na.omit(x) %in% 0:1) })
+  #Discretize continuous columns
+  mdt[,!bin_cols] = apply(mdt[,!bin_cols],2,quantiles,n_q=5)
+  
+  #Remove the treatment column
+  mdt$treatment = NULL
+  
+  #Set the solver options
+  solver = list(name = solver_option, t_max = t_max, approximate = approximate,
+                round_cplex = 0, trace = 0)
+  
+  # Fine balance
+  fine = list(covs = mdt)
+  # Match
+  matched1 = cardmatch(t_ind, fine = fine, solver = solver)
+  
+  # Indices of the treated units and matched controls
+  t_id_1 = matched1$t_id
+  c_id_1 = matched1$c_id
+  
+  for (i in 1:ncol(mdt)) {
+    print(names(mdt)[i])
+    print(finetab(mdt[, i], t_id_1, c_id_1))
+  }
+  
+  reference_data = mdt[c_id_1,]
+  matched_data = mdt[t_id_1,]
+  
+  summary_means = meantab(mdt, t_ind, t_id_1, c_id_1)
+  
+  match_result = list(matched = matched1, reference_data = reference_data, 
+                      matched_data = matched_data, 
+                      summary_means= summary_means, mdt = mdt, 
+                      t_ind = t_ind, t_id= t_id_1, c_id = c_id_1)
+  return(match_result)
+}
 
-#Discretize continuous columns
-mdt[,!bin_cols] = apply(mdt[,!bin_cols],2,quantiles,n_q=5)
+#Set the path
+save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 
-#Remove the treatment column
-mdt$treatment = NULL
+#Read in the data
+data = read.csv(paste(save_path, "hope_data_clean_imputed.csv",sep=""), header = TRUE)
+
+#Countries to include
+groups = c("SPAIN")
+treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS','REGIMEN')
+outcomes = c('DEATH','COMORB_DEATH')
+#Filter the appropriate dataframe
+df = data %>%filter(COUNTRY %in% groups) %>% dplyr::select(-outcomes, DT_HOSPITAL_ADMISSION)
+#Keep the treatment as an independent vector
+regimens_col = df%>%select(REGIMEN)
+
+#Select columns based on which the matching will take place
+features_matching = c("AGE",
+                      "GENDER",
+                      "SAT02_BELOW92",
+                      "FAST_BREATHING",
+                      "CREATININE",
+                      "ONSET_DATE_DIFF",
+                      "LEUCOCYTES",
+                      "HEMOGLOBIN",
+                      "LYMPHOCYTES",
+                      "PLATELETS",
+                      "MAXTEMPERATURE_ADMISSION")
+
+df<-df[,features_matching]
+
+#One hot encode the dataset
+dmy_out = dummyVars(" ~ .", data = df, drop2nd = TRUE, fullRank=T)
+one_hot = predict(dmy_out, newdata = df)
+
+# Split based on the treatments column
+out <- split(data.frame(one_hot), f = regimens_col)
+
+#We will pick as reference the treatment option that has the highest sample size
+for (i in 1:length(out)){
+  print(paste("Treatment option ", names(out)[i], " has ", nrow(out[[i]]), " observations.", sep = ""))
+}
+
+#Base on that statement we will pick as treatment of reference:
+# Chloroquine and Antivirals- 3
+ref_treatment = 3
+t = 1:5
+to_match_treatments = t[-ref_treatment]
 
 ## Global variables for matching
 # Solver options
-t_max = 5
-solver = "gurobi"
+t_max = 60
+solver_option = "gurobi"
 approximate = 0
-solver = list(name = solver, t_max = t_max, approximate = approximate,
-              round_cplex = 0, trace = 0)
+fine_balance = TRUE
 
-# Fine balance
-fine = list(covs = mdt)
+matched_data =list()
+referenced_data =list()
 
-# Match
-matched1 = cardmatch(t_ind, fine = fine, solver = solver)
-
-#Get the indices of the treated units and the matched controls
-t_id_1 = matched1$t_id
-c_id_1 = matched1$c_id
-
-# Mean balance
-covs = cbind(mdt$GENDER.FEMALE, mdt$AGE)
-meantab(covs, t_ind, t_id_1, c_id_1)
-
-# Fine balance (note here we are getting an approximate solution)
-for (i in 1:ncol(fine_covs)) {
-  print(finetab(fine_covs[, i], t_id_1, c_id_1))
+for (to_treat in to_match_treatments){
+  matched = matching_process(out, ref_treatment, to_treat, t_max, solver_option, approximate)
+  matched_data[[to_treat]] = matched$matched_data
+  referenced_data[[to_treat]] =  matched$reference_data
 }
+
+for (i in to_match_treatments) {
+  print(paste("Treatment option :", names(out)[i], sep = ""))
+  print(paste("The original dataset has ", nrow(out[[i]]), " observations.", sep = ""))
+  print(paste("The matched dataframe has now ", nrow(matched_data[[i]]), " observations"), sep = "")
+  print(paste("The referenced dataframe has now ", nrow(referenced_data[[i]]), " from ", nrow(out[[ref_treatment]]) , " observations"), sep = "")
+  print("")
+}
+
+
+
+
+
