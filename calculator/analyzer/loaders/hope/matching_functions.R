@@ -26,11 +26,11 @@ quantiles = function(covar, n_q) {
 matching_process<-function(data, reference_df, matched_df, t_max, solver, approximate, verbose = FALSE){
   
   #Create a treatment column
-  data[[reference_df]]$treatment = 0
   data[[matched_df]]$treatment = 1
+  data[[reference_df]]$treatment = 0
   
-  t_ind = c(data[[reference_df]]$treatment, data[[matched_df]]$treatment)
-  mdt = rbind(data[[reference_df]], data[[matched_df]])
+  t_ind = c(data[[matched_df]]$treatment, data[[reference_df]]$treatment)
+  mdt = rbind(data[[matched_df]], data[[reference_df]])
   
   # t_ind[1:1000]=2; t_ind[1001:2000]=1; t_ind[2000:2436]=0
   
@@ -134,6 +134,7 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, c_id_co
   X_mat_c_after_mean = apply(X_mat_c_after, 2, mean)
   std_dif_after = (X_mat_t_mean - X_mat_c_after_mean)/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
   
+  c_id_common = c_id_common + length(t_id)
   X_mat_c_after_common = X_mat[c_id_common, ]
   X_mat_c_after_common_mean = apply(X_mat_c_after_common, 2, mean)
   std_dif_after_common = (X_mat_t_mean - X_mat_c_after_common_mean)/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)

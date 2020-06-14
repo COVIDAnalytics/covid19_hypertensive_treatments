@@ -91,7 +91,8 @@ for (i in to_match_treatments) {
   print(paste("The matched dataframe has now ", nrow(matched_data[[i]]), " observations"), sep = "")
   print(paste("The referenced dataframe has now ", nrow(referenced_data[[i]]), " from ", nrow(out[[ref_treatment]]) , " observations"), sep = "")
   print("")
-  common_control = intersect(common_control, matched_object_list[[i]]$t_id)
+  control_inds = matched_object_list[[i]]$c_id - nrow(out[[i]])
+  common_control = intersect(common_control, control_inds)
 }
 
 common_control
@@ -100,7 +101,7 @@ common_control
 # Evaluate a single treatment ---------------------------------------------
 
 #Select a treatment option to investigate
-to_treat=1
+to_treat=2
 
 t_ind = matched_object_list[[to_treat]]$t_ind
 t_inds = which(t_ind == 1)
