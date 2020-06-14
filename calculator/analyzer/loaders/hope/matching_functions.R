@@ -23,7 +23,7 @@ quantiles = function(covar, n_q) {
   return(covar_out)
 }
 
-matching_process<-function(data, reference_df, matched_df, t_max, solver, approximate){
+matching_process<-function(data, reference_df, matched_df, t_max, solver, approximate, verbose = FALSE){
   
   #Create a treatment column
   data[[reference_df]]$treatment = 0
@@ -32,9 +32,12 @@ matching_process<-function(data, reference_df, matched_df, t_max, solver, approx
   t_ind = c(data[[reference_df]]$treatment, data[[matched_df]]$treatment)
   mdt = rbind(data[[reference_df]], data[[matched_df]])
   
+  # t_ind[1:1000]=2; t_ind[1001:2000]=1; t_ind[2000:2436]=0
+  
   #Remove the treatment column
   mdt$treatment = NULL
   
+  # Save the non-discretized data
   mdt0 = mdt
   
   #Find all binary columns
@@ -55,9 +58,11 @@ matching_process<-function(data, reference_df, matched_df, t_max, solver, approx
   t_id_1 = matched1$t_id
   c_id_1 = matched1$c_id
   
-  for (i in 1:ncol(mdt)) {
-    print(names(mdt)[i])
-    print(finetab(mdt[, i], t_id_1, c_id_1))
+  if (verbose) {
+    for (i in 1:ncol(mdt)) {
+      print(names(mdt)[i])
+      print(finetab(mdt[, i], t_id_1, c_id_1))
+    }
   }
   
   reference_data = mdt[c_id_1,]
@@ -154,3 +159,46 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, c_id_co
          xpd=TRUE, y.intersp=0.1)
   abline(v = v_line, lty = 2)
 }
+
+
+compare_features <- function(ref_treat, to_treat, common_control=c()){
+  label_a = names(out)[ref_treatment]
+  label_b = names(out)[to_treat]
+  data_a = df_full %>%filter(REGIMEN == label_a)
+  data_b = df_full %>%filter(REGIMEN == label_b)
+  data_stack = rbind(data_a, data_b)
+  nrow(data_stack) == nrow(matched_object_list[[to_treat]]$mdt0)
+  data_a_filtered = data_stack[matched_object_list[[to_treat]]$c_id,]
+  if (length(common_control)  > 0) {
+    data_a_filtered = data_stack[common_control,]
+  }
+  data_b_filtered = data_stack[matched_object_list[[to_treat]]$t_id,]
+  
+  ttest_original = run_ttest(data_a, data_b, label_a, label_b, cols_exclude = treatments)
+  ttest_filtered = run_ttest(data_a_filtered, data_b_filtered, label_a, label_b, cols_exclude = treatments)
+  
+  violate_original = ttest_original %>% filter(`P-Value` < 0.01) %>% pull(Feature) %>% sort
+  violate_filtered = ttest_filtered %>% filter(`P-Value` < 0.01)  %>% pull(Feature) %>% sort 
+  
+  ttest_compare = ttest_original %>% dplyr::select(Feature, P_0 = `P-Value`) %>%
+    left_join(ttest_filtered %>% dplyr::select(Feature, P_Filtered = `P-Value`), on = 'Feature')
+  
+  new_violations = ttest_compare %>%
+    filter(P_0 > P_Filtered) %>%
+    filter(P_Filtered < 0.01) %>%
+    arrange(P_Filtered)
+  
+  print(paste0("Original Significant Differences (Count = ", 
+               length(violate_original),"): ",
+               paste0(violate_original, collapse = ", ")))
+  
+  print(paste0("Filtered Significant Differences (Count = ", 
+               length(violate_filtered),"): ",
+               paste0(violate_filtered, collapse = ", ")))
+  
+  print("New Violations: ")
+  print(new_violations)
+  
+  return(list(ttest_original,ttest_filtered,ttest_compare))
+}
+

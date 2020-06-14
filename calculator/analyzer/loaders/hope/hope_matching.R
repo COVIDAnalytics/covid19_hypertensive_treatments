@@ -15,6 +15,7 @@ library(slam)
 
 source("hope_data_cleaning.R")
 source("matching_functions.R")
+source("descriptive_functions.R")
 
 #Set the path
 save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
@@ -85,12 +86,12 @@ for (to_treat in to_match_treatments){
 
 common_control = 1:n_control
 for (i in to_match_treatments) {
-  print(paste("Treatment option :", names(out)[i], sep = ""))
+  print(paste("Treatment option: ", names(out)[i], sep = ""))
   print(paste("The original dataset has ", nrow(out[[i]]), " observations.", sep = ""))
   print(paste("The matched dataframe has now ", nrow(matched_data[[i]]), " observations"), sep = "")
   print(paste("The referenced dataframe has now ", nrow(referenced_data[[i]]), " from ", nrow(out[[ref_treatment]]) , " observations"), sep = "")
   print("")
-  common_control = intersect(common_control, matched_object_list[[i]]$c_id)
+  common_control = intersect(common_control, matched_object_list[[i]]$t_id)
 }
 
 common_control
@@ -99,7 +100,7 @@ common_control
 # Evaluate a single treatment ---------------------------------------------
 
 #Select a treatment option to investigate
-to_treat=4
+to_treat=1
 
 t_ind = matched_object_list[[to_treat]]$t_ind
 t_inds = which(t_ind == 1)
@@ -112,7 +113,7 @@ t_inds = which(t_ind == 1)
 # Vertical line for satisfactory balance
 vline = 0.15
 
-plt = loveplot_common(names(out)[to_treat], # 
+loveplot_common(names(out)[to_treat], # 
                 matched_object_list[[to_treat]]$mdt0, # matrix
                 t_inds, # treatment indicators (original)
                 matched_object_list[[to_treat]]$t_id, #(treatment indicators - matched)
@@ -120,45 +121,9 @@ plt = loveplot_common(names(out)[to_treat], #
                 common_control, # control_indicators (common)
                 vline) 
 
-
-compare_features <- function(ref_treat, to_treat, common_control){
-  label_a = names(out)[ref_treatment]
-  label_b = names(out)[to_treat]
-  data_a = df_full %>%filter(REGIMEN == label_a)
-  data_b = df_full %>%filter(REGIMEN == label_b)
-  data_stack = rbind(data_a, data_b)
-  nrow(data_stack) == nrow(matched_object_list[[to_treat]]$mdt0)
-  # data_a_filtered = data_stack[matched_object_list[[to_treat]]$c_id,]
-  data_a_filtered = data_stack[common_control,]
-  data_b_filtered = data_stack[matched_object_list[[to_treat]]$t_id,]
+x = compare_features(3,1)
+ttest_original = x[[1]]
+ttest_filtered = x[[2]]
+ttest_compare = x[[3]]
   
-  ttest_original = run_ttest(data_a, data_b, label_a, label_b, cols_exclude = treatments)
-  ttest_filtered = run_ttest(data_a_filtered, data_b_filtered, label_a, label_b, cols_exclude = treatments)
-  
-  violate_original = ttest_original %>% filter(`P-Value` < 0.01) %>% pull(Feature) %>% sort
-  violate_filtered = ttest_filtered %>% filter(`P-Value` < 0.01)  %>% pull(Feature) %>% sort 
-  
-  ttest_compare = ttest_original %>% dplyr::select(Feature, P_0 = `P-Value`) %>%
-    left_join(ttest_filtered %>% dplyr::select(Feature, P_Filtered = `P-Value`), on = 'Feature')
-  
-  new_violations = ttest_compare %>%
-    filter(P_0 > P_Filtered) %>%
-    filter(P_Filtered < 0.01) %>%
-    arrange(P_Filtered)
-  
-  print(paste0("Original Significant Differences (Count = ", 
-               length(violate_original),"): ",
-               paste0(violate_original, collapse = ", ")))
-  
-  print(paste0("Filtered Significant Differences (Count = ", 
-               length(violate_filtered),"): ",
-               paste0(violate_filtered, collapse = ", ")))
-  
-  print("New Violations: ")
-  print(new_violations)
-  
-  return(list(ttest_original,ttest_filtered,ttest_compare))
-}
-
-x = compare_features(3,1,common_control)
 
