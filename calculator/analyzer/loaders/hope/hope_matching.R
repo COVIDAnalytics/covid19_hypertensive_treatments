@@ -88,11 +88,25 @@ for (i in to_match_treatments) {
 }
 
 
-# The loveplot plots the absolute standardized differences in means 
+# The loveplot plots the absolute  differences in means 
+# We can change the function to reflect the absolute standardized differences in means
 # Vertical line for satisfactory balance
 vline = 0.15
 
 #Select a treatment option to investigate
-to_treat=4
-loveplot_custom(names(out)[to_treat],mdt, matched_object_list[[to_treat]]$t_id, matched_object_list[[to_treat]]$c_id, vline) 
+to_treat=2
+
+# Indexes of the treated units
+t_ind = matched_object_list[[to_treat]]$t_ind
+t_inds = which(t_ind == 1)
+
+#I have an issue with where the legend appears
+# Box is before matching and * after matching
+
+loveplot_custom(names(out)[to_treat],
+                matched_object_list[[to_treat]]$mdt, 
+                t_inds, 
+                matched_object_list[[to_treat]]$t_id, 
+                matched_object_list[[to_treat]]$c_id, 
+                vline) 
 
