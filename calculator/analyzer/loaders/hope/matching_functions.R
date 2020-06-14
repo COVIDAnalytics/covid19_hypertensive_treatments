@@ -134,7 +134,7 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, c_id_co
   X_mat_c_after_mean = apply(X_mat_c_after, 2, mean)
   std_dif_after = (X_mat_t_mean - X_mat_c_after_mean)/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
   
-  c_id_common = c_id_common + length(t_id)
+  c_id_common = c_id_common + nrow(X_mat_t_before)
   X_mat_c_after_common = X_mat[c_id_common, ]
   X_mat_c_after_common_mean = apply(X_mat_c_after_common, 2, mean)
   std_dif_after_common = (X_mat_t_mean - X_mat_c_after_common_mean)/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
@@ -162,15 +162,23 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, c_id_co
 }
 
 
-compare_features <- function(ref_treat, to_treat, common_control=c()){
+compare_features <- function(df_full, ref_treat, to_treat, common_control=c()){
+  # data A = reference
   label_a = names(out)[ref_treatment]
+  
+  # data B = treated
   label_b = names(out)[to_treat]
+  
   data_a = df_full %>%filter(REGIMEN == label_a)
   data_b = df_full %>%filter(REGIMEN == label_b)
-  data_stack = rbind(data_a, data_b)
+  data_stack = rbind(data_b, data_a)
+  
   nrow(data_stack) == nrow(matched_object_list[[to_treat]]$mdt0)
+  
+  # Filter to c_ids. If common control, adjust the common controls to start at the correct index
   data_a_filtered = data_stack[matched_object_list[[to_treat]]$c_id,]
   if (length(common_control)  > 0) {
+    common_control = common_control + nrow(data_b) 
     data_a_filtered = data_stack[common_control,]
   }
   data_b_filtered = data_stack[matched_object_list[[to_treat]]$t_id,]

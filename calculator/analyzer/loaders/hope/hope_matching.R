@@ -101,7 +101,7 @@ common_control
 # Evaluate a single treatment ---------------------------------------------
 
 #Select a treatment option to investigate
-to_treat=2
+to_treat=1
 
 t_ind = matched_object_list[[to_treat]]$t_ind
 t_inds = which(t_ind == 1)
@@ -122,9 +122,8 @@ loveplot_common(names(out)[to_treat], #
                 common_control, # control_indicators (common)
                 vline) 
 
-x = compare_features(df_full, 3,1)
+x = compare_features(df_full, 3, 1)
 ttest_original = x[[1]]
 ttest_filtered = x[[2]]
 ttest_compare = x[[3]]
-  
 
