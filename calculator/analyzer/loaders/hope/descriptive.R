@@ -120,3 +120,31 @@ ttest <- do.call(rbind, lapply(names(data_derivation), function(col){
 
 pop_compare <- list(t_deriv, t_val, ttest) %>%
   reduce(full_join, by = 'Feature')
+
+write.csv(pop_compare, paste0(save_path, "description_bysplit.csv"), row.names = FALSE)
+
+# Pairwise significance ---------------------------------------------------
+data_a <- fl_data %>% filter(DEATH == 1)
+label_a <- 'NonSurvivor'
+data_b <- fl_data %>% filter(DEATH == 0)
+label_b <- 'Survivor'
+file_name <- 'description_bysurvival.csv'
+
+t_a = descriptive_table(data_a, short_version = TRUE)[[1]] %>%
+  `colnames<-`(c('Feature', paste0("Summary_",label_a), paste0("Missing_",label_a)))
+t_b = descriptive_table(data_b, short_version = TRUE)[[1]] %>%
+  `colnames<-`(c('Feature', paste0("Summary_",label_b), paste0("Missing_",label_b)))
+
+ttest <- do.call(rbind, lapply(setdiff(names(data_a),'DEATH'), function(col){
+  print(col)
+  if (is.numeric(data_a[[col]])){
+    r = t.test(data_a[[col]], data_b[[col]], var.equal = FALSE, na.action = "na.omit")
+    return(c(col, r$p.value))
+  }})) %>%
+  as.data.frame() %>%
+  `colnames<-`(c('Feature','P-Value'))
+
+pop_compare <- list(t_a, t_b, ttest) %>%
+  reduce(full_join, by = 'Feature')
+
+write.csv(pop_compare, paste0(save_path, file_name), row.names = FALSE)

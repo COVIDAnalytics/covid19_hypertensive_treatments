@@ -10,7 +10,8 @@ library(purrr)
 library(cobalt)
 library(gurobi)
 library(Hmisc)
-#install.packages('/Library/gurobi811/mac64/R/gurobi_8.1-1_R_3.5.0.tgz', repos=NULL)
+# install.packages('/Library/gurobi902/mac64/R/gurobi_9.0-2_R_3.6.1.tgz', repos=NULL)
+library(slam)
 
 source("hope_data_cleaning.R")
 source("matching_functions.R")
@@ -28,7 +29,7 @@ outcomes = c('DEATH','COMORB_DEATH')
 #Filter the appropriate dataframe
 df = data %>%filter(COUNTRY %in% groups) %>% dplyr::select(-outcomes, DT_HOSPITAL_ADMISSION)
 #Keep the treatment as an independent vector
-regimens_col = df%>%select(REGIMEN)
+regimens_col = df%>%dplyr::select(REGIMEN)
 
 #Select columns based on which the matching will take place
 features_matching = c("AGE",
@@ -73,10 +74,12 @@ matched_data =list()
 referenced_data =list()
 matched_object_list = list()
 
+
 for (to_treat in to_match_treatments){
-  matched_object_list[[to_treat]] = matching_process(out, ref_treatment, to_treat, t_max, solver_option, approximate)
-  matched_data[[to_treat]] = matched$matched_data
-  referenced_data[[to_treat]] =  matched$reference_data
+  match_output = matching_process(out, ref_treatment, to_treat, t_max, solver_option, approximate)
+  matched_object_list[[to_treat]] = match_output
+  matched_data[[to_treat]] = match_output$matched_data
+  referenced_data[[to_treat]] =  match_output$reference_data
 }
 
 for (i in to_match_treatments) {
@@ -94,7 +97,7 @@ for (i in to_match_treatments) {
 vline = 0.15
 
 #Select a treatment option to investigate
-to_treat=2
+to_treat=5
 
 # Indexes of the treated units
 t_ind = matched_object_list[[to_treat]]$t_ind
@@ -102,6 +105,14 @@ t_inds = which(t_ind == 1)
 
 #I have an issue with where the legend appears
 # Box is before matching and * after matching
+
+# 
+
+loveplot(
+                matched_object_list[[to_treat]]$mdt, 
+                matched_object_list[[to_treat]]$t_id, 
+                matched_object_list[[to_treat]]$c_id, 
+                vline) 
 
 loveplot_custom(names(out)[to_treat],
                 matched_object_list[[to_treat]]$mdt, 
