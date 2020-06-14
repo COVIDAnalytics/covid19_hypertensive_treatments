@@ -9,68 +9,11 @@ library(dplyr)
 library(purrr)
 library(cobalt)
 library(gurobi)
+library(Hmisc)
 #install.packages('/Library/gurobi811/mac64/R/gurobi_8.1-1_R_3.5.0.tgz', repos=NULL)
 
 source("hope_data_cleaning.R")
-
-# Discretize covariates
-quantiles = function(covar, n_q) {
-  p_q = seq(0, 1, 1/n_q)
-  val_q = quantile(covar, probs = p_q, na.rm = TRUE)
-  covar_out = rep(NA, length(covar))
-  for (i in 1:n_q) {
-    if (i==1) {covar_out[covar<val_q[i+1]] = i}
-    if (i>1 & i<n_q) {covar_out[covar>=val_q[i] & covar<val_q[i+1]] = i}
-    if (i==n_q) {covar_out[covar>=val_q[i] & covar<=val_q[i+1]] = i}}
-  return(covar_out)
-}
-
-matching_process<-function(data, reference_df, matched_df, t_max, solver, approximate){
-  
-  #Create a treatment column
-  data[[reference_df]]$treatment = 0
-  data[[matched_df]]$treatment = 1
-  
-  t_ind = c(data[[reference_df]]$treatment, data[[matched_df]]$treatment)
-  mdt = rbind(data[[reference_df]], data[[matched_df]])
-  
-  #Find all binary columns
-  bin_cols = apply(mdt,2,function(x) { all(na.omit(x) %in% 0:1) })
-  #Discretize continuous columns
-  mdt[,!bin_cols] = apply(mdt[,!bin_cols],2,quantiles,n_q=5)
-  
-  #Remove the treatment column
-  mdt$treatment = NULL
-  
-  #Set the solver options
-  solver = list(name = solver_option, t_max = t_max, approximate = approximate,
-                round_cplex = 0, trace = 0)
-  
-  # Fine balance
-  fine = list(covs = mdt)
-  # Match
-  matched1 = cardmatch(t_ind, fine = fine, solver = solver)
-  
-  # Indices of the treated units and matched controls
-  t_id_1 = matched1$t_id
-  c_id_1 = matched1$c_id
-  
-  for (i in 1:ncol(mdt)) {
-    print(names(mdt)[i])
-    print(finetab(mdt[, i], t_id_1, c_id_1))
-  }
-  
-  reference_data = mdt[c_id_1,]
-  matched_data = mdt[t_id_1,]
-  
-  summary_means = meantab(mdt, t_ind, t_id_1, c_id_1)
-  
-  match_result = list(matched = matched1, reference_data = reference_data, 
-                      matched_data = matched_data, 
-                      summary_means= summary_means, mdt = mdt, 
-                      t_ind = t_ind, t_id= t_id_1, c_id = c_id_1)
-  return(match_result)
-}
+source("matching_functions.R")
 
 #Set the path
 save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
@@ -145,14 +88,11 @@ for (i in to_match_treatments) {
 }
 
 
-# Plots the absolute standardized differences in means 
+# The loveplot plots the absolute standardized differences in means 
 # Vertical line for satisfactory balance
 vline = 0.15
 
 #Select a treatment option to investigate
-to_treat=2
-loveplot(mdt, matched_object_list[[to_treat]]$t_id, matched_object_list[[to_treat]]$c_id, vline) 
-
-
-
+to_treat=4
+loveplot_custom(names(out)[to_treat],mdt, matched_object_list[[to_treat]]$t_id, matched_object_list[[to_treat]]$c_id, vline) 
 
