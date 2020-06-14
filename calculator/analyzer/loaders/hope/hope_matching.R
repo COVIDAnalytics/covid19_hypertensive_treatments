@@ -27,9 +27,9 @@ groups = c("SPAIN")
 treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS','REGIMEN')
 outcomes = c('DEATH','COMORB_DEATH')
 #Filter the appropriate dataframe
-df = data %>%filter(COUNTRY %in% groups) %>% dplyr::select(-outcomes, DT_HOSPITAL_ADMISSION)
+df_full = data %>%filter(COUNTRY %in% groups) %>% dplyr::select(-outcomes, DT_HOSPITAL_ADMISSION)
 #Keep the treatment as an independent vector
-regimens_col = df%>%dplyr::select(REGIMEN)
+regimens_col = df_full%>%dplyr::select(REGIMEN)
 
 #Select columns based on which the matching will take place
 features_matching = c("AGE",
@@ -44,7 +44,7 @@ features_matching = c("AGE",
                       "PLATELETS",
                       "MAXTEMPERATURE_ADMISSION")
 
-df<-df[,features_matching]
+df<-df_full[,features_matching]
 
 #One hot encode the dataset
 dmy_out = dummyVars(" ~ .", data = df, drop2nd = TRUE, fullRank=T)
@@ -95,26 +95,70 @@ for (i in to_match_treatments) {
 
 common_control
 
-# The loveplot plots the absolute  differences in means 
-# We can change the function to reflect the absolute standardized differences in means
-# Vertical line for satisfactory balance
-vline = 0.15
+
+# Evaluate a single treatment ---------------------------------------------
 
 #Select a treatment option to investigate
-to_treat=2
+to_treat=4
 
-# Indexes of the treated units
 t_ind = matched_object_list[[to_treat]]$t_ind
 t_inds = which(t_ind == 1)
 
 #I have an issue with where the legend appears
 # Box is before matching and * after matching
 
-loveplot_common(names(out)[to_treat], # 
+# The loveplot plots the absolute  differences in means 
+# We can change the function to reflect the absolute standardized differences in means
+# Vertical line for satisfactory balance
+vline = 0.15
+
+plt = loveplot_common(names(out)[to_treat], # 
                 matched_object_list[[to_treat]]$mdt0, # matrix
                 t_inds, # treatment indicators (original)
                 matched_object_list[[to_treat]]$t_id, #(treatment indicators - matched)
                 matched_object_list[[to_treat]]$c_id, #(control indicators - matched)
                 common_control, # control_indicators (common)
                 vline) 
+
+
+compare_features <- function(ref_treat, to_treat, common_control){
+  label_a = names(out)[ref_treatment]
+  label_b = names(out)[to_treat]
+  data_a = df_full %>%filter(REGIMEN == label_a)
+  data_b = df_full %>%filter(REGIMEN == label_b)
+  data_stack = rbind(data_a, data_b)
+  nrow(data_stack) == nrow(matched_object_list[[to_treat]]$mdt0)
+  # data_a_filtered = data_stack[matched_object_list[[to_treat]]$c_id,]
+  data_a_filtered = data_stack[common_control,]
+  data_b_filtered = data_stack[matched_object_list[[to_treat]]$t_id,]
+  
+  ttest_original = run_ttest(data_a, data_b, label_a, label_b, cols_exclude = treatments)
+  ttest_filtered = run_ttest(data_a_filtered, data_b_filtered, label_a, label_b, cols_exclude = treatments)
+  
+  violate_original = ttest_original %>% filter(`P-Value` < 0.01) %>% pull(Feature) %>% sort
+  violate_filtered = ttest_filtered %>% filter(`P-Value` < 0.01)  %>% pull(Feature) %>% sort 
+  
+  ttest_compare = ttest_original %>% dplyr::select(Feature, P_0 = `P-Value`) %>%
+    left_join(ttest_filtered %>% dplyr::select(Feature, P_Filtered = `P-Value`), on = 'Feature')
+  
+  new_violations = ttest_compare %>%
+    filter(P_0 > P_Filtered) %>%
+    filter(P_Filtered < 0.01) %>%
+    arrange(P_Filtered)
+  
+  print(paste0("Original Significant Differences (Count = ", 
+               length(violate_original),"): ",
+               paste0(violate_original, collapse = ", ")))
+  
+  print(paste0("Filtered Significant Differences (Count = ", 
+               length(violate_filtered),"): ",
+               paste0(violate_filtered, collapse = ", ")))
+  
+  print("New Violations: ")
+  print(new_violations)
+  
+  return(list(ttest_original,ttest_filtered,ttest_compare))
+}
+
+x = compare_features(3,1,common_control)
 

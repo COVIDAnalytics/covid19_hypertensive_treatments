@@ -9,12 +9,12 @@ library(reshape2)
 is.binary <- function(col){
   # print(col)
   t = sort(unique(col))
-  if (length(t) == 2  & is.numeric(t) & (min(t) == 0 & max(t) == 1)) {
+  if (is.numeric(t)){
+    if (length(t) <= 2 & (min(t) %in% c(0,1) & max(t) %in% c(0,1))) {
       return(TRUE)
     }
-  else {
-    return(FALSE)
   }
+  return(FALSE)
 }
 
 
@@ -52,17 +52,20 @@ descriptive_table <- function(data, short_version = FALSE){
   if (short_version){
     num_summary <- num_summary %>% 
       mutate(Missing = paste0(round(Missing*100,1), "%")) %>%
-      select('Feature','Summary','Missing')
+      dplyr::select('Feature','Summary','Missing')
   }
   
-  cat_summary <- do.call(rbind, lapply(names(categorical), function(col){
-    t <- (table(categorical[col], useNA = "ifany")/nrow(data)) %>% as.data.frame() %>% 
-      mutate(Feature = col) %>% 
-      select(Feature, Value = Var1, Freq)
-    return(t)
-  }))
-  
-  return(list(num_summary, cat_summary))
+  if (length(categorical) > 0) {
+    cat_summary <- do.call(rbind, lapply(names(categorical), function(col){
+      t <- (table(categorical[col], useNA = "ifany")/nrow(data)) %>% as.data.frame() %>% 
+        mutate(Feature = col) %>% 
+        dplyr::select(Feature, Value = Var1, Freq)
+      return(t)
+    }))
+    return(list(num_summary, cat_summary))
+  } else {
+    return(list(num_summary))
+  }
 }
 
 
@@ -124,27 +127,32 @@ pop_compare <- list(t_deriv, t_val, ttest) %>%
 write.csv(pop_compare, paste0(save_path, "description_bysplit.csv"), row.names = FALSE)
 
 # Pairwise significance ---------------------------------------------------
-data_a <- fl_data %>% filter(DEATH == 1)
+data_a <- data %>% filter(DEATH == 1)
 label_a <- 'NonSurvivor'
-data_b <- fl_data %>% filter(DEATH == 0)
+data_b <- data %>% filter(DEATH == 0)
 label_b <- 'Survivor'
 file_name <- 'description_bysurvival.csv'
 
-t_a = descriptive_table(data_a, short_version = TRUE)[[1]] %>%
-  `colnames<-`(c('Feature', paste0("Summary_",label_a), paste0("Missing_",label_a)))
-t_b = descriptive_table(data_b, short_version = TRUE)[[1]] %>%
-  `colnames<-`(c('Feature', paste0("Summary_",label_b), paste0("Missing_",label_b)))
-
-ttest <- do.call(rbind, lapply(setdiff(names(data_a),'DEATH'), function(col){
-  print(col)
-  if (is.numeric(data_a[[col]])){
-    r = t.test(data_a[[col]], data_b[[col]], var.equal = FALSE, na.action = "na.omit")
-    return(c(col, r$p.value))
-  }})) %>%
-  as.data.frame() %>%
-  `colnames<-`(c('Feature','P-Value'))
-
-pop_compare <- list(t_a, t_b, ttest) %>%
-  reduce(full_join, by = 'Feature')
+run_ttest <- function(data_a, data_b, label_a, label_b, cols_exclude=c()){
+  t_a = descriptive_table(data_a, short_version = TRUE)[[1]] %>%
+    `colnames<-`(c('Feature', paste0("Summary_",label_a), paste0("Missing_",label_a)))
+  t_b = descriptive_table(data_b, short_version = TRUE)[[1]] %>%
+    `colnames<-`(c('Feature', paste0("Summary_",label_b), paste0("Missing_",label_b)))
+  
+  ttest <- do.call(rbind, lapply(setdiff(names(data_a),cols_exclude), function(col){
+    # print(col)
+    if (is.numeric(data_a[[col]])){
+      r = t.test(data_a[[col]], data_b[[col]], var.equal = FALSE, na.action = "na.omit")
+      return(c(col, r$p.value))
+    }})) %>%
+    as.data.frame() %>%
+    `colnames<-`(c('Feature','P-Value'))
+  
+  pop_compare <- list(t_a, t_b, ttest) %>%
+    reduce(full_join, by = 'Feature') %>%
+    mutate_if(is.factor, ~ as.numeric(as.character(.x)))
+  
+  return(pop_compare)
+}
 
 write.csv(pop_compare, paste0(save_path, file_name), row.names = FALSE)

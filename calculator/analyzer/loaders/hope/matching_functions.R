@@ -119,7 +119,7 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, c_id_co
   X_mat_c_before_mean = apply(X_mat_c_before, 2, mean)
   X_mat_c_before_var = apply(X_mat_c_before, 2, var)
   
-  std_dif_before = (X_mat_t_before_mean - X_mat_c_before_mean)#/sqrt((X_mat_t_before_var +  X_mat_c_before_var)/2)
+  std_dif_before = (X_mat_t_before_mean - X_mat_c_before_mean)/sqrt((X_mat_t_before_var +  X_mat_c_before_var)/2)
   
   X_mat_t = X_mat[t_id_new, ]
   X_mat_t_mean = apply(X_mat_t, 2, mean)
@@ -127,11 +127,11 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, c_id_co
   
   X_mat_c_after = X_mat[c_id, ]
   X_mat_c_after_mean = apply(X_mat_c_after, 2, mean)
-  std_dif_after = (X_mat_t_mean - X_mat_c_after_mean)#/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
+  std_dif_after = (X_mat_t_mean - X_mat_c_after_mean)/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
   
   X_mat_c_after_common = X_mat[c_id_common, ]
   X_mat_c_after_common_mean = apply(X_mat_c_after_common, 2, mean)
-  std_dif_after_common = (X_mat_t_mean - X_mat_c_after_common_mean)#/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
+  std_dif_after_common = (X_mat_t_mean - X_mat_c_after_common_mean)/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
   
   abs_std_dif_before = abs(std_dif_before)
   n_aux = length(abs_std_dif_before)
