@@ -7,6 +7,7 @@ library(caret)
 library(designmatch)
 library(dplyr)
 library(purrr)
+library(cobalt)
 library(gurobi)
 #install.packages('/Library/gurobi811/mac64/R/gurobi_8.1-1_R_3.5.0.tgz', repos=NULL)
 
@@ -124,13 +125,13 @@ to_match_treatments = t[-ref_treatment]
 t_max = 60
 solver_option = "gurobi"
 approximate = 0
-fine_balance = TRUE
 
 matched_data =list()
 referenced_data =list()
+matched_object_list = list()
 
 for (to_treat in to_match_treatments){
-  matched = matching_process(out, ref_treatment, to_treat, t_max, solver_option, approximate)
+  matched_object_list[[to_treat]] = matching_process(out, ref_treatment, to_treat, t_max, solver_option, approximate)
   matched_data[[to_treat]] = matched$matched_data
   referenced_data[[to_treat]] =  matched$reference_data
 }
@@ -143,6 +144,14 @@ for (i in to_match_treatments) {
   print("")
 }
 
+
+# Plots the absolute standardized differences in means 
+# Vertical line for satisfactory balance
+vline = 0.15
+
+#Select a treatment option to investigate
+to_treat=2
+loveplot(mdt, matched_object_list[[to_treat]]$t_id, matched_object_list[[to_treat]]$c_id, vline) 
 
 
 
