@@ -63,6 +63,7 @@ for (i in 1:length(out)){
 ref_treatment = 3
 t = 1:5
 to_match_treatments = t[-ref_treatment]
+n_control = nrow(out[[ref_treatment]])
 
 ## Global variables for matching
 # Solver options
@@ -82,14 +83,17 @@ for (to_treat in to_match_treatments){
   referenced_data[[to_treat]] =  match_output$reference_data
 }
 
+common_control = 1:n_control
 for (i in to_match_treatments) {
   print(paste("Treatment option :", names(out)[i], sep = ""))
   print(paste("The original dataset has ", nrow(out[[i]]), " observations.", sep = ""))
   print(paste("The matched dataframe has now ", nrow(matched_data[[i]]), " observations"), sep = "")
   print(paste("The referenced dataframe has now ", nrow(referenced_data[[i]]), " from ", nrow(out[[ref_treatment]]) , " observations"), sep = "")
   print("")
+  common_control = intersect(common_control, matched_object_list[[i]]$c_id)
 }
 
+common_control
 
 # The loveplot plots the absolute  differences in means 
 # We can change the function to reflect the absolute standardized differences in means
@@ -97,7 +101,7 @@ for (i in to_match_treatments) {
 vline = 0.15
 
 #Select a treatment option to investigate
-to_treat=5
+to_treat=2
 
 # Indexes of the treated units
 t_ind = matched_object_list[[to_treat]]$t_ind
@@ -106,18 +110,11 @@ t_inds = which(t_ind == 1)
 #I have an issue with where the legend appears
 # Box is before matching and * after matching
 
-# 
-
-loveplot(
-                matched_object_list[[to_treat]]$mdt, 
-                matched_object_list[[to_treat]]$t_id, 
-                matched_object_list[[to_treat]]$c_id, 
-                vline) 
-
-loveplot_custom(names(out)[to_treat],
-                matched_object_list[[to_treat]]$mdt, 
-                t_inds, 
-                matched_object_list[[to_treat]]$t_id, 
-                matched_object_list[[to_treat]]$c_id, 
+loveplot_common(names(out)[to_treat], # 
+                matched_object_list[[to_treat]]$mdt0, # matrix
+                t_inds, # treatment indicators (original)
+                matched_object_list[[to_treat]]$t_id, #(treatment indicators - matched)
+                matched_object_list[[to_treat]]$c_id, #(control indicators - matched)
+                common_control, # control_indicators (common)
                 vline) 
 
