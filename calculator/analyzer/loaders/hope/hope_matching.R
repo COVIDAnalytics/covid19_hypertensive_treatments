@@ -122,7 +122,7 @@ loveplot_common(names(out)[to_treat], #
                 common_control, # control_indicators (common)
                 vline) 
 
-x = compare_features(3,1)
+x = compare_features(df_full, 3,1)
 ttest_original = x[[1]]
 ttest_filtered = x[[2]]
 ttest_compare = x[[3]]
