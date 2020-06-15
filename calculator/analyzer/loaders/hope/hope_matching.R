@@ -89,15 +89,15 @@ for (t in to_match_treatments){
 }
 
 # control = "treatment", so these are the first indices in the matrix 
-common_control = 1:n_base
+common_control = 1:n_base 
 for (i in to_match_treatments) {
   print(paste("Treatment option: ", names(out)[i], " (",i,")", sep = ""))
   print(paste("The matched dataframe has now ", nrow(matched_data[[i]]), " from ", nrow(out[[i]]), " observations."), sep = "")
   print(paste("The base dataframe has now ", nrow(referenced_data[[i]]), " from ", nrow(out[[base_treatment]]) , " observations"), sep = "")
   print("")
   control_inds = matched_object_list[[i]]$t_id
-  common_control = intersect(common_control, control_inds)
-  #common_control = union(common_control, control_inds)
+  # common_control = intersect(common_control, control_inds)
+  # common_control = union(common_control, control_inds)
 }
 
 length(common_control)
