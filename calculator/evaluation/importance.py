@@ -166,7 +166,10 @@ def get_model_data(model_type, model_lab, website_path, data_path):
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
         model_file = pickle.load(file)
 
-    seedID = model_file['best seed']
+    try:
+        seedID = model_file['best seed']
+    except: 
+        seedID = model_file['seed']
 
     #Load model corresponding to model_type and lab
     with open(data_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
@@ -191,7 +194,8 @@ def get_model_data(model_type, model_lab, website_path, data_path):
 
 def feature_importance(model_type, model_lab, website_path, data_path, save_path,
                        feature_limit = 100, latex = True, dependence_plot = False,
-                       data_filter = None, suffix_filter = ''):
+                       data_filter = None, suffix_filter = '', filetype = '.pdf',
+                       website_figures = False):
     assert model_type in('mortality','infection'), "Invalid outcome"
     assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
 
@@ -252,95 +256,99 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
     #  gs.update(wspace=0.5)  # Reduce space
 
     # New way with just subplots
-    max_display = np.minimum(len(X.columns) - 1, 9)   # -1 because we remove age
-    n_cols = 3
-    if latex:
-        latexify(columns=2)
+    if dependence_plot:
+        max_display = np.minimum(len(X.columns) - 1, 9)   # -1 because we remove age
+        n_cols = 3
+        if latex:
+            latexify(columns=2)
 
 
-    fig, axs = plt.subplots(np.ceil(max_display/n_cols).astype(np.int64), n_cols,
-                            figsize=(10, 6), constrained_layout=True
-                            #  facecolor='w', edgecolor='k'
-                            )
+        fig, axs = plt.subplots(np.ceil(max_display/n_cols).astype(np.int64), n_cols,
+                                figsize=(10, 6), constrained_layout=True
+                                #  facecolor='w', edgecolor='k'
+                                )
 
-    axs = axs.ravel()  # flatten
+        axs = axs.ravel()  # flatten
 
-    # Sort shap values indices to get most important ones
-    sort_idx = np.argsort(-np.abs(shap_values).mean(0))
+        # Sort shap values indices to get most important ones
+        sort_idx = np.argsort(-np.abs(shap_values).mean(0))
 
-    # Get features to display. Remove age
-    feat_display = np.array(X.columns)[sort_idx]
-    feat_display = np.delete(feat_display, np.argwhere(feat_display == "Age"))
+        # Get features to display. Remove age
+        feat_display = np.array(X.columns)[sort_idx]
+        feat_display = np.delete(feat_display, np.argwhere(feat_display == "Age"))
 
-    # Letters for paper labels
-    letters = ["(b)", "(c)", "(d)"]
-    letters = ["\\textbf{(" + s + ")}" for s in list(string.ascii_lowercase)[1:max_display+1]]
-
-
-    # Reference ranges
-    ref_ranges = pd.read_csv('./evaluation/reference_ranges.csv',
-                             index_col='name')
-
-    shap_values_abs = np.maximum(np.abs(shap_values.min()-.05), np.abs(shap_values.max()+0.05))
-    for idx in range(max_display):
-        ax = axs[idx]
-        feat = feat_display[idx]
-        shap.dependence_plot(feat,
-                             shap_values, X, ax=ax,
-                             interaction_index="Age",
-                             xmin="percentile(1)", xmax="percentile(99)",
-                             #  alpha=0.5,
-                             #  x_jitter=0.1,
-                             dot_size=3,
-                             show=False)
-        # ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
-        ax.set_ylabel("SHAP value")
-        print("SHAP bounds: ", str(shap_values.min()), ", ", str(shap_values.max()))
-        ax.set_ylim([-shap_values_abs, shap_values_abs])
-
-        ax.text(0.1, 0.95, letters[idx],
-                horizontalalignment='center',
-                verticalalignment='center',
-                transform=ax.transAxes,
-                weight='bold',
-        )
-        #  short_name = feat.split(" ", 1)[0]
-        #  if short_name in 'C-Reactive Protein' or \
-        #          short_name in 'Aspartate Aminotransferase':
-        #      ax.set_xscale('log')
-
-        # Remove colorbar
-        ax.collections[0].colorbar.remove()
-
-        ax.hlines(y=0, xmin=X[feat].min(), xmax=X[feat].max(),
-                  color="#cccccc", lw=0.5, linestyle="dotted", zorder=-1)
-
-        # Add reference range
-
-        ax.axvspan(ref_ranges.loc[feat]['min'], ref_ranges.loc[feat]['max'],
-                   zorder=-1, alpha=0.1, color='gray')
-        #  for k in ['min', 'max']:
-        #      ax.vlines(x=ref_ranges.loc[feat][k], ymin=-shap_values_abs, ymax=shap_values_abs,
-        #                color="k", lw=0.5, linestyle="dashdot")
+        # Letters for paper labels
+        letters = ["(b)", "(c)", "(d)"]
+        letters = ["\\textbf{(" + s + ")}" for s in list(string.ascii_lowercase)[1:max_display+1]]
 
 
-    # Plot colorbar on the right
-    cb = fig.colorbar(ax.collections[0], ax=axs.flat)
-    cb.set_label("Age", size=13)
-    cb.ax.tick_params(labelsize=11)
-    cb.set_alpha(1)
-    cb.outline.set_visible(False)
-    bbox = cb.ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-    #  cb.ax.set_aspect((bbox.height - 0.8) * 20)
-    cb.ax.set_aspect((bbox.height - 0.8) * 10)
+        # Reference ranges
+        ref_ranges = pd.read_csv('./evaluation/reference_ranges.csv',
+                                 index_col='name')
+
+        shap_values_abs = np.maximum(np.abs(shap_values.min()-.05), np.abs(shap_values.max()+0.05))
+        for idx in range(max_display):
+            ax = axs[idx]
+            feat = feat_display[idx]
+            shap.dependence_plot(feat,
+                                 shap_values, X, ax=ax,
+                                 interaction_index="Age",
+                                 xmin="percentile(1)", xmax="percentile(99)",
+                                 #  alpha=0.5,
+                                 #  x_jitter=0.1,
+                                 dot_size=3,
+                                 show=False)
+            # ax.set_ylabel("%s SHAP value" % feat.split(" ", 1)[0])
+            ax.set_ylabel("SHAP value")
+            print("SHAP bounds: ", str(shap_values.min()), ", ", str(shap_values.max()))
+            ax.set_ylim([-shap_values_abs, shap_values_abs])
+
+            ax.text(0.1, 0.95, letters[idx],
+                    horizontalalignment='center',
+                    verticalalignment='center',
+                    transform=ax.transAxes,
+                    weight='bold',
+            )
+            #  short_name = feat.split(" ", 1)[0]
+            #  if short_name in 'C-Reactive Protein' or \
+            #          short_name in 'Aspartate Aminotransferase':
+            #      ax.set_xscale('log')
+
+            # Remove colorbar
+            ax.collections[0].colorbar.remove()
+
+            ax.hlines(y=0, xmin=X[feat].min(), xmax=X[feat].max(),
+                      color="#cccccc", lw=0.5, linestyle="dotted", zorder=-1)
+
+            # Add reference range
+
+            ax.axvspan(ref_ranges.loc[feat]['min'], ref_ranges.loc[feat]['max'],
+                       zorder=-1, alpha=0.1, color='gray')
+            #  for k in ['min', 'max']:
+            #      ax.vlines(x=ref_ranges.loc[feat][k], ymin=-shap_values_abs, ymax=shap_values_abs,
+            #                color="k", lw=0.5, linestyle="dashdot")
 
 
-    print("Number of samples %d" % len(X))
+        # Plot colorbar on the right
+        cb = fig.colorbar(ax.collections[0], ax=axs.flat)
+        cb.set_label("Age", size=13)
+        cb.ax.tick_params(labelsize=11)
+        cb.set_alpha(1)
+        cb.outline.set_visible(False)
+        bbox = cb.ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        #  cb.ax.set_aspect((bbox.height - 0.8) * 20)
+        cb.ax.set_aspect((bbox.height - 0.8) * 10)
 
-    fig.savefig(os.path.join(save_path, 'feature_plot' + suffix_filter+'.pdf'),  bbox_inches='tight')
 
+        print("Number of samples %d" % len(X))
+
+        fig.savefig(os.path.join(save_path, 'feature_plot' + suffix_filter+filetype),  bbox_inches='tight')
+
+
+        plt.close()
 
     plt.close()
+
     shap.summary_plot(shap_values, X, show=False,
                       max_display=10,
                       plot_size=(10, 5),
@@ -354,10 +362,11 @@ def feature_importance(model_type, model_lab, website_path, data_path, save_path
             transform=ax.transAxes,
             weight='bold',
             )
-    plt.xlabel('SHAP value (impact on model output)')
-    f.savefig(os.path.join(save_path, 'summary_plot' + suffix_filter + '.pdf'),
-            bbox_inches='tight'
-            )
+    plt.xlabel('SHAP value (impact on model output)')   
+
+    f.savefig(os.path.join(save_path, 'summary_plot' + suffix_filter + filetype),
+        bbox_inches='tight'
+        )
     plt.clf()
 
 
@@ -415,39 +424,57 @@ def feature_importance_website(model_type, model_lab, website_path, data_path, s
     assert model_lab in('with_lab','without_lab'), "Invalid lab specification"
 
     ## Load model corresponding to *model_type* and *model_lab*.
+
     with open(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.pkl', 'rb') as file:
         best_model = pickle.load(file)
 
-    seedID = best_model['best seed']
+    try:
+        seedID = best_model['best seed']
+    except: 
+        seedID = best_model['seed']
 
     #Load model corresponding to model_type and lab
     with open(data_path+model_type+'_'+model_lab+'/seed'+str(seedID)+'.pkl', 'rb') as file:
         model_file = pickle.load(file)
 
+    assert best_model['AUC'] == model_file['AUC'], "Models do not match"
+
     model = model_file['model']
     data = model_file['train']
+    data_test = model_file['test']
 
-    ## Load data: to be replaced once we store X_train and X_test. Currently no imputation
     if model_type == "mortality":
         X = data.drop(["Outcome"], axis=1, inplace = False)
         y = data["Outcome"]
+        X_test = data_test.drop(["Outcome"], axis=1, inplace = False)
+        y_test = data_test["Outcome"]
+
     else:
         X = data.drop(["Swab"], axis=1, inplace = False)
         y = data["Swab"]
+        X_test = data_test.drop(["Swab"], axis=1, inplace = False)
+        y_test = data_test["Swab"]
 
     ## Calculate SHAP values (for each observation x feature)
-    explainer = shap.TreeExplainer(model);
+    explainer = shap.TreeExplainer(model,
+                                   data=X_test,
+                                   model_output="probability",
+                                   );
     shap_values = explainer.shap_values(X);
 
-    ft_recode = []
-    for i in X.columns:
-        ft_recode.append(title_mapping[i])
+    # Recode column names
+    X.columns = [title_mapping[i] for i in X.columns]
 
-    ## Summarize SHAP values across all features
-    # This acts as an alterative to the standard variable importance plots. Higher SHAP values translate to higher probability of mortality.
     plt.close()
-    shap.summary_plot(shap_values, X, show=False,feature_names=ft_recode, max_display=feature_limit, plot_type = "violin")
+
+    shap.summary_plot(shap_values, X, show=False,
+                      max_display=10,
+                      plot_size=(10, 5),
+                      feature_names=[c[:c.find("(")] if c.find("(") != -1 else c for c in X.columns],
+                      plot_type="violin")
     f = plt.gcf()
+    ax = plt.gca()
+    plt.xlabel('SHAP value (impact on model output)')
     f.savefig(website_path+'assets/risk_calculators/'+model_type+'/model_'+model_lab+'.jpg', bbox_inches='tight')
     plt.clf()
     plt.close()
