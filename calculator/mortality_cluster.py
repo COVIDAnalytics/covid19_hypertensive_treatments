@@ -3,19 +3,18 @@ import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
 
-# # Other packages
-# from sklearn.model_selection import train_test_split, GridSearchCV
-# from sklearn.metrics import roc_curve, auc
-# from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
-# import analyzer.loaders.cremona.utils as u
-# import analyzer.loaders.cremona as cremona
-# import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
-# from analyzer.utils import store_json, change_SaO2
+# Other packages
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import roc_curve, auc
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.impute import KNNImputer
+import analyzer.loaders.cremona.utils as u
+import analyzer.loaders.cremona as cremona
+import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
 import analyzer.dataset as ds
-# import analyzer.optimizer as o
-
-import analyzer.loaders.hartford.hartford as hartford
+import analyzer.optuna as o
+from analyzer.utils import impute_missing, train_and_evaluate
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
 jobid = int(jobid)
@@ -23,7 +22,7 @@ print('Jobid = ', jobid)
 
 SEED = 1
 prediction = 'Outcome'
-folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower()
+folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 output_folder = 'predictors/outcome'
 
 name_datasets = np.asarray(['discharge', 'comorbidities', 'vitals', 'lab', 'demographics', 'swab'])
@@ -32,6 +31,7 @@ extra_data = False
 demographics_data = True
 
 if jobid == 0:
+    o2_col = 'ABG: Oxygen Saturation (SaO2)'
     discharge_data = True
     comorbidities_data = True
     vitals_data = True
@@ -40,6 +40,7 @@ if jobid == 0:
     mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
     print(name_datasets[mask])
 elif jobid == 1:
+    o2_col = 'SaO2'
     discharge_data = True
     comorbidities_data = True
     vitals_data = True
@@ -93,18 +94,60 @@ X, bounds_dict = ds.filter_outliers(X, filter_lb = 1.0, filter_ub = 99.0, o2 = o
 
 store_json(bounds_dict, 'mortality_bounds.json')
 
-
 # Shuffle
 np.random.seed(SEED)
 idx = np.arange(len(X)); np.random.shuffle(idx)
 X = X.loc[idx]
 y = y.loc[idx]
 
+if jobid == 0:
+    X = X[u.SPANISH_ITALIAN_DATA] 
+
 if jobid == 1:
-    #X['SaO2'] = X['SaO2'].apply(change_SaO2)
-    pass
-# Train
+    X = X.drop(['Systolic Blood Pressure', 'Essential hypertension'], axis = 1)
+
+seed = 30
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
+X_train = impute_missing(X_train)
+
+
+# Train XGB
 algorithm = o.algorithms[0]
 name_param = o.name_params[0]
 
-best_xgb = o.optimizer(algorithm, name_param, X, y, seed_len = 35, n_calls = 400, name_algo = 'xgboost')
+best_xgb, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 400, name_algo = 'xgboost')
+
+# Train RF
+# algorithm = o.algorithms[1]
+# name_param = o.name_params[1]
+
+# best_rf, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'rf')
+
+# Train CART
+# algorithm = o.algorithms[2]
+# name_param = o.name_params[2]
+
+# best_cart, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'cart')
+
+# Train Logistic regression
+# algorithm = o.algorithms[3]
+# name_param = o.name_params[3]
+
+# best_lr, best_params = o.optimizer(algorithm, name_param, X_train, y_train, n_calls = 500, name_algo = 'lr')
+
+# Train OCT
+# from julia.api import Julia
+# jl = Julia(compiled_modules=False)
+# from interpretableai import iai
+
+# algorithm = iai.OptimalTreeClassifier
+# name_param = o.name_params[4]
+
+# best_oct, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 40, n_calls = 300, name_algo = 'oct')
+
+
+X_test = impute_missing(X_test)
+
+best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params)
+
+print(algorithm)

@@ -6,6 +6,10 @@ import matplotlib.pylab as plt
 import seaborn as sns
 import numpy as np
 import pickle
+from analyzer.learners import scores, train_and_evaluate
+from sklearn.model_selection import train_test_split
+import shap
+
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer, KNNImputer
 
@@ -115,8 +119,9 @@ def impute_missing(df, type = 'knn'):
 categorical = ['Gender'] 
 comorbidities = ['Cardiac dysrhythmias',
                 'Chronic kidney disease',
-                'Coronary atherosclerosis and other heart disease', 'Diabetes',
-                'Essential hypertension']
+                'Coronary atherosclerosis and other heart disease', 
+                #'Essential hypertension',
+                'Diabetes']
 symptoms = []
 
 def export_features_json(X, numeric, categorical,  symptoms, comorbidities):
@@ -171,18 +176,10 @@ def save_data(X_train, y_train, X_test, y_test, name, folder_path = '../../covid
     X_test = impute_missing(X_test)
     train = pd.concat((X_train, y_train), axis = 1)
     test = pd.concat((X_test, y_test), axis = 1)
-    train.to_csv(folder_path + name + 'train')
-    test.to_csv(folder_path + name + 'test')
-    return 
+    train.to_csv(folder_path + name + '/train.csv')
+    test.to_csv(folder_path + name + '/test.csv')
+    return train, test
     
-
-
-
-
-def store_json(data, file_name):
-    with open(file_name, 'w') as f:
-        json.dump(data, f)
-
 
 def get_percentages(df, missing_type=np.nan):
     if np.isnan(missing_type):
@@ -192,7 +189,6 @@ def get_percentages(df, missing_type=np.nan):
 
     percent_missing = df.sum() * 100 / len(df)
     return pd.DataFrame({'percent_missing': percent_missing})
-
 
 def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
     missing_values = get_percentages(df, missing_type)
@@ -207,3 +203,56 @@ def remove_missing(df, missing_type=np.nan, nan_threshold=40, impute=False):
         df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
 
     return df
+
+def create_and_save_pickle(algorithm, X_train, X_test, y_train, y_test, current_seed, best_seed, 
+                            best_params, categorical, symptoms, comorbidities, name, pickle_path, 
+                            data_save = False, data_in_pickle = False, folder_path = '../../covid19_clean_data/'):
+    numeric = [i for i in X_train.columns if i not in categorical + symptoms + comorbidities]
+
+    X_train = impute_missing(X_train) #impute training set
+    X_test = impute_missing(X_test) #impute test set
+    
+    if current_seed == best_seed:
+        data_save = True
+
+    if data_save:
+        train, test = save_data(X_train, y_train, X_test, y_test, name, folder_path) #save training and test
+
+    best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) # get best learner and performances
+    json = export_features_json(X_train, numeric, categorical,  symptoms, comorbidities) #create json
+    cols = X_train.columns
+
+    imputer = KNNImputer() #create imputer
+    imputer = imputer.fit(X_train)
+    
+    exp = {'model': best_model,
+            'imputer': imputer,
+            'json': json,
+            'columns': list(cols),
+            'current seed': current_seed,
+            'best seed': best_seed,
+            'Misclassification': np.round(accTest,2),
+            'AUC': np.round(ofsAUC,2),
+            'Size Training': len(X_train),
+            'Size Test': len(X_test),
+            'Percentage Training': np.round(np.mean(y_train),2),
+            'Percentage Test': np.round(np.mean(y_test),2)}
+            
+    if 'alpha' in best_params:
+        explainer = shap.TreeExplainer(best_model); # create shap explainer
+        shap_values = explainer.shap_values(X_train); # compute shap values for imputed training set
+        
+        # shap.summary_plot(shap_values, X_train, show=False, max_display=50)
+        # ft_imp = plt.gcf()
+        # exp['importance']= ft_imp,
+        exp['explainer']= explainer
+
+    if data_in_pickle:
+        train = pd.concat((X_train, y_train), axis = 1)
+        test = pd.concat((X_test, y_test), axis = 1)
+        exp['train'] = train
+        exp['test'] = test
+    
+    with open(pickle_path, 'wb') as handle:
+        pickle.dump(exp, handle, protocol=4)
+    return

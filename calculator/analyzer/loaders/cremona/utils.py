@@ -22,7 +22,7 @@ LIST_REMOVE_COMORBIDITIES = ["Immunizations and screening for infectious disease
 SWAB_WITH_LAB_COLUMNS = ['Age',
                         'Gender',
                         'Body Temperature',
-                        'Systolic Blood Pressure',
+                        #'Systolic Blood Pressure',
                         'Respiratory Frequency',
                         'Cardiac Frequency',
                         'C-Reactive Protein (CRP)',
@@ -40,19 +40,18 @@ SWAB_WITH_LAB_COLUMNS = ['Age',
                         'CBC: Mean Corpuscular Volume (MCV)',
                         'Glycemia']
 
-SUBSET_COLUMNS_WITHOUT_ABG = ['Age', 'Gender',
-                                'Systolic Blood Pressure', 'Respiratory Frequency',
-                                'Body Temperature', 'ABG: Oxygen Saturation (SaO2)',
-                                'C-Reactive Protein (CRP)', 'CBC: Leukocytes',
-                                'Blood Calcium', 'CBC: Platelets',
-                                'Blood Creatinine', 'CBC: Mean Corpuscular Volume (MCV)',
-                                'Prothrombin Time (INR)', 'Blood Sodium',
-                                'CBC: Red cell Distribution Width (RDW)', 'Aspartate Aminotransferase (AST)',
-                                'Blood Urea Nitrogen (BUN)', 'Alanine Aminotransferase (ALT)',
-                                'Total Bilirubin', 'CBC: Hemoglobin']
+SUBSET_COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 
+                            'ABG: Oxygen Saturation (SaO2)','Cardiac Frequency',  'Respiratory Frequency', 
+                            #'Systolic Blood Pressure', 
+                            'Alanine Aminotransferase (ALT)', 'Aspartate Aminotransferase (AST)', 
+                            'Total Bilirubin',  'Blood Calcium', 'Blood Creatinine', 'Blood Sodium', 
+                            'Blood Urea Nitrogen (BUN)', 'CBC: Hemoglobin', 'CBC: Mean Corpuscular Volume (MCV)', 
+                            'CBC: Platelets', 'CBC: Red cell Distribution Width (RDW)', 'CBC: Leukocytes', 
+                            'C-Reactive Protein (CRP)', 'Prothrombin Time (INR)']
 
 COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 'Cardiac Frequency',
-                    'Respiratory Frequency', 'Systolic Blood Pressure', 'ABG: Oxygen Saturation (SaO2)',
+                    'Respiratory Frequency', 'ABG: Oxygen Saturation (SaO2)',
+                    #'Systolic Blood Pressure', 
                     'Activated Partial Thromboplastin Time (aPTT)', 'Blood Urea Nitrogen (BUN)',
                     'Alanine Aminotransferase (ALT)', 'Aspartate Aminotransferase (AST)',
                     'Blood Amylase', 'Blood Calcium', 'Blood Creatinine', 'Blood Sodium',
@@ -62,16 +61,16 @@ COLUMNS_WITHOUT_ABG = ['Age', 'Gender', 'Body Temperature', 'Cardiac Frequency',
                     'Glycemia', 'Potassium Blood Level',
                     'Prothrombin Time (INR)', 'Total Bilirubin']
 
-SPANISH_ITALIAN_DATA = ['Age', 'Gender', 'ABG: Oxygen Saturation (SaO2)',
-       'Cardiac Frequency', 'Systolic Blood Pressure', 'Alanine Aminotransferase (ALT)',
-       'Blood Creatinine', 'Blood Sodium', 'Blood Urea Nitrogen (BUN)',
-       'Body Temperature', 'C-Reactive Protein (CRP)', 'CBC: Hemoglobin',
-       'CBC: Leukocytes', 'CBC: Mean Corpuscular Volume (MCV)',
-       'Aspartate Aminotransferase (AST)', 'CBC: Platelets',
-       'Cardiac dysrhythmias', 'Chronic kidney disease',
-       'Coronary atherosclerosis and other heart disease', 'Diabetes',
-       'Essential hypertension',  'Glycemia', 'Potassium Blood Level',
-       'Prothrombin Time (INR)']
+SPANISH_ITALIAN_DATA = ['Age', 'Gender', 'Body Temperature', 
+                        'ABG: Oxygen Saturation (SaO2)', 'Cardiac Frequency', 
+                        # 'Systolic Blood Pressure', 'Essential hypertension',
+                        'Alanine Aminotransferase (ALT)', 'Aspartate Aminotransferase (AST)', 
+                        'Blood Creatinine', 'Blood Sodium', 'Blood Urea Nitrogen (BUN)', 
+                        'Potassium Blood Level', 'CBC: Hemoglobin', 'CBC: Mean Corpuscular Volume (MCV)',  
+                        'CBC: Platelets', 'CBC: Leukocytes', 'C-Reactive Protein (CRP)', 'Glycemia', 
+                        'Prothrombin Time (INR)', 'Cardiac dysrhythmias', 'Chronic kidney disease', 
+                        'Coronary atherosclerosis and other heart disease', 'Diabetes']
+
 
 # Discharge codes
 # 1,2,5,6,9 = discharged, 4 = deceased

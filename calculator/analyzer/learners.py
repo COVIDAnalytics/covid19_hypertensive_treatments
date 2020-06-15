@@ -8,7 +8,39 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import mlflow.sklearn
 import xgboost as xgb
 
-from analyzer.utils import top_features, remove_dir, impute_missing
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import IterativeImputer, KNNImputer
+#from analyzer.utils import top_features, remove_dir, impute_missing
+
+
+def remove_dir(path):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+
+def top_features(model, X_train, n=20):
+    varsImpo = pd.DataFrame({'names':X_train.columns,
+                             'vals':model.feature_importances_})
+
+    varsImpo = varsImpo.sort_values(by='vals',
+                                    ascending = False)
+    varsImpo = varsImpo[:n]
+
+    print("Top %d\n" % n)
+    print(varsImpo)
+    return varsImpo
+
+def impute_missing(df, type = 'knn'):
+    if type == 'knn':
+        imputer = KNNImputer()
+        imputer.fit(df)
+    if type == 'iterative':
+        imputer = IterativeImputer(random_state=0)
+        imputer.fit(df)
+    imputed_df = imputer.transform(df)
+    df = pd.DataFrame(imputed_df, index=df.index, columns=df.columns)
+    return df
+
 
 def train_oct(X_train, y_train,
               X_test, y_test,
@@ -25,8 +57,9 @@ def train_oct(X_train, y_train,
         iai.OptimalTreeClassifier(
             random_seed = seed,
         ),
-        max_depth=range(3, 10),
-        minbucket=[5, 10, 15, 20, 25, 30, 35],
+        max_depth=range(1, 10),
+        # minbucket=[5, 10, 15, 20, 25, 30, 35],
+        criterion = ['gini', 'entropy', 'misclassification'],
         ls_num_tree_restarts=200,
     )
     oct_grid.fit_cv(X_train, y_train, n_folds=5, validation_criterion = 'auc')
@@ -64,35 +97,42 @@ def scores(model, t_X, t_Y, te_X, te_Y):
 
     ofs_fpr, ofs_tpr, _ = roc_curve(te_Y, pred_te_Y)
     ofsAUC = auc(ofs_fpr, ofs_tpr)
-    return (accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC)
+    return (accTrain, accTest, isAUC, ofsAUC)
 
 #DEFINE FUNCTION THAT TRAINS A MODEL AND OUTPUTS THE PERFORMANCES
 
-def train_and_evaluate(algorithm, X, y, seed, best_params):
+def train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params):
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
     X_train = impute_missing(X_train)
     X_test = impute_missing(X_test)
 
     best_model = algorithm()
+    if 'max_depth' in best_params:
+        best_params['max_depth'] = int(best_params['max_depth'])
     best_model.set_params(**best_params)
     best_model.fit(X_train, y_train)
 
-    accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC  = \
-                scores(best_model,
-                    X_train,
-                    y_train,
-                    X_test,
-                    y_test)
-        
-    print('Seed = ', seed)
+    if 'minbucket' not in best_params:
+        accTrain, accTest, isAUC, ofsAUC  = \
+                    scores(best_model,
+                        X_train,
+                        y_train,
+                        X_test,
+                        y_test)
+    
+    else:
+        isAUC = best_model.score(X_train, y_train, criterion='auc')
+        ofsAUC = best_model.score(X_test, y_test, criterion='auc')
+        accTrain = best_model.score(X_train, y_train, criterion='misclassification')
+        accTest = best_model.score(X_test, y_test, criterion='misclassification')
+
     print('In Sample AUC', isAUC)
     print('Out of Sample AUC', ofsAUC)
     print('In Sample Misclassification', accTrain)
     print('Out of Sample Misclassification', accTest)
     print('\n')
 
-    return best_model, accTrain, accTest, ofs_fpr, ofs_tpr, isAUC, ofsAUC
+    return best_model, accTrain, accTest, isAUC, ofsAUC
 
 #INITIATE 10-FOLD CV
 
@@ -113,7 +153,7 @@ def xgboost_classifier(X_train, y_train, X_test, y_test, param_grid, output_path
     print(pd.DataFrame(bestHypXGB.items(), columns = ['Parameter', 'Value']))
     
     bestXGB = gridsearch.best_estimator_
-    accTrain_XGB, accTest_XGB, ofs_fpr_XGB, ofs_tpr_XGB, isAUC_XGB, ofsAUC_XGB  = \
+    accTrain_XGB, accTest_XGB, isAUC_XGB, ofsAUC_XGB  = \
             scores(bestXGB,
                    X_train.astype(np.float64),
                    y_train.astype(int),
@@ -149,7 +189,7 @@ def rf_classifier(X_train, y_train, X_test, y_test, param_grid, output_path, see
     print(pd.DataFrame(bestHypRF.items(), columns = ['Parameter', 'Value']))
     
     bestRF = gridsearch.best_estimator_
-    accTrain_RF, accTest_RF, ofs_fpr_RF, ofs_tpr_RF, isAUC_RF, ofsAUC_RF  = \
+    accTrain_RF, accTest_RF, isAUC_RF, ofsAUC_RF  = \
             scores(bestRF,
                    X_train.astype(np.float64),
                    y_train.astype(int),
