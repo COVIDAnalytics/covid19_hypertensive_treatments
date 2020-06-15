@@ -19,7 +19,7 @@ source("descriptive_functions.R")
 
 #Set the path
 # save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
-# save_path = (I can't remember your path!! Goodnight to you and Alvaro!)
+# save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
 
 #Read in the data
 data = read.csv(paste(save_path, "hope_data_clean_imputed.csv",sep=""), header = TRUE)
@@ -62,7 +62,7 @@ for (i in 1:length(out)){
 }
 
 #Base on that statement we will pick as treatment of reference:
-# Chloroquine and Antivirals- 3
+# Chloroquine Only with 725 observations
 base_treatment = 4
 t = 1:5
 to_match_treatments = t[-base_treatment]
@@ -70,7 +70,7 @@ n_base = nrow(out[[base_treatment]])
 
 ## Global variables for matching
 # Solver options
-t_max = 60
+t_max = 600
 solver_option = "gurobi"
 approximate = 0
 
@@ -97,16 +97,16 @@ for (i in to_match_treatments) {
   print("")
   control_inds = matched_object_list[[i]]$t_id
   common_control = intersect(common_control, control_inds)
+  #common_control = union(common_control, control_inds)
 }
 
 length(common_control)
-
 
 # Evaluate a single treatment ---------------------------------------------
 vline = 0.15
 
 #Select a treatment option to investigate
-to_treat=2
+to_treat=4
 t_inds = which(matched_object_list[[to_treat]]$t_ind == 1)
 
 # The loveplot plots the absolute  differences in means 
