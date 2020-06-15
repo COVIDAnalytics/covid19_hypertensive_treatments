@@ -77,72 +77,42 @@ matching_process<-function(data, reference_df, matched_df, t_max, solver, approx
   return(match_result)
 }
 
-loveplot_custom <- function (treatment_name, X_mat, t_id, t_id_new, c_id, v_line, legend_position = "topright") 
+loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, t_id_common, v_line = .1, legend_position = "topright") 
 {
+  ## Original Treated Group (base treatment)
   X_mat_t_before = X_mat[t_id, ]
   X_mat_t_before_mean = apply(X_mat_t_before, 2, mean)
   X_mat_t_before_var = apply(X_mat_t_before, 2, var)
-  X_mat_c_before = X_mat[-t_id, ]
-  X_mat_c_before_mean = apply(X_mat_c_before, 2, mean)
-  X_mat_c_before_var = apply(X_mat_c_before, 2, var)
   
-  std_dif_before = (X_mat_t_before_mean - X_mat_c_before_mean)#/sqrt((X_mat_t_before_var +  X_mat_c_before_var)/2)
-  
+  ## Matched Treated Group
   X_mat_t = X_mat[t_id_new, ]
   X_mat_t_mean = apply(X_mat_t, 2, mean)
   X_mat_t_var = apply(X_mat_t, 2, var)
   
-  X_mat_c_after = X_mat[c_id, ]
-  X_mat_c_after_mean = apply(X_mat_c_after, 2, mean)
-  std_dif_after = (X_mat_t_mean - X_mat_c_after_mean)#/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
+  ## Common Treated Group 
+  X_mat_t_common = X_mat[t_id_common, ]
+  X_mat_t_common_mean = apply(X_mat_t_common, 2, mean)
+  X_mat_t_common_var = apply(X_mat_t_common, 2, var)
   
-  abs_std_dif_before = abs(std_dif_before)
-  n_aux = length(abs_std_dif_before)
-  abs_std_dif_after = abs(std_dif_after)
-  par(mar = c(3, 3, 3, 3),xpd=FALSE)
-  dotchart(abs_std_dif_before[n_aux:1], labels = colnames(X_mat)[n_aux:1], 
-           cex = 0.7, pch = " ", color = , main = paste("Matching for treatment ", 
-                                                        treatment_name,sep=""), xlim = c(0,0.4), 
-           xlab = "Absolute standardized differences in means", bg = par("bg"))
-  points(abs_std_dif_before[n_aux:1], y = 1:ncol(X_mat), cex = 0.9, 
-         pch = 0)
-  points(abs_std_dif_after[n_aux:1], y = 1:ncol(X_mat), cex = 0.8, 
-         pch = 8, col = "blue")
-  legend(legend_position, c("Before matching", "After matching"), 
-         cex = 0.5, bty = "n", pch = c(0, 8), col = c("black", 
-                                                      "blue"), 
-         xpd=TRUE, y.intersp=0.1)
-  abline(v = v_line, lty = 2)
-}
-
-loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, c_id_common, v_line, legend_position = "topright") 
-{
-  X_mat_t_before = X_mat[t_id, ]
-  X_mat_t_before_mean = apply(X_mat_t_before, 2, mean)
-  X_mat_t_before_var = apply(X_mat_t_before, 2, var)
+  ## Original Control Group (dependent on treatment_name)
   X_mat_c_before = X_mat[-t_id, ]
   X_mat_c_before_mean = apply(X_mat_c_before, 2, mean)
   X_mat_c_before_var = apply(X_mat_c_before, 2, var)
+  
+  ## Matched Control Group
+  X_mat_c_after = X_mat[c_id, ]
+  X_mat_c_after_mean = apply(X_mat_c_after, 2, mean)
+  X_mat_c_after_var = apply(X_mat_c_after, 2, var)
   
   std_dif_before = (X_mat_t_before_mean - X_mat_c_before_mean)/sqrt((X_mat_t_before_var +  X_mat_c_before_var)/2)
-  
-  X_mat_t = X_mat[t_id_new, ]
-  X_mat_t_mean = apply(X_mat_t, 2, mean)
-  X_mat_t_var = apply(X_mat_t, 2, var)
-  
-  X_mat_c_after = X_mat[c_id, ]
-  X_mat_c_after_mean = apply(X_mat_c_after, 2, mean)
-  std_dif_after = (X_mat_t_mean - X_mat_c_after_mean)/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
-  
-  c_id_common = c_id_common + nrow(X_mat_t_before)
-  X_mat_c_after_common = X_mat[c_id_common, ]
-  X_mat_c_after_common_mean = apply(X_mat_c_after_common, 2, mean)
-  std_dif_after_common = (X_mat_t_mean - X_mat_c_after_common_mean)/sqrt((X_mat_t_var +  X_mat_c_before_var)/2)
-  
   abs_std_dif_before = abs(std_dif_before)
-  n_aux = length(abs_std_dif_before)
+  std_dif_after = (X_mat_t_mean - X_mat_c_after_mean)/sqrt((X_mat_t_var +  X_mat_c_after_var)/2)
   abs_std_dif_after = abs(std_dif_after)
+  std_dif_after_common = (X_mat_t_common_mean - X_mat_c_after_mean)/sqrt((X_mat_t_common_var +  X_mat_c_after_var)/2)
   abs_std_dif_after_common = abs(std_dif_after_common)
+  
+  n_aux = length(abs_std_dif_before)
+  
   par(mar = c(3, 3, 3, 3),xpd=FALSE)
   dotchart(abs_std_dif_before[n_aux:1], labels = colnames(X_mat)[n_aux:1], 
            cex = 0.7, pch = " ", color = , main = paste("Matching for treatment ", 
@@ -157,34 +127,36 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, c_id_co
   legend(legend_position, c("Before matching", "After matching", "After matching - common control"), 
          cex = 0.5, bty = "n", pch = c(0, 8, 8), col = c("black", 
                                                       "blue", "red"), 
-         xpd=TRUE, y.intersp=0.1)
+         xpd=TRUE, 
+         y.intersp=0.1)
   abline(v = v_line, lty = 2)
 }
 
 
-compare_features <- function(df_full, ref_treat, to_treat, common_control=c()){
-  # data A = reference
-  label_a = names(out)[ref_treatment]
+compare_features <- function (df_full, base_treat, var_treat, common_control=c()){
+  # data A = base treatment
+  label_a = names(out)[base_treat]
   
-  # data B = treated
-  label_b = names(out)[to_treat]
+  # data B = changing treatment ("control")
+  label_b = names(out)[var_treat]
   
   data_a = df_full %>%filter(REGIMEN == label_a)
   data_b = df_full %>%filter(REGIMEN == label_b)
-  data_stack = rbind(data_b, data_a)
   
-  nrow(data_stack) == nrow(matched_object_list[[to_treat]]$mdt0)
+  nrow(data_a) + nrow(data_b) == nrow(matched_object_list[[to_treat]]$mdt0)
   
-  # Filter to c_ids. If common control, adjust the common controls to start at the correct index
-  data_a_filtered = data_stack[matched_object_list[[to_treat]]$c_id,]
+  # Filter to t_ids. If common control, adjust the common controls to start at the correct index
+  data_a_filtered = data_a[matched_object_list[[to_treat]]$t_id,]
   if (length(common_control)  > 0) {
-    common_control = common_control + nrow(data_b) 
-    data_a_filtered = data_stack[common_control,]
+    data_a_filtered = data_a[common_control,]
   }
-  data_b_filtered = data_stack[matched_object_list[[to_treat]]$t_id,]
+  c_id = matched_object_list[[to_treat]]$c_id - nrow(data_a) #adjust down
+  data_b_filtered = data_b[c_id,]
   
-  ttest_original = run_ttest(data_a, data_b, label_a, label_b, cols_exclude = treatments)
-  ttest_filtered = run_ttest(data_a_filtered, data_b_filtered, label_a, label_b, cols_exclude = treatments)
+  ttest_original = run_ttest(data_a, data_b, label_a, label_b, cols_exclude = treatments) %>%
+    mutate_if(is.numeric, funs(round(., digits = 3)))
+  ttest_filtered = run_ttest(data_a_filtered, data_b_filtered, label_a, label_b, cols_exclude = treatments) %>%
+    mutate_if(is.numeric, funs(round(., digits = 3)))
   
   violate_original = ttest_original %>% filter(`P-Value` < 0.01) %>% pull(Feature) %>% sort
   violate_filtered = ttest_filtered %>% filter(`P-Value` < 0.01)  %>% pull(Feature) %>% sort 
@@ -208,6 +180,5 @@ compare_features <- function(df_full, ref_treat, to_treat, common_control=c()){
   print("New Violations: ")
   print(new_violations)
   
-  return(list(ttest_original,ttest_filtered,ttest_compare))
+  return(list(original = ttest_original,filtered = ttest_filtered,compare = ttest_compare))
 }
-
