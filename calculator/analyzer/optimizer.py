@@ -96,6 +96,13 @@ def optimizer(algorithm, name_param, X, y, cv = 200, n_calls = 500, name_algo = 
     opt_model = gp_minimize(objective, space, n_calls = n_calls, random_state = 1, verbose = True, n_random_starts = 30, n_jobs = -1)
     best_params = dict(zip(name_param, opt_model.x)) 
 
+    print('The parameters are:')
+    print(name_param)
+    
+    print('The parameters values are:')
+    print(opt_model.x)
+
+
     print('The best parameters are:')
     print('\n')
     print(pd.DataFrame(best_params.items(), columns = ['Parameter', 'Value']))
@@ -111,7 +118,7 @@ def optimizer(algorithm, name_param, X, y, cv = 200, n_calls = 500, name_algo = 
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
     model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) #gets in sample performance
 
-    if name_algo != 'oct':
+    if name_algo != 'oct' and name_algo != 'lr':
         top_features(model, X)
     
     return best_model, best_params
