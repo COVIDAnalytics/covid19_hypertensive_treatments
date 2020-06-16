@@ -1,38 +1,78 @@
 import numpy as np
 
-def create_dataset(data_dict, discharge_data = True,
-                        comorbidities_data = True,
-                        vitals_data = True,
+admission_cols = ['ONSET_DATE_DIFF', 'TEST_DATE_DIFF']
+
+demographic_cols = ['COUNTRY', 'GENDER', 'RACE', 'PREGNANT', 'AGE']
+
+comorb_cols = ['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY', 'SMOKING', 'RENALINSUF',
+       'ANYLUNGDISEASE', 'AF', 'VIH', 'TBPASSED', 'ANYHEARTDISEASE',
+       'MAINHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE',
+       'LIVER_DISEASE', 'CANCER']
+
+vital_cols = ['FAST_BREATHING', 'MAXTEMPERATURE_ADMISSION', 'SAT02_BELOW92', 'BLOOD_PRESSURE_ABNORMAL_B']
+
+lab_cols = ['DDDIMER_B', 'PROCALCITONIN_B', 'PCR_B', 'TRANSAMINASES_B', 'LDL_B', 'CREATININE', 'SODIUM', 'LEUCOCYTES',
+       'LYMPHOCYTES', 'HEMOGLOBIN', 'PLATELETS']
+
+med_hx_cols = ['HOME_OXIGEN_THERAPY', 'IN_PREVIOUSASPIRIN',
+       'IN_OTHERANTIPLATELET', 'IN_ORALANTICOAGL', 'IN_ACEI_ARB',
+       'IN_BETABLOCKERS', 'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED',
+       'IN_DVITAMINSUPLEMENT', 'IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT']
+
+other_tx_cols = ['CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS']
+
+outcome_cols = ['DEATH', 'COMORB_DEATH']
+
+def create_dataset_treatment(data, treatment,
+                        demographics = True,
+                        comorbidities = True,
+                        vitals = True,
                         lab_tests=True,
-                        demographics_data = False,
-                        swabs_data = False,
-                        prediction='Outcome'):
+                        med_hx=True,
+                        other_tx=True,
+                        prediction = 'DEATH'):
+    cols_include = (demographics*demographic_cols + 
+        comorbidities*comorb_cols + vitals*vital_cols + 
+        lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)
 
-    if demographics_data:
-        data = data_dict['demographics']
+    data_sub = data.loc[data['REGIMEN']==treatment,]
 
-    if discharge_data:
-        data = data.join(data_dict['discharge'])
+    return data_sub[cols_include], data_sub[prediction]
 
-    if comorbidities_data:
-        data = data.join(data_dict['comorbidities'])
 
-    if vitals_data:
-        data = data.join(data_dict['vitals'])
+# def create_dataset(data_dict, discharge_data = True,
+#                         comorbidities_data = True,
+#                         vitals_data = True,
+#                         lab_tests=True,
+#                         demographics_data = False,
+#                         swabs_data = False,
+#                         prediction='Outcome'):
 
-    if lab_tests:
-        data = data.join(data_dict['lab'])
+#     if demographics_data:
+#         data = data_dict['demographics']
 
-    if swabs_data:
-        data = data.join(data_dict['swab'])
+#     if discharge_data:
+#         data = data.join(data_dict['discharge'])
 
-    X = data.loc[:, data.columns.difference(['Outcome', 'ICU', 'Swab'])]
-    y = data.loc[:, prediction]
+#     if comorbidities_data:
+#         data = data.join(data_dict['comorbidities'])
 
-    X = X.astype(np.float32)
-    y = y.astype(int)
+#     if vitals_data:
+#         data = data.join(data_dict['vitals'])
 
-    return X, y
+#     if lab_tests:
+#         data = data.join(data_dict['lab'])
+
+#     if swabs_data:
+#         data = data.join(data_dict['swab'])
+
+#     X = data.loc[:, data.columns.difference(['Outcome', 'ICU', 'Swab'])]
+#     y = data.loc[:, prediction]
+
+#     X = X.astype(np.float32)
+#     y = y.astype(int)
+
+#     return X, y
 
 def filter_outliers(df_X, filter_lb = 0.1, filter_ub = 99.9, o2 = "SaO2"):
     bounds_dict = {}
