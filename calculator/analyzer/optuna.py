@@ -63,10 +63,10 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
                     "criterion": trial.suggest_categorical("criterion", ['gini', 'entropy'])}
 
         elif name_algo == 'lr':
-            params = {"penalty": trial.suggest_categorical("solver", ['l1','l2', 'none']),
+            params = {"penalty": trial.suggest_categorical("penalty", ['l1','l2', 'none']),
                     "tol": trial.suggest_uniform("tol", 1e-5, 10),
                     "C": trial.suggest_uniform("C", 1e-5, 2),
-                    "solver": 'saga'}
+                    "solver": trial.suggest_categorical("solver", ['saga'])}
 
 
         elif name_algo == 'oct':
@@ -88,7 +88,7 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
 
 
         # Add a callback for pruning.
-        model = algorithm()
+        model = algorithm()       
         model.set_params(**params)
         score = np.mean(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"))
         #score = np.quantile(cross_val_score(model, X, y, cv = cv, n_jobs = -1, scoring="roc_auc"), 0.25)
@@ -116,7 +116,7 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
     model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) #gets in sample performance
 
-    if name_algo != 'oct':
+    if name_algo != 'oct'and name_algo != 'lr':
         top_features(model, X)
     
     return best_model, best_params

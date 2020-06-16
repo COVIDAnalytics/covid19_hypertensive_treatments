@@ -256,3 +256,63 @@ def create_and_save_pickle(algorithm, X_train, X_test, y_train, y_test, current_
     with open(pickle_path, 'wb') as handle:
         pickle.dump(exp, handle, protocol=4)
     return
+
+def create_and_save_pickle_treatments(algorithm, treatment, SEED, split_type,
+                                      X_train, X_test, y_train, y_test, 
+                                      best_params, file_name, results_folder,
+                                      data_save = True, data_in_pickle = True):
+
+    # if data_save:
+    #     train, test = save_data(X_train, y_train, X_test, y_test, file_name, results_folder) #save training and test
+
+    best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) # get best learner and performances
+    # json = export_features_json(X_train, numeric, categorical,  symptoms, comorbidities) #create json
+    cols = X_train.columns
+
+    # imputer = KNNImputer() #create imputer
+    # imputer = imputer.fit(X_train)
+    
+    exp = {'model': best_model,
+           'treatment':treatment,
+           'split_type':split_type,
+            # 'imputer': imputer,
+            # 'json': json,
+            'columns': list(cols),
+            'current seed': SEED,
+            'Misclassification': np.round(accTest,2),
+            'AUC': np.round(ofsAUC,2),
+            'Size Training': len(X_train),
+            'Size Test': len(X_test),
+            'Percentage Training': np.round(np.mean(y_train),2),
+            'Percentage Test': np.round(np.mean(y_test),2)}
+            
+    if 'alpha' in best_params:
+        explainer = shap.TreeExplainer(best_model); # create shap explainer
+        shap_values = explainer.shap_values(X_train); # compute shap values for imputed training set
+        
+        # shap.summary_plot(shap_values, X_train, show=False, max_display=50)
+        # ft_imp = plt.gcf()
+        # exp['importance']= ft_imp,
+        exp['explainer']= explainer
+
+    if data_in_pickle:
+        train = pd.concat((X_train, y_train), axis = 1)
+        test = pd.concat((X_test, y_test), axis = 1)
+        exp['train'] = train
+        exp['test'] = test
+        
+    pickle_path = results_folder + file_name
+    
+    with open(pickle_path, 'wb') as handle:
+        pickle.dump(exp, handle, protocol=4)
+    return
+
+
+
+
+
+
+
+
+
+

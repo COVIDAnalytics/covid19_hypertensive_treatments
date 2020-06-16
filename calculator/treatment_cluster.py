@@ -16,8 +16,9 @@ import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
 import analyzer.dataset as ds
-import analyzer.optimizer as o
+import analyzer.optuna as o
 from analyzer.utils import impute_missing, train_and_evaluate
+import analyzer.utils as utils
 import itertools
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
@@ -25,6 +26,13 @@ jobid = int(jobid)
 print('Jobid = ', jobid)
 
 SEED = 1
+
+#Define the name of the dataset for sacing the results
+dataset = "hope"
+#Split type
+split_type = 0
+split_types = ["bycountry","random"]
+
 prediction = 'DEATH'
 treatment_list = ['Chloroquine Only', 'All', 'Chloroquine and Anticoagulants',
        'Chloroquine and Antivirals', 'Non-Chloroquine']
@@ -39,9 +47,9 @@ algorithm = o.algorithms[algorithm_id]
 name_param = o.name_params[algorithm_id]
 name_algo = o.algo_names[algorithm_id]
 
-## HMW: haven't specified where to save this yet
-#Add data version as well 
-folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower() + '_jobid_' + str(jobid)
+## Results path and file names
+t = treatment.replace(" ", "_")
+file_name = str(dataset)+'_results_treatment_'+str(t)+'_seed' + str(SEED) + '_split_' + str(split_types[split_type]) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 # output_folder = 'predictors/treatment_mortality'
 results_folder = '../../covid19_treatments_results/' + str(name_algo) +'/'
 
@@ -111,3 +119,15 @@ best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, c
 best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params)
 
 print(algorithm)
+
+
+utils.create_and_save_pickle_treatments(algorithm, treatment, SEED, split_type,
+                                      X_train, X_test, y_train, y_test, 
+                                      best_params, file_name, results_folder,
+                                      data_save = True, data_in_pickle = True)
+        
+
+
+
+
+
