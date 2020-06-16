@@ -2,10 +2,40 @@ import pandas as pd
 import numpy as np 
 import analyzer.loaders.cremona.utils as u
 
-path = '../../../data/cremona'
+path = '../../../../data/cremona'
 
 # Load Cremona data
 discharge_info = pd.read_csv('%s/general/discharge_info.csv' % path)
+covid_patients = discharge_info['Principale'].isin(u.LIST_DIAGNOSIS)
+
+for d in u.DIAGNOSIS_COLUMNS:
+    covid_patients = covid_patients | discharge_info[d].isin(u.LIST_DIAGNOSIS)
+
+discharge_info = discharge_info[covid_patients]
+
+# Keep discharge codes and transform the dependent variable to binary
+discharge_info = discharge_info[discharge_info['Modalità di dimissione'].isin(u.DISCHARGE_CODES)]
+discharge_info['Modalità di dimissione'] = \
+    (discharge_info['Modalità di dimissione'] == u.DISCHARGE_CODE_RELEASED).apply(int) #transform to binary
+
+# Drop Duplicated Observations
+discharge_info.drop_duplicates(['NumeroScheda', 'Modalità di dimissione'],
+                                inplace=True)
+discharge_info.drop_duplicates(['NumeroScheda'], inplace=True)
+discharge_info = discharge_info[['NumeroScheda', 'Sesso', 'Età', 'Data di ricovero', 'Modalità di dimissione']]
+discharge_info = discharge_info.rename(columns={'NumeroScheda': 'NOSOLOGICO',
+                                                'Sesso': 'Gender',
+                                                'Età':'Age',
+                                                'Data di ricovero': 'DT_HOSPITAL_ADMISSION',
+                                                'Modalità di dimissione':'Outcome'})
+discharge_info['DT_HOSPITAL_ADMISSION'] = pd.to_datetime(discharge_info['DT_HOSPITAL_ADMISSION'])
+discharge_info.NOSOLOGICO = discharge_info.NOSOLOGICO.apply(str)
+
+comorb_long = u.comorbidities_long(discharge_info)
+comorb_long.drop(["index"], axis = 1, inplace = True)
+comorb_long.rename(columns={'comorb':'DIAGNOSIS_CODE',
+                            'id':'NOSOLOGICO'}, inplace = True)
+comorb_long['NOSOLOGICO'] = comorb_long['NOSOLOGICO'].apply(str)
 
 # Cleanup discharge information: keep only covid patients
 discharge_info = u.cleanup_discharge_info(discharge_info)
@@ -46,3 +76,18 @@ data_treat['Proportion'] = (data_treat['Occurrence']/len(drugs.Nosologico.unique
 ATCs = list(drugs.ATC.unique())
 ATC_antibiotics = np.asarray([ATCs[i] for i in range(len(ATCs)) if ATCs[i][:3] == 'J01']) # Standard code for antibiotic
 ATC_antivirals = np.asarray([ATCs[i] for i in range(len(ATCs)) if ATCs[i][:3] == 'J05']) # Standard code for antiviral
+
+cremona_treatments = pd.DataFrame(0, index=range(len(patients)), columns=['NOSOLOGICO'] + u.COLS_TREATMENTS)
+cremona_treatments['NOSOLOGICO'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'NOSOLOGICO'].reset_index(drop = True)
+cremona_treatments['HOSPITAL'] = np.repeat('Cremona', len(patients))
+cremona_treatments['COUNTRY'] = np.repeat('Italy', len(patients))
+cremona_treatments['DT_HOSPITAL_ADMISSION'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'DT_HOSPITAL_ADMISSION'].reset_index(drop = True)
+cremona_treatments['GENDER'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'Gender'].reset_index(drop = True)
+cremona_treatments[['RACE', 'PREGNANT', 'SMOKING', 'MAINHEARTDISEASE']] = np.nan
+cremona_treatments['AGE'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'Age'].reset_index(drop = True)
+
+for i in range(len(u.COMORBS_TREATMENTS_HCUP)):
+    name = u.COMORBS_TREATMENTS_NAMES[i]
+    hcups = u.COMORBS_TREATMENTS_HCUP[i]
+    for j in patients:
+        cremona_treatments.loc[comorb_long['NOSOLOGICO'] == j, name] = (sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'DIAGNOSIS_CODE'].isin(hcups)) > 0)

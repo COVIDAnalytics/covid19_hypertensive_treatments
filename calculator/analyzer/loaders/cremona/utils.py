@@ -151,8 +151,55 @@ LAB_FEATURES_NOT_MATCH = ['IONE BICARBONATO',  # We keep standard directly
                           'CLORUREMIA',  # Redundant with Sodium
                           ]
 
+COLS_TREATMENTS = ['HOSPITAL', 'COUNTRY', 'DT_HOSPITAL_ADMISSION', 'GENDER',
+                    'RACE', 'PREGNANT', 'AGE', 'DIABETES', 'HYPERTENSION',
+                    'DISLIPIDEMIA', 'OBESITY', 'SMOKING', 'RENALINSUF',
+                    'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE',
+                    'MAINHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE',
+                    'LIVER_DISEASE', 'CANCER', 'HOME_OXIGEN_THERAPY', 'IN_PREVIOUSASPIRIN',
+                    'IN_OTHERANTIPLATELET', 'IN_ORALANTICOAGL', 'IN_ACEI_ARB' 'IN_BETABLOCKERS',
+                    'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED','IN_DVITAMINSUPLEMENT',
+                    'IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT', 'FAST_BREATHING', 'MAXTEMPERATURE_ADMISSION',
+                    'SAT02_BELOW92', 'DDDIMER_B', 'PROCALCITONIN_B', 'PCR_B', 'TRANSAMINASES_B', 'LDL_B',
+                    'BLOOD_PRESSURE_ABNORMAL_B', 'CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES',
+                    'HEMOGLOBIN', 'PLATELETS', 'GLASGOW_COMA_SCORE', 'CHESTXRAY_BNORMALITY',
+                    'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS','ACEI_ARBS',
+                    'ONSET_DATE_DIFF', 'TEST_DATE_DIFF', 'CLOROQUINE', 'ANTIVIRAL','ANTICOAGULANTS',
+                    'REGIMEN', 'DEATH', 'COMORB_DEATH']
 
-HCUP_LIST = [49,50,87,90,95,146]
+# This is the list of HCUP used for the mortality paper
+COVID_MORTALITY_PAPER_HCUP_LIST = [49,50,87,90,95,146]
+
+DIABETES = [49, 50, 174]
+HYPERTENSION = [87, 88, 171]
+DISLIPIDEMIA = [53]
+OBESITY = [58]
+RENALINSUF = [145, 146]
+ANYLUNGDISEASE = [116, 117, 121, 122]
+AF = [95]
+VIH = [5]
+ANYHEARTDISEASE = [90, 92, 93, 95]
+ANYCEREBROVASCULARDISEASE = [98, 100, 101, 102]
+CONECTIVEDISEASE = [198, 199]
+LIVER_DISEASE = [6, 139]
+CANCER = [11, 12, 13, 14, 15, 16, 17, 18, 19, 
+        20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 
+        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
+        40, 41, 42, 43]
+
+# HCUP_LIST FOR THE TREATMENTS PAPER    
+COMORBS_TREATMENTS_NAMES = ['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY', 'RENALINSUF',
+            'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE',
+            'CONECTIVEDISEASE', 'LIVER_DISEASE', 'CANCER']
+
+COMORBS_TREATMENTS_HCUP = [DIABETES, HYPERTENSION, DISLIPIDEMIA, OBESITY, RENALINSUF,
+            ANYLUNGDISEASE, AF, VIH, ANYHEARTDISEASE, ANYCEREBROVASCULARDISEASE,
+            CONECTIVEDISEASE, LIVER_DISEASE, CANCER]
+
+
+HCUP_LIST = list(set(DIABETES + HYPERTENSION + DISLIPIDEMIA + OBESITY + RENALINSUF + \
+            ANYLUNGDISEASE + AF + VIH + ANYHEARTDISEASE + ANYCEREBROVASCULARDISEASE + \
+            CONECTIVEDISEASE + LIVER_DISEASE + CANCER))
 
 
 def clean_lab_features(lab_feat):
@@ -318,11 +365,11 @@ def create_lab_dataset(lab, patients):
 
 def create_dataset_comorbidities(comorb_long, icd_category, patients):
 
-     #Load the diagnoses dict
+    #Load the diagnoses dict
     if icd_category == 9:
-        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd9.csv')
+        icd_dict = pd.read_csv('../../../analyzer/hcup_dictionary_icd9.csv')
     else:
-        icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd10.csv')
+        icd_dict = pd.read_csv('../../../analyzer/hcup_dictionary_icd10.csv')
 
     #The codes that are not mapped are mostly procedure codes or codes that are not of interest
     icd_descr = pd.merge(comorb_long, icd_dict, how='inner', left_on=['DIAGNOSIS_CODE'], right_on=['DIAGNOSIS_CODE'])
