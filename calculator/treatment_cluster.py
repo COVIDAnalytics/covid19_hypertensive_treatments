@@ -16,7 +16,7 @@ import analyzer.loaders.cremona.utils as u
 import analyzer.loaders.cremona as cremona
 import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
 import analyzer.dataset as ds
-import analyzer.optuna as o
+import analyzer.optimizer as o
 from analyzer.utils import impute_missing, train_and_evaluate
 import itertools
 
@@ -40,6 +40,7 @@ name_param = o.name_params[algorithm_id]
 name_algo = o.algo_names[algorithm_id]
 
 ## HMW: haven't specified where to save this yet
+#Add data version as well 
 folder_name = 'complete_lab_tests_seed' + str(SEED) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 # output_folder = 'predictors/treatment_mortality'
 results_folder = '../../covid19_treatments_results/' + str(name_algo) +'/'
