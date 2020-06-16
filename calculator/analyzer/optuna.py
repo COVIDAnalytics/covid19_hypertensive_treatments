@@ -41,6 +41,12 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
                     "alpha": trial.suggest_uniform("alpha", 1e-8, 5), 
                     "eval_metric": "auc"}
 
+            dtrain = xgb.DMatrix(X, label=y)
+            pruning_callback = optuna.integration.XGBoostPruningCallback(trial, "test-auc")
+            history = xgb.cv(params, dtrain, num_boost_round = 100, callbacks = [pruning_callback], nfold = cv, stratified = True)
+            score = history["test-auc-mean"].values[-1]
+            return score
+
         elif name_algo == 'rf':
             params = {"n_estimators": trial.suggest_int("n_estimators", 10, 900),
                     "max_depth": trial.suggest_int("max_depth", 3, 10),
