@@ -223,6 +223,42 @@ IN_TREATMENTS = [HOME_OXIGEN_THERAPY, IN_PREVIOUSASPIRIN, IN_OTHERANTIPLATELET,
                 IN_ORALANTICOAGL, IN_ACEI_ARB, IN_BETABLOCKERS, IN_BETAGONISTINHALED,
                 IN_GLUCORTICOIDSINHALED, IN_DVITAMINSUPLEMENT, IN_BENZODIACEPINES, IN_ANTIDEPRESSANT]
 
+VITALS_TREAT = ['Respiratory Frequency', 'Body Temperature', 'Systolic Blood Pressure']
+LABS_TREAT = ['ABG: Oxygen Saturation (SaO2)', 'Azoto ematico UAR: D-DIMERO', 'PROCALCITONINA: PROCALCITONINA',
+              'C-Reactive Protein (CRP)', 'Alanine Aminotransferase (ALT)', 'LATTICODEIDROGENASI: (LDH) LATTICODEIDROGENASI',
+              'Blood Creatinine', 'Blood Sodium', 'CBC: Leukocytes', 'Emocromo + formula: LINFOCITI (N)', 'CBC: Hemoglobin', 'CBC: Platelets']
+
+VITALS_TREAT_RENAME = {'Respiratory Frequency': 'FAST_BREATHING', 
+                        'Body Temperature': 'MAXTEMPERATURE_ADMISSION', 
+                        'Systolic Blood Pressure': 'BLOOD_PRESSURE_ABNORMAL_B'}
+
+LABS_TREAT_RENAME = {'ABG: Oxygen Saturation (SaO2)': 'SAT02_BELOW92', 
+                    'Azoto ematico UAR: D-DIMERO': 'DDDIMER_B', 
+                    'PROCALCITONINA: PROCALCITONINA': 'PROCALCITONIN_B',
+                    'C-Reactive Protein (CRP)': 'PCR_B', 
+                    'Alanine Aminotransferase (ALT)': 'TRANSAMINASES_B', 
+                    'LATTICODEIDROGENASI: (LDH) LATTICODEIDROGENASI': 'LDL_B',
+                    'Blood Creatinine': 'CREATININE', 
+                    'Blood Sodium': 'SODIUM', 
+                    'CBC: Leukocytes': 'LEUCOCYTES', 
+                    'Emocromo + formula: LINFOCITI (N)': 'LYMPHOCYTES', 
+                    'CBC: Hemoglobin': 'HEMOGLOBIN', 
+                    'CBC: Platelets': 'PLATELETS'}
+
+# TREATMENTS
+TREATMENTS_NAME = ['CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS', 'CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS']
+CORTICOSTEROIDS = 'H02'
+INTERFERONOR = 'L03'
+TOCILIZUMAB = 'L04AC07'
+ANTIBIOTICS = 'J01'
+ACEI_ARBS = 'C09'
+CLOROQUINE = 'P01BA02'
+ANTIVIRAL = 'J05AR'
+ANTICOAGULANTS = 'B01AB'
+
+TREATMENTS = [CORTICOSTEROIDS, INTERFERONOR, TOCILIZUMAB, ANTIBIOTICS, ACEI_ARBS, CLOROQUINE, ANTIVIRAL, ANTICOAGULANTS]
+
+
 def clean_lab_features(lab_feat):
     features = [x for x in lab_feat
                 if all(s not in x for s in LAB_FEATURES_NOT_CONTAIN) and

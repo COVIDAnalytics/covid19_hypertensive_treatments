@@ -56,13 +56,28 @@ vitals = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
 vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
 vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
 dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=True)
+dataset_vitals = dataset_vitals[u.VITALS_TREAT]
+dataset_vitals = dataset_vitals.rename(columns = u.VITALS_TREAT_RENAME)
+dataset_vitals.loc[dataset_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] = (dataset_vitals.loc[dataset_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] > 20).astype(int)
+dataset_vitals.loc[dataset_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] = (dataset_vitals.loc[dataset_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] > 140).astype(int)
 
 # Load lab test
 lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
 lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
 lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
 lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(u.get_lab_dates)
+lab = lab[lab['NOSOLOGICO'].isin(patients)]
+dates_pcr = lab[lab.DESCR_PRESTAZIONE == 'CORONAVIRUS COVID19 PCR Real Time                                               '][['NOSOLOGICO', 'DATA_RICHIESTA']].drop_duplicates('NOSOLOGICO').reset_index(drop = True)
+
 dataset_lab = u.create_lab_dataset(lab, patients)
+dataset_lab = dataset_lab[u.LABS_TREAT]
+dataset_lab = dataset_lab.rename(columns = u.LABS_TREAT_RENAME)
+dataset_lab.loc[dataset_lab['SAT02_BELOW92'].notna(), 'SAT02_BELOW92'] = (dataset_lab.loc[dataset_lab['SAT02_BELOW92'].notna(), 'SAT02_BELOW92'] < 92).astype(int)
+dataset_lab.loc[dataset_lab['DDDIMER_B'].notna(), 'DDDIMER_B'] = (dataset_lab.loc[dataset_lab['DDDIMER_B'].notna(), 'DDDIMER_B'] > 0.5).astype(int)
+dataset_lab.loc[dataset_lab['PROCALCITONIN_B'].notna(), 'PROCALCITONIN_B'] = (dataset_lab.loc[dataset_lab['PROCALCITONIN_B'].notna(), 'PROCALCITONIN_B'] > 0.5).astype(int)
+dataset_lab.loc[dataset_lab['PCR_B'].notna(), 'PCR_B'] = (dataset_lab.loc[dataset_lab['PCR_B'].notna(), 'PCR_B'] > 100).astype(int)
+dataset_lab.loc[dataset_lab['TRANSAMINASES_B'].notna(), 'TRANSAMINASES_B'] = (dataset_lab.loc[dataset_lab['TRANSAMINASES_B'].notna(), 'TRANSAMINASES_B'] > 40).astype(int)
+dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] = (dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] > 300).astype(int)
 
 # Filter patients that are diagnosed for covid
 drugs = drugs[drugs['Nosologico'].isin(patients)]
@@ -90,7 +105,7 @@ cremona_treatments['HOSPITAL'] = np.repeat('Cremona', len(patients))
 cremona_treatments['COUNTRY'] = np.repeat('Italy', len(patients))
 cremona_treatments['DT_HOSPITAL_ADMISSION'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'DT_HOSPITAL_ADMISSION'].reset_index(drop = True)
 cremona_treatments['GENDER'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'Gender'].reset_index(drop = True)
-cremona_treatments[['RACE', 'PREGNANT', 'SMOKING', 'MAINHEARTDISEASE']] = np.nan
+cremona_treatments[['RACE', 'PREGNANT', 'SMOKING', 'MAINHEARTDISEASE', 'GLASGOW_COMA_SCORE', 'CHESTXRAY_BNORMALITY', 'ONSET_DATE_DIFF']] = np.nan
 cremona_treatments['AGE'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'Age'].reset_index(drop = True)
 
 # Get the dataframe to map DIAGNOSIS CODE to HCUP_ORDER
@@ -110,3 +125,23 @@ for i in range(len(u.IN_TREATMENTS)):
     treat = u.IN_TREATMENTS[i]
     for j in patients:
         cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(drugs.loc[drugs['Nosologico'] == j, 'ATC'].apply(lambda x: treat in x)) > 0)
+
+# Fill in Lab and Vitals
+for j in patients:
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, dataset_lab.columns] = dataset_lab.loc[j, :].to_frame().T.values
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, dataset_vitals.columns] = dataset_vitals.loc[j, :].to_frame().T.values
+
+# Fill TREATMENTS
+for i in range(len(u.TREATMENTS)):
+    name = u.TREATMENTS_NAME[i]
+    treat = u.TREATMENTS[i]
+    for j in patients:
+        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(drugs.loc[drugs['Nosologico'] == j, 'ATC'].apply(lambda x: treat in x)) > 0)
+
+# Fill in Outcome and days diff from covid test to hospitalization
+for j in patients:
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'DEATH'] = discharge_info.loc[discharge_info['NOSOLOGICO'] == j, 'Outcome'].values
+    if j in dates_pcr['NOSOLOGICO'].to_list():
+        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'TEST_DATE_DIFF'] = (dates_pcr.loc[dates_pcr['NOSOLOGICO'] == j, 'DATA_RICHIESTA'].values - cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'DT_HOSPITAL_ADMISSION'].values ).item()/(60*60*60*60*60*60*60)
+    else:
+        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'TEST_DATE_DIFF'] = np.NaN
