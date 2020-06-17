@@ -22,7 +22,7 @@ import analyzer.utils as utils
 import itertools
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
-jobid = int(jobid)
+jobid = int(jobid)-1
 print('Jobid = ', jobid)
 
 SEED = 1
