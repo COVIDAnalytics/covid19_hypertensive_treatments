@@ -376,7 +376,7 @@ def create_lab_dataset(lab, patients):
     # Create full dataset
     dataset_lab_full = pd.concat([v for _,v in dataset_lab.items()],
                                  axis=1, sort=True).astype(np.float64)
-    dataset_lab_full = remove_missing(dataset_lab_full)
+    dataset_lab_full = remove_missing(dataset_lab_full, nan_threshold=100)
 
 
     # Rename dataset laboratory
