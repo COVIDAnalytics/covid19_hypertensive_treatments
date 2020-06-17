@@ -174,7 +174,7 @@ DIABETES = [49, 50, 174]
 HYPERTENSION = [87, 88, 171]
 DISLIPIDEMIA = [53]
 OBESITY = [58]
-RENALINSUF = [145, 146]
+RENALINSUF = [146]
 ANYLUNGDISEASE = [116, 117, 121, 122]
 AF = [95]
 VIH = [5]
@@ -186,7 +186,6 @@ CANCER = [11, 12, 13, 14, 15, 16, 17, 18, 19,
         20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 
         30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
         40, 41, 42, 43]
-
 # HCUP_LIST FOR THE TREATMENTS PAPER    
 COMORBS_TREATMENTS_NAMES = ['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY', 'RENALINSUF',
             'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE',
@@ -258,6 +257,8 @@ ANTICOAGULANTS = 'B01AB'
 
 TREATMENTS = [CORTICOSTEROIDS, INTERFERONOR, TOCILIZUMAB, ANTIBIOTICS, ACEI_ARBS, CLOROQUINE, ANTIVIRAL, ANTICOAGULANTS]
 
+# HCUP for COMORB_DEATH columns. SEPSIS = 2; Acute Renal Failure: 145; Heart Failure: 97; Embolic Event: 105
+COMORB_DEATH = [2, 145, 97, 105]
 
 def clean_lab_features(lab_feat):
     features = [x for x in lab_feat
@@ -536,3 +537,20 @@ def get_swabs(lab):
     swab['Swab'] = swab['Swab'].astype('int')
 
     return swab
+
+def get_regimen(cloroquine, antiviral, anticoagulant):
+    if cloroquine == 0:
+        return 'Non-Chloroquine'
+
+    elif cloroquine == 1 and antiviral == 1 and anticoagulant == 1:
+        return 'All'
+    
+    elif cloroquine == 1 and antiviral == 1 and anticoagulant == 0:
+        return 'Chloroquine and Antivirals'
+
+    elif cloroquine == 1 and antiviral == 0 and anticoagulant == 1:
+        return 'Chloroquine and Anticoagulants'
+
+    elif cloroquine == 1 and antiviral == 0 and anticoagulant == 0:
+        return 'Chloroquine Only'
+    

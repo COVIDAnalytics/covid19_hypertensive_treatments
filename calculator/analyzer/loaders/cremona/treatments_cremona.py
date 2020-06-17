@@ -142,6 +142,13 @@ for i in range(len(u.TREATMENTS)):
 for j in patients:
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'DEATH'] = discharge_info.loc[discharge_info['NOSOLOGICO'] == j, 'Outcome'].values
     if j in dates_pcr['NOSOLOGICO'].to_list():
-        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'TEST_DATE_DIFF'] = (dates_pcr.loc[dates_pcr['NOSOLOGICO'] == j, 'DATA_RICHIESTA'].values - cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'DT_HOSPITAL_ADMISSION'].values ).item()/(60*60*60*60*60*60*60)
+        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'TEST_DATE_DIFF'] = int((dates_pcr.loc[dates_pcr['NOSOLOGICO'] == j, 'DATA_RICHIESTA'].values - cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'DT_HOSPITAL_ADMISSION'].values ).item()/(60*60*60*60*60*60*60))
     else:
         cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'TEST_DATE_DIFF'] = np.NaN
+
+# Add the regimen for each patient
+cremona_treatments['REGIMEN'] = cremona_treatments.apply(lambda row: u.get_regimen(row['CLOROQUINE'], row['ANTIVIRAL'], row['ANTICOAGULANTS']), axis = 1)
+
+# Fill COMORB_DEATH
+for j in patients:
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'COMORB_DEATH'] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(u.COMORB_DEATH)) > 0)
