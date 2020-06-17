@@ -6,6 +6,7 @@ path = '../../../../data/cremona'
 
 # Load Cremona data
 discharge_info = pd.read_csv('%s/general/discharge_info.csv' % path)
+comorb_long = u.comorbidities_long(discharge_info)
 covid_patients = discharge_info['Principale'].isin(u.LIST_DIAGNOSIS)
 
 for d in u.DIAGNOSIS_COLUMNS:
@@ -30,16 +31,13 @@ discharge_info = discharge_info.rename(columns={'NumeroScheda': 'NOSOLOGICO',
                                                 'Modalità di dimissione':'Outcome'})
 discharge_info['DT_HOSPITAL_ADMISSION'] = pd.to_datetime(discharge_info['DT_HOSPITAL_ADMISSION'])
 discharge_info.NOSOLOGICO = discharge_info.NOSOLOGICO.apply(str)
+# Cleanup discharge information: keep only covid patients
+patients = discharge_info['NOSOLOGICO']
 
-comorb_long = u.comorbidities_long(discharge_info)
 comorb_long.drop(["index"], axis = 1, inplace = True)
 comorb_long.rename(columns={'comorb':'DIAGNOSIS_CODE',
                             'id':'NOSOLOGICO'}, inplace = True)
 comorb_long['NOSOLOGICO'] = comorb_long['NOSOLOGICO'].apply(str)
-
-# Cleanup discharge information: keep only covid patients
-discharge_info = u.cleanup_discharge_info(discharge_info)
-patients = discharge_info['NOSOLOGICO']
 
 # Load Treatment data
 feb = pd.read_csv('%s/therapies/drugs_2020_02.csv' % path)
@@ -60,10 +58,6 @@ drugs = drugs[drugs['Nosologico'].isin(patients)]
 drugs = drugs.drop(['note1', 'note2'], axis = 1)
 drugs = drugs[drugs['Principio Attivo'] != '-']
 drugs['Principio Attivo'] = drugs['Principio Attivo'].str.lower()
-# drugs = drugs[drugs.AIC.apply(lambda x: x[0] != 'N')]
-# drugs.AIC = drugs.AIC.astype(int)
-# drugs.AIC = drugs.AIC.astype(str)
-# AICs = drugs.AIC.astype(str).unique()
 
 # Count the occurrence of a particular treatment
 df = drugs.groupby(['Principio Attivo', 'Nosologico']).count().Reparto.reset_index().drop('Reparto', axis = 1)
@@ -72,11 +66,11 @@ data_treat = pd.DataFrame([active_principles, counts]).T
 data_treat.columns = ['Active Principle', 'Occurrence']
 data_treat = data_treat.sort_values('Occurrence', ascending = False)
 data_treat['Proportion'] = (data_treat['Occurrence']/len(drugs.Nosologico.unique())).apply(lambda x: np.round(x, 3))
-
 ATCs = list(drugs.ATC.unique())
 ATC_antibiotics = np.asarray([ATCs[i] for i in range(len(ATCs)) if ATCs[i][:3] == 'J01']) # Standard code for antibiotic
 ATC_antivirals = np.asarray([ATCs[i] for i in range(len(ATCs)) if ATCs[i][:3] == 'J05']) # Standard code for antiviral
 
+# Create the dataframe in the HOPE format
 cremona_treatments = pd.DataFrame(0, index=range(len(patients)), columns=['NOSOLOGICO'] + u.COLS_TREATMENTS)
 cremona_treatments['NOSOLOGICO'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'NOSOLOGICO'].reset_index(drop = True)
 cremona_treatments['HOSPITAL'] = np.repeat('Cremona', len(patients))
@@ -86,8 +80,19 @@ cremona_treatments['GENDER'] = discharge_info.loc[discharge_info['NOSOLOGICO'].i
 cremona_treatments[['RACE', 'PREGNANT', 'SMOKING', 'MAINHEARTDISEASE']] = np.nan
 cremona_treatments['AGE'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'Age'].reset_index(drop = True)
 
+# Get the dataframe to map DIAGNOSIS CODE to HCUP_ORDER
+icd_dict = pd.read_csv('../../../analyzer/hcup_dictionary_icd9.csv')
+comorb_long = comorb_long.merge(icd_dict[['DIAGNOSIS_CODE', 'HCUP_ORDER']], how = 'left', on = 'DIAGNOSIS_CODE').dropna().reset_index(drop = True)
+
+# Fill the comorbidities table
 for i in range(len(u.COMORBS_TREATMENTS_HCUP)):
     name = u.COMORBS_TREATMENTS_NAMES[i]
     hcups = u.COMORBS_TREATMENTS_HCUP[i]
     for j in patients:
-        cremona_treatments.loc[comorb_long['NOSOLOGICO'] == j, name] = (sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'DIAGNOSIS_CODE'].isin(hcups)) > 0)
+        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(hcups)) > 0)
+
+# Fill IN_TREATMENTS
+for i in range(len(u.IN_TREATMENTS)):
+    name = u.IN_TREATMENTS_NAME[i]
+    treat = u.IN_TREATMENTS[i]
+    
