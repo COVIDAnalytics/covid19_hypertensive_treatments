@@ -51,6 +51,19 @@ drugs = pd.concat([feb, mar, apr, may]).reset_index(drop = True)
 drugs['Nosologico'] = drugs['Nosologico'].apply(lambda x: x[:-7])
 patients = np.asarray(list(set(patients).intersection(set(drugs['Nosologico']))))
 
+# Load vitals
+vitals = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
+vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
+vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
+dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=True)
+
+# Load lab test
+lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
+lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
+lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
+lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(u.get_lab_dates)
+dataset_lab = u.create_lab_dataset(lab, patients)
+
 # Filter patients that are diagnosed for covid
 drugs = drugs[drugs['Nosologico'].isin(patients)]
 
@@ -97,6 +110,3 @@ for i in range(len(u.IN_TREATMENTS)):
     treat = u.IN_TREATMENTS[i]
     for j in patients:
         cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(drugs.loc[drugs['Nosologico'] == j, 'ATC'].apply(lambda x: treat in x)) > 0)
-    
-
-    

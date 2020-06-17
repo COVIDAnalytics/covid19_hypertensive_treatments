@@ -325,7 +325,7 @@ def create_vitals_dataset(vitals, patients, lab_tests=True):
     dataset_vitals['Temp.'] = fahrenheit_covert(dataset_vitals['Temp.'])
 
     # Adjust missing columns
-    dataset_vitals = remove_missing(dataset_vitals)
+    dataset_vitals = remove_missing(dataset_vitals, nan_threshold=100)
 
     # Rename to English
     dataset_vitals = dataset_vitals.rename(columns=RENAMED_VITALS_COLUMNS)
@@ -344,7 +344,7 @@ def create_lab_dataset(lab, patients):
     dataset_lab_tests.columns = [i[1] for i in dataset_lab_tests.columns] # because of groupby, the columns are a tuple
 
     # 30% removes tests that are not present and the COVID-19 lab test
-    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threshold=30, impute=False)
+    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threshold=100, impute=False)
 
     # Filter data entries per test
     lab_reduced = lab[lab['COD_INTERNO_PRESTAZIONE'].isin(lab_tests_reduced.columns)]
