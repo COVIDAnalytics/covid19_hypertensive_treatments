@@ -95,4 +95,8 @@ for i in range(len(u.COMORBS_TREATMENTS_HCUP)):
 for i in range(len(u.IN_TREATMENTS)):
     name = u.IN_TREATMENTS_NAME[i]
     treat = u.IN_TREATMENTS[i]
+    for j in patients:
+        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(drugs.loc[drugs['Nosologico'] == j, 'ATC'].apply(lambda x: treat in x)) > 0)
+    
+
     
