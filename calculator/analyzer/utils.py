@@ -260,8 +260,10 @@ def create_and_save_pickle(algorithm, X_train, X_test, y_train, y_test, current_
 def create_and_save_pickle_treatments(algorithm, treatment, SEED, split_type,
                                       X_train, X_test, y_train, y_test, 
                                       best_params, file_name, results_folder,
-                                      data_save = True, data_in_pickle = True):
+                                      data_save = True, data_in_pickle = True,
+                                      json_model = False):
 
+    pickle_path = results_folder + file_name
     # if data_save:
     #     train, test = save_data(X_train, y_train, X_test, y_test, file_name, results_folder) #save training and test
 
@@ -271,6 +273,11 @@ def create_and_save_pickle_treatments(algorithm, treatment, SEED, split_type,
 
     # imputer = KNNImputer() #create imputer
     # imputer = imputer.fit(X_train)
+
+    if json_model:
+        ## Fix issue where OCT cannot save as pickle
+        best_model.write_json(pickle_path+'.json')
+        best_model = 'json_model'
     
     exp = {'model': best_model,
            'treatment':treatment,
