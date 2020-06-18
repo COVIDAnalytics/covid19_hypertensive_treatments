@@ -157,7 +157,7 @@ COLS_TREATMENTS = ['HOSPITAL', 'COUNTRY', 'DT_HOSPITAL_ADMISSION', 'GENDER',
                     'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE',
                     'MAINHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE',
                     'LIVER_DISEASE', 'CANCER', 'HOME_OXIGEN_THERAPY', 'IN_PREVIOUSASPIRIN',
-                    'IN_OTHERANTIPLATELET', 'IN_ORALANTICOAGL', 'IN_ACEI_ARB' 'IN_BETABLOCKERS',
+                    'IN_OTHERANTIPLATELET', 'IN_ORALANTICOAGL', 'IN_ACEI_ARB', 'IN_BETABLOCKERS',
                     'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED','IN_DVITAMINSUPLEMENT',
                     'IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT', 'FAST_BREATHING', 'MAXTEMPERATURE_ADMISSION',
                     'SAT02_BELOW92', 'DDDIMER_B', 'PROCALCITONIN_B', 'PCR_B', 'TRANSAMINASES_B', 'LDL_B',
@@ -174,7 +174,7 @@ DIABETES = [49, 50, 174]
 HYPERTENSION = [87, 88, 171]
 DISLIPIDEMIA = [53]
 OBESITY = [58]
-RENALINSUF = [145, 146]
+RENALINSUF = [146]
 ANYLUNGDISEASE = [116, 117, 121, 122]
 AF = [95]
 VIH = [5]
@@ -186,7 +186,6 @@ CANCER = [11, 12, 13, 14, 15, 16, 17, 18, 19,
         20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 
         30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
         40, 41, 42, 43]
-
 # HCUP_LIST FOR THE TREATMENTS PAPER    
 COMORBS_TREATMENTS_NAMES = ['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY', 'RENALINSUF',
             'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE',
@@ -201,6 +200,65 @@ HCUP_LIST = list(set(DIABETES + HYPERTENSION + DISLIPIDEMIA + OBESITY + RENALINS
             ANYLUNGDISEASE + AF + VIH + ANYHEARTDISEASE + ANYCEREBROVASCULARDISEASE + \
             CONECTIVEDISEASE + LIVER_DISEASE + CANCER))
 
+# HOPE TREATMENTS
+
+IN_TREATMENTS_NAME = ['HOME_OXIGEN_THERAPY', 'IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
+                'IN_ORALANTICOAGL', 'IN_ACEI_ARB', 'IN_BETABLOCKERS', 'IN_BETAGONISTINHALED',
+                'IN_GLUCORTICOIDSINHALED', 'IN_DVITAMINSUPLEMENT', 'IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT']
+
+HOME_OXIGEN_THERAPY = 'V03AN01'
+IN_PREVIOUSASPIRIN = 'N02BA01'
+IN_OTHERANTIPLATELET = 'B01AC'
+IN_ORALANTICOAGL = 'B01'
+IN_ACEI_ARB = 'C09'
+IN_BETABLOCKERS = 'C07A'
+IN_BETAGONISTINHALED = 'R03AC'
+IN_GLUCORTICOIDSINHALED = 'R03BA'
+IN_DVITAMINSUPLEMENT = 'A11'
+IN_BENZODIACEPINES = 'N05'
+IN_ANTIDEPRESSANT = 'N06A'
+
+IN_TREATMENTS = [HOME_OXIGEN_THERAPY, IN_PREVIOUSASPIRIN, IN_OTHERANTIPLATELET,
+                IN_ORALANTICOAGL, IN_ACEI_ARB, IN_BETABLOCKERS, IN_BETAGONISTINHALED,
+                IN_GLUCORTICOIDSINHALED, IN_DVITAMINSUPLEMENT, IN_BENZODIACEPINES, IN_ANTIDEPRESSANT]
+
+VITALS_TREAT = ['Respiratory Frequency', 'Body Temperature', 'Systolic Blood Pressure']
+LABS_TREAT = ['ABG: Oxygen Saturation (SaO2)', 'Azoto ematico UAR: D-DIMERO', 'PROCALCITONINA: PROCALCITONINA',
+              'C-Reactive Protein (CRP)', 'Alanine Aminotransferase (ALT)', 'LATTICODEIDROGENASI: (LDH) LATTICODEIDROGENASI',
+              'Blood Creatinine', 'Blood Sodium', 'CBC: Leukocytes', 'Emocromo + formula: LINFOCITI (N)', 'CBC: Hemoglobin', 'CBC: Platelets']
+
+VITALS_TREAT_RENAME = {'Respiratory Frequency': 'FAST_BREATHING', 
+                        'Body Temperature': 'MAXTEMPERATURE_ADMISSION', 
+                        'Systolic Blood Pressure': 'BLOOD_PRESSURE_ABNORMAL_B'}
+
+LABS_TREAT_RENAME = {'ABG: Oxygen Saturation (SaO2)': 'SAT02_BELOW92', 
+                    'Azoto ematico UAR: D-DIMERO': 'DDDIMER_B', 
+                    'PROCALCITONINA: PROCALCITONINA': 'PROCALCITONIN_B',
+                    'C-Reactive Protein (CRP)': 'PCR_B', 
+                    'Alanine Aminotransferase (ALT)': 'TRANSAMINASES_B', 
+                    'LATTICODEIDROGENASI: (LDH) LATTICODEIDROGENASI': 'LDL_B',
+                    'Blood Creatinine': 'CREATININE', 
+                    'Blood Sodium': 'SODIUM', 
+                    'CBC: Leukocytes': 'LEUCOCYTES', 
+                    'Emocromo + formula: LINFOCITI (N)': 'LYMPHOCYTES', 
+                    'CBC: Hemoglobin': 'HEMOGLOBIN', 
+                    'CBC: Platelets': 'PLATELETS'}
+
+# TREATMENTS
+TREATMENTS_NAME = ['CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS', 'CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS']
+CORTICOSTEROIDS = 'H02'
+INTERFERONOR = 'L03'
+TOCILIZUMAB = 'L04AC07'
+ANTIBIOTICS = 'J01'
+ACEI_ARBS = 'C09'
+CLOROQUINE = 'P01BA02'
+ANTIVIRAL = 'J05AR'
+ANTICOAGULANTS = 'B01AB'
+
+TREATMENTS = [CORTICOSTEROIDS, INTERFERONOR, TOCILIZUMAB, ANTIBIOTICS, ACEI_ARBS, CLOROQUINE, ANTIVIRAL, ANTICOAGULANTS]
+
+# HCUP for COMORB_DEATH columns. SEPSIS = 2; Acute Renal Failure: 145; Heart Failure: 97; Embolic Event: 105
+COMORB_DEATH = [2, 145, 97, 105]
 
 def clean_lab_features(lab_feat):
     features = [x for x in lab_feat
@@ -304,7 +362,7 @@ def create_vitals_dataset(vitals, patients, lab_tests=True):
     dataset_vitals['Temp.'] = fahrenheit_covert(dataset_vitals['Temp.'])
 
     # Adjust missing columns
-    dataset_vitals = remove_missing(dataset_vitals)
+    dataset_vitals = remove_missing(dataset_vitals, nan_threshold=100)
 
     # Rename to English
     dataset_vitals = dataset_vitals.rename(columns=RENAMED_VITALS_COLUMNS)
@@ -323,7 +381,7 @@ def create_lab_dataset(lab, patients):
     dataset_lab_tests.columns = [i[1] for i in dataset_lab_tests.columns] # because of groupby, the columns are a tuple
 
     # 30% removes tests that are not present and the COVID-19 lab test
-    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threshold=30, impute=False)
+    lab_tests_reduced = remove_missing(dataset_lab_tests, missing_type=False, nan_threshold=100, impute=False)
 
     # Filter data entries per test
     lab_reduced = lab[lab['COD_INTERNO_PRESTAZIONE'].isin(lab_tests_reduced.columns)]
@@ -355,7 +413,7 @@ def create_lab_dataset(lab, patients):
     # Create full dataset
     dataset_lab_full = pd.concat([v for _,v in dataset_lab.items()],
                                  axis=1, sort=True).astype(np.float64)
-    dataset_lab_full = remove_missing(dataset_lab_full)
+    dataset_lab_full = remove_missing(dataset_lab_full, nan_threshold=100)
 
 
     # Rename dataset laboratory
@@ -479,3 +537,20 @@ def get_swabs(lab):
     swab['Swab'] = swab['Swab'].astype('int')
 
     return swab
+
+def get_regimen(cloroquine, antiviral, anticoagulant):
+    if cloroquine == 0:
+        return 'Non-Chloroquine'
+
+    elif cloroquine == 1 and antiviral == 1 and anticoagulant == 1:
+        return 'All'
+    
+    elif cloroquine == 1 and antiviral == 1 and anticoagulant == 0:
+        return 'Chloroquine and Antivirals'
+
+    elif cloroquine == 1 and antiviral == 0 and anticoagulant == 1:
+        return 'Chloroquine and Anticoagulants'
+
+    elif cloroquine == 1 and antiviral == 0 and anticoagulant == 0:
+        return 'Chloroquine Only'
+    
