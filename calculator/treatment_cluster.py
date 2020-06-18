@@ -13,13 +13,13 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
 import analyzer.dataset as ds
-import analyzer.optimizer as o
+import analyzer.optuna as o
 from analyzer.utils import impute_missing, train_and_evaluate
 import analyzer.utils as utils
 import itertools
 
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
-jobid = int(jobid)-1
+jobid = int(jobid)
 print('Jobid = ', jobid)
 
 SEED = 1
