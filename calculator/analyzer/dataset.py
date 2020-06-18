@@ -31,8 +31,7 @@ def create_dataset_treatment(data, treatment,
                         med_hx=True,
                         other_tx=True,
                         prediction = 'DEATH'):
-    
-    data['REGIMEN'] = data['REGIMEN'].map(lambda x: x.replace(" ", "_"))
+
     cols_include = (demographics*demographic_cols + 
         comorbidities*comorb_cols + vitals*vital_cols + 
         lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)
