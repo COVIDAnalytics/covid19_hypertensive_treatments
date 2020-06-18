@@ -23,7 +23,7 @@ other_tx_cols = ['CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS'
 
 outcome_cols = ['DEATH', 'COMORB_DEATH']
 
-def create_dataset_treatment(data, treatment,
+def create_dataset_treatment(data, treatment = None,
                         demographics = True,
                         comorbidities = True,
                         vitals = True,
@@ -36,7 +36,7 @@ def create_dataset_treatment(data, treatment,
         comorbidities*comorb_cols + vitals*vital_cols + 
         lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)
     
-    if treatment == 'All':
+    if treatment == None:
         cols_include.append('REGIMEN')
         data_sub = data
     else: 

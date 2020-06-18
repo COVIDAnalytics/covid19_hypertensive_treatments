@@ -15,7 +15,7 @@ import analyzer.dataset as ds
 def load_data(data_path, split, seed = 1):
     data = pd.read_csv(data_path)
 
-    X_hope, y_hope = ds.create_dataset_treatment(data, treatment = 'All')
+    X_hope, y_hope = ds.create_dataset_treatment(data)
     X_hope.index.name = 'ID'
     y_hope.index.name = 'ID'
     Z_hope = X_hope['REGIMEN']
@@ -61,13 +61,18 @@ def generate_preds(X, treatment, algorithm, dataset, SEED = 1, prediction = 'DEA
         return prob_pos
     else:
         with open(file_name, 'rb') as file:
-              model_file = pickle.load(file)
-        
-        model = model_file['model']
-        
-        if model == 'json_model':
-           model_json = iai.read_json(file_name+'.json')
-        prob_pos = model.predict_proba(X)[:, 1]
+             model_file = pickle.load(file)
+                    
+        if algorithm  == 'oct':
+            from julia import Julia
+            jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
+            from interpretableai import iai
+
+            model = iai.read_json(file_name+'.json')
+            prob_pos = model.predict_proba(X).iloc[:,1]
+        else:
+            model = model_file['model']
+            prob_pos = model.predict_proba(X)[:, 1]
         
         return prob_pos
 

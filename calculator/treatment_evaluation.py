@@ -15,13 +15,8 @@ os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calcula
 import evaluation.treatment_utils as u
 # import evaluation.importance as imp
 # import matplotlib.pyplot as plt
-import analyzer.optuna as o
+# import analyzer.optuna as o
 import pandas as pd
-
-
-from julia import Julia
-jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
-from interpretableai import iai
 
 #%% Set Problem Parameters
 #Paths for data access
@@ -43,14 +38,13 @@ algorithm_list = ['lr','rf','cart','xgboost']
 split = 'bycountry'
 X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, split = split)
 
-data_version = 'train'
+data_version = 'test'
 
 if data_version == 'train':
     X = X_train
     Z = Z_train
     y = y_train
 else: 
-    print("test")
     X = X_test
     Z = Z_test
     y = y_test
