@@ -29,7 +29,7 @@ algorithms = {'xgboost':xgb.XGBClassifier,
             'cart':DecisionTreeClassifier, 
             'lr':LogisticRegression}
 
-algorithms = {'xgboost':name_param_xgb,
+name_params = {'xgboost':name_param_xgb,
             'rf':name_param_rf, 
             'cart':name_param_cart, 
             'lr':name_param_lr,
