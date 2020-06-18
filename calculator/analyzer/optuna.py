@@ -71,6 +71,8 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
 
         elif name_algo == 'oct':
 
+            from interpretableai import iai
+
             params = {"max_depth": trial.suggest_int("max_depth", 3, 10),
                     "criterion": trial.suggest_categorical("criterion", ['gini', 'entropy', 'misclassification']),
                     "minbucket": trial.suggest_uniform("minbucket", 10**-6, 0.4),
