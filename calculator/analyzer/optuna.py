@@ -22,9 +22,16 @@ name_param_cart = ["max_depth", "min_weight_fraction_leaf", "min_samples_leaf", 
 name_param_lr = ["penalty", "tol", "C", "solver"]
 name_param_oct = ["max_depth", "criterion", "minbucket", "cp"]
 
-algorithms = [xgb.XGBClassifier, RandomForestClassifier, DecisionTreeClassifier, LogisticRegression]
-name_params = [name_param_xgb, name_param_rf, name_param_cart, name_param_lr, name_param_oct]
-algo_names = ['xgboost','rf','cart','lr','oct']
+algorithms = {'xgboost':xgb.XGBClassifier,
+            'rf':RandomForestClassifier, 
+            'cart':DecisionTreeClassifier, 
+            'lr':LogisticRegression}
+
+algorithms = {'xgboost':name_param_xgb,
+            'rf':name_param_rf, 
+            'cart':name_param_cart, 
+            'lr':name_param_lr,
+            'oct':name_param_oct}
 
 def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 'xgboost'):
 

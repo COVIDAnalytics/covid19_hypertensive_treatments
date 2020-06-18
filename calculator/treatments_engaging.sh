@@ -11,4 +11,4 @@ module load julia/1.2.0
 
 export IAI_LICENSE_FILE="$HOME/iai.lic"
 
-python3 src/treatment_cluster_oct.py
+python3 src/treatment_cluster_oct.py ['oct','lr']

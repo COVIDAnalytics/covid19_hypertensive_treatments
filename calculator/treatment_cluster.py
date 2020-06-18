@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+import sys
 from sklearn.model_selection import train_test_split
 
 
@@ -18,12 +19,23 @@ from analyzer.utils import impute_missing, train_and_evaluate
 import analyzer.utils as utils
 import itertools
 
+
+## Set up experiment based on job specifications
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
-jobid = int(jobid)
+jobid = int(jobid)-1
 print('Jobid = ', jobid)
 
-SEED = 1
+try: 
+  algorithm_list = sys.argv[1]
+  print("Algorithms: ")
+  print(algorithm_list)
+except:
+  print("Must provide algorithm list")
 
+assert set(algorithm_list).issubset(set(o.algo_names)), "Invalid algorithm list"
+
+
+SEED = 1
 #Define the name of the dataset for sacing the results
 dataset = "hope"
 #Split type
@@ -34,21 +46,18 @@ prediction = 'DEATH'
 treatment_list = ['Chloroquine Only', 'All', 'Chloroquine and Anticoagulants',
        'Chloroquine and Antivirals', 'Non-Chloroquine']
 
-algorithm_list = range(0,len(o.algorithms))
-
 param_list = list(itertools.product(treatment_list, algorithm_list))
 
-## HMW: I matched Luca's way of calling by index of the different optuna.py lists, but we can make this more efficient
-treatment, algorithm_id = param_list[jobid]
-algorithm = o.algorithms[algorithm_id]
-name_param = o.name_params[algorithm_id]
-name_algo = o.algo_names[algorithm_id]
+treatment, name_algo = param_list[jobid]
 
-## If algorithm = oct, load IAI
-if name_algo == 'oct':
+if 'oct' == name_algo:
   from julia import Julia
   jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
   from interpretableai import iai
+  o.algorithms['oct'] = iai.OptimalTreeClassifier
+
+name_param = o.name_params[name_algo]
+algorithm = o.algorithms[name_algo]
 
 ## Results path and file names
 t = treatment.replace(" ", "_")
@@ -123,11 +132,10 @@ best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_t
 
 print(algorithm)
 
-
 utils.create_and_save_pickle_treatments(algorithm, treatment, SEED, split_type,
                                       X_train, X_test, y_train, y_test, 
                                       best_params, file_name, results_folder,
-                                      data_save = True, data_in_pickle = True)
+                                      data_save = True, data_in_pickle = True, json_model = True)
         
 
 
