@@ -22,7 +22,7 @@ name_param_cart = ["max_depth", "min_weight_fraction_leaf", "min_samples_leaf", 
 name_param_lr = ["penalty", "tol", "C", "solver"]
 name_param_oct = ["max_depth", "criterion", "minbucket", "cp"]
 
-algorithms = [xgb.XGBClassifier, RandomForestClassifier, DecisionTreeClassifier, LogisticRegression]
+algorithms = [xgb.XGBClassifier, RandomForestClassifier, DecisionTreeClassifier, LogisticRegression, iai.OptimalTreeClassifier]
 name_params = [name_param_xgb, name_param_rf, name_param_cart, name_param_lr, name_param_oct]
 algo_names = ['xgboost','rf','cart','lr','oct']
 
