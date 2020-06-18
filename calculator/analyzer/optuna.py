@@ -70,9 +70,6 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
 
 
         elif name_algo == 'oct':
-            from julia.api import Julia
-            jl = Julia(compiled_modules=False)
-            from interpretableai import iai
 
             params = {"max_depth": trial.suggest_int("max_depth", 3, 10),
                     "criterion": trial.suggest_categorical("criterion", ['gini', 'entropy', 'misclassification']),

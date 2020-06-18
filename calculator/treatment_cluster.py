@@ -12,11 +12,8 @@ from sklearn.impute import KNNImputer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
-import analyzer.loaders.cremona.utils as u
-import analyzer.loaders.cremona as cremona
-import analyzer.loaders.hmfundacion.hmfundacion as hmfundacion
 import analyzer.dataset as ds
-import analyzer.optuna as o
+import analyzer.optimizer as o
 from analyzer.utils import impute_missing, train_and_evaluate
 import analyzer.utils as utils
 import itertools
@@ -46,6 +43,12 @@ treatment, algorithm_id = param_list[jobid]
 algorithm = o.algorithms[algorithm_id]
 name_param = o.name_params[algorithm_id]
 name_algo = o.algo_names[algorithm_id]
+
+## If algorithm = oct, load IAI
+if name_algo == 'oct':
+  from julia import Julia
+  jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
+  from interpretableai import iai
 
 ## Results path and file names
 t = treatment.replace(" ", "_")

@@ -18,7 +18,7 @@ source("matching_functions.R")
 source("descriptive_functions.R")
 
 #Set the path
-# save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
+save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 # save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
 
 #Read in the data
@@ -106,7 +106,7 @@ length(common_control)
 vline = 0.15
 
 #Select a treatment option to investigate
-to_treat=4
+to_treat=5
 t_inds = which(matched_object_list[[to_treat]]$t_ind == 1)
 
 # The loveplot plots the absolute  differences in means 

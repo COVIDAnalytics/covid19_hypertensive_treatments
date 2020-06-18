@@ -120,15 +120,15 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, t_id_co
            xlab = "Absolute standardized differences in means", bg = par("bg"))
   points(abs_std_dif_before[n_aux:1], y = 1:ncol(X_mat), cex = 0.9, 
          pch = 0)
-  points(abs_std_dif_after[n_aux:1], y = 1:ncol(X_mat), cex = 0.8, 
-         pch = 8, col = "blue")
+  # points(abs_std_dif_after[n_aux:1], y = 1:ncol(X_mat), cex = 0.8, 
+  #        pch = 8, col = "blue")
   points(abs_std_dif_after_common[n_aux:1], y = 1:ncol(X_mat), cex = 0.8, 
          pch = 8, col = "red")
-  legend(legend_position, c("Before matching", "After matching", "After matching - common control"), 
-         cex = 0.5, bty = "n", pch = c(0, 8, 8), col = c("black", 
-                                                      "blue", "red"), 
-         xpd=TRUE, 
-         y.intersp=0.1)
+  # legend(legend_position, c("Before matching", "After matching", "After matching - common control"), 
+  #        cex = 0.5, bty = "n", pch = c(0, 8, 8), col = c("black", 
+  #                                                     "blue", "red"), 
+  #        xpd=TRUE, 
+  #        y.intersp=0.1)
   abline(v = v_line, lty = 2)
 }
 
