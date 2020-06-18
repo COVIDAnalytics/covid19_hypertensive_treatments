@@ -27,8 +27,8 @@ print('Jobid = ', jobid)
 
 try: 
   algorithm_list = sys.argv[1]
-  print("Algorithms: ")
-  print(algorithm_list)
+  print("Algorithms: " algorithm_list)
+  print("Valid Algorithms: ", o.algorithms)
 except:
   print("Must provide algorithm list")
 
