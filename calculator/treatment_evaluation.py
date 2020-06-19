@@ -1,7 +1,6 @@
-treatment_list': ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants',
-                              'Chloroquine_and_Antivirals', 'Non-Chloroquine']#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
+Script for aggregating and evaluating performance of predictive models across treatments
+
 Created on Wed Jun 17 13:57:19 2020
 
 @author: hollywiberg
@@ -38,7 +37,7 @@ algorithm_list = ['lr','rf','cart','xgboost']
 split = 'bycountry'
 X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, split = split)
 
-data_version = 'test'
+data_version = 'train'
 
 if data_version == 'train':
     X = X_train
