@@ -26,7 +26,7 @@ jobid = int(jobid)-1
 print('Jobid = ', jobid)
 
 try: 
-  algorithm_list = sys.argv[1]
+  algorithm_list = sys.argv[1:]
   print("Algorithms: ", algorithm_list)
   print("Valid Algorithms: ", o.algorithms)
 except:
