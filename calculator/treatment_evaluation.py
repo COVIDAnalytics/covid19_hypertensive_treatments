@@ -37,7 +37,7 @@ algorithm_list = ['lr','rf','cart','xgboost']
 split = 'bycountry'
 X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, split = split)
 
-data_version = 'train'
+data_version = 'test'
 
 if data_version == 'train':
     X = X_train
