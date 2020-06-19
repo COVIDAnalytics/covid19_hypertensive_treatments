@@ -26,13 +26,13 @@ jobid = int(jobid)-1
 print('Jobid = ', jobid)
 
 try: 
-  algorithm_list = sys.argv[1]
-  print("Algorithms: " algorithm_list)
-  print("Valid Algorithms: ", o.algorithms)
+  algorithm_list = sys.argv[1].split(',')
+  print("Algorithms: ", algorithm_list)
+  print("Valid Algorithms: ", o.algo_names)
 except:
   print("Must provide algorithm list")
 
-assert set(algorithm_list).issubset(set(o.algo_names)), "Invalid algorithm list"
+# assert set(algorithm_list).issubset(set(o.algo_names)), "Invalid algorithm list"
 
 
 SEED = 1
@@ -49,12 +49,15 @@ treatment_list = ['Chloroquine Only', 'All', 'Chloroquine and Anticoagulants',
 param_list = list(itertools.product(treatment_list, algorithm_list))
 
 treatment, name_algo = param_list[jobid]
-
+print("Treatment = ", treatment, "; Algorithm = ", name_algo)
 if 'oct' == name_algo:
   from julia import Julia
   jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
   from interpretableai import iai
   o.algorithms['oct'] = iai.OptimalTreeClassifier
+  json_format = True
+else:
+  json_format = False
 
 name_param = o.name_params[name_algo]
 algorithm = o.algorithms[name_algo]
@@ -135,10 +138,7 @@ print(algorithm)
 utils.create_and_save_pickle_treatments(algorithm, treatment, SEED, split_type,
                                       X_train, X_test, y_train, y_test, 
                                       best_params, file_name, results_folder,
-                                      data_save = True, data_in_pickle = True, json_model = True)
-        
-
-
+                                      data_save = True, data_in_pickle = True, json_model = json_format)
 
 
 
