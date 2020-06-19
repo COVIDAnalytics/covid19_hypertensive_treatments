@@ -12,4 +12,4 @@ unset PYTHONPATH
 export PYTHONNOUSERSITE=True
 conda activate covid19
 cd covid19_calculator/calculator/
-python treatment_cluster.py ['xgboost']
+python treatment_cluster.py 'xgboost'
