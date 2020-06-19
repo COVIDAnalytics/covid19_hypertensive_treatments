@@ -1,7 +1,6 @@
-treatment_list': ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants',
-                              'Chloroquine_and_Antivirals', 'Non-Chloroquine']#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
+Script for aggregating and evaluating performance of predictive models across treatments
+
 Created on Wed Jun 17 13:57:19 2020
 
 @author: hollywiberg
