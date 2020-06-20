@@ -58,8 +58,8 @@ vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
 dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=True)
 dataset_vitals = dataset_vitals[u.VITALS_TREAT]
 dataset_vitals = dataset_vitals.rename(columns = u.VITALS_TREAT_RENAME)
-dataset_vitals.loc[dataset_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] = (dataset_vitals.loc[dataset_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] > 20).astype(int)
-dataset_vitals.loc[dataset_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] = (dataset_vitals.loc[dataset_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] > 140).astype(int)
+dataset_vitals.loc[dataset_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] = (dataset_vitals.loc[dataset_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] > 22).astype(int)
+dataset_vitals.loc[dataset_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] = (dataset_vitals.loc[dataset_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] < 100).astype(int)
 
 # Load lab test
 lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
@@ -77,7 +77,7 @@ dataset_lab.loc[dataset_lab['DDDIMER_B'].notna(), 'DDDIMER_B'] = (dataset_lab.lo
 dataset_lab.loc[dataset_lab['PROCALCITONIN_B'].notna(), 'PROCALCITONIN_B'] = (dataset_lab.loc[dataset_lab['PROCALCITONIN_B'].notna(), 'PROCALCITONIN_B'] > 0.5).astype(int)
 dataset_lab.loc[dataset_lab['PCR_B'].notna(), 'PCR_B'] = (dataset_lab.loc[dataset_lab['PCR_B'].notna(), 'PCR_B'] > 100).astype(int)
 dataset_lab.loc[dataset_lab['TRANSAMINASES_B'].notna(), 'TRANSAMINASES_B'] = (dataset_lab.loc[dataset_lab['TRANSAMINASES_B'].notna(), 'TRANSAMINASES_B'] > 40).astype(int)
-dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] = (dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] > 300).astype(int)
+dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] = (dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] > 222).astype(int)
 
 # Filter patients that are diagnosed for covid
 drugs = drugs[drugs['Nosologico'].isin(patients)]
@@ -103,9 +103,12 @@ cremona_treatments = pd.DataFrame(0, index=range(len(patients)), columns=['NOSOL
 cremona_treatments['NOSOLOGICO'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'NOSOLOGICO'].reset_index(drop = True)
 cremona_treatments['HOSPITAL'] = np.repeat('Cremona', len(patients))
 cremona_treatments['COUNTRY'] = np.repeat('Italy', len(patients))
+cremona_treatments['RACE'] = np.repeat('CAUC', len(patients))
 cremona_treatments['DT_HOSPITAL_ADMISSION'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'DT_HOSPITAL_ADMISSION'].reset_index(drop = True)
 cremona_treatments['GENDER'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'Gender'].reset_index(drop = True)
-cremona_treatments[['RACE', 'PREGNANT', 'SMOKING', 'MAINHEARTDISEASE', 'GLASGOW_COMA_SCORE', 'CHESTXRAY_BNORMALITY', 'ONSET_DATE_DIFF']] = np.nan
+cremona_treatments.loc[cremona_treatments['GENDER'] == 'F', 'GENDER'] = 'FEMALE'
+cremona_treatments.loc[cremona_treatments['GENDER'] == 'M', 'GENDER'] = 'MALE'
+cremona_treatments[['PREGNANT', 'SMOKING', 'MAINHEARTDISEASE', 'GLASGOW_COMA_SCORE', 'CHESTXRAY_BNORMALITY', 'ONSET_DATE_DIFF']] = np.nan
 cremona_treatments['AGE'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'Age'].reset_index(drop = True)
 
 # Get the dataframe to map DIAGNOSIS CODE to HCUP_ORDER
@@ -130,6 +133,7 @@ for i in range(len(u.IN_TREATMENTS)):
 for j in patients:
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, dataset_lab.columns] = dataset_lab.loc[j, :].to_frame().T.values
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, dataset_vitals.columns] = dataset_vitals.loc[j, :].to_frame().T.values
+cremona_treatments.loc[:, ['LEUKOCYTES', 'LYMPHOCYTES', 'PLATELETS']] = cremona_treatments.loc[:, ['LEUKOCYTES', 'LYMPHOCYTES', 'PLATELETS']]*1000
 
 # Fill TREATMENTS
 for i in range(len(u.TREATMENTS)):
@@ -152,3 +156,4 @@ cremona_treatments['REGIMEN'] = cremona_treatments.apply(lambda row: u.get_regim
 # Fill COMORB_DEATH
 for j in patients:
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'COMORB_DEATH'] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(u.COMORB_DEATH)) > 0)
+cremona_treatments.loc[:, 'COMORB_DEATH'] = cremona_treatments.apply(lambda row: max(row['DEATH'], row['COMORB_DEATH']), axis = 1)

@@ -359,7 +359,7 @@ def create_vitals_dataset(vitals, patients, lab_tests=True):
             vital_value = pd.to_numeric(vital_value).mean()
             dataset_vitals.loc[p, vital_name] = vital_value
 
-    dataset_vitals['Temp.'] = fahrenheit_covert(dataset_vitals['Temp.'])
+    #dataset_vitals['Temp.'] = fahrenheit_covert(dataset_vitals['Temp.'])
 
     # Adjust missing columns
     dataset_vitals = remove_missing(dataset_vitals, nan_threshold=100)
