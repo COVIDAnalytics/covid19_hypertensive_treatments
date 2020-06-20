@@ -133,7 +133,7 @@ for i in range(len(u.IN_TREATMENTS)):
 for j in patients:
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, dataset_lab.columns] = dataset_lab.loc[j, :].to_frame().T.values
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, dataset_vitals.columns] = dataset_vitals.loc[j, :].to_frame().T.values
-cremona_treatments.loc[:, ['LEUKOCYTES', 'LYMPHOCYTES', 'PLATELETS']] = cremona_treatments.loc[:, ['LEUKOCYTES', 'LYMPHOCYTES', 'PLATELETS']]*1000
+cremona_treatments.loc[:, ['LEUCOCYTES', 'LYMPHOCYTES', 'PLATELETS']] = cremona_treatments.loc[:, ['LEUCOCYTES', 'LYMPHOCYTES', 'PLATELETS']]*1000
 
 # Fill TREATMENTS
 for i in range(len(u.TREATMENTS)):
