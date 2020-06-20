@@ -29,7 +29,7 @@ treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants',
 
 
 # algorithm_list = range(0,len(o.algo_names))
-algorithm_list = ['lr','rf','cart','xgboost']
+algorithm_list = ['lr','rf','cart','xgboost','oct']
 
 
 #%% Generate predictions
@@ -37,7 +37,7 @@ algorithm_list = ['lr','rf','cart','xgboost']
 split = 'bycountry'
 X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, split = split)
 
-data_version = 'test'
+data_version = 'train'
 
 if data_version == 'train':
     X = X_train
