@@ -4,8 +4,15 @@ import pandas as pd
 from sklearn.model_selection import cross_val_score
 import optuna
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC, LinearSVC
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import RBF
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 import xgboost as xgb
 import copy
@@ -21,19 +28,34 @@ name_param_rf = ["n_estimators", "max_depth", "min_samples_leaf", "min_samples_s
 name_param_cart = ["max_depth", "min_weight_fraction_leaf", "min_samples_leaf", "min_samples_split", "min_impurity_decrease", "criterion"]
 name_param_lr = ["penalty", "tol", "C", "solver"]
 name_param_oct = ["max_depth", "criterion", "minbucket", "cp"]
+name_param_kn = ['n_neighbors', 'weights', 'algorithm', 'leaf_size', 'p']
+name_param_svm = ['C', 'kernel', 'degree', 'probability', 'gamma', 'coef0']
+name_param_gpc = ['n_restarts_optimizer', 'max_iter_predict']
+name_param_mlp = ['activation', 'solver', 'alpha', 'learning_rate', 'tol']
+name_param_qda = ['reg_param', 'tol']
 
-algo_names = ['xgboost','rf','cart','lr','oct']
+algo_names = ['xgboost','rf','cart','lr','oct', 'kn', 'svm','gpc', 'mlp', 'qda']
 
-algorithms = {'xgboost':xgb.XGBClassifier,
-            'rf':RandomForestClassifier, 
-            'cart':DecisionTreeClassifier, 
-            'lr':LogisticRegression}
+algorithms = {'xgboost': xgb.XGBClassifier,
+            'rf': RandomForestClassifier, 
+            'cart': DecisionTreeClassifier, 
+            'lr': LogisticRegression,
+            'kn': KNeighborsClassifier,
+            'svm': SVC,
+            'gpc': GaussianProcessClassifier,
+            'mlp': MLPClassifier,
+            'qda': QuadraticDiscriminantAnalysis}
 
-name_params = {'xgboost':name_param_xgb,
-            'rf':name_param_rf, 
-            'cart':name_param_cart, 
-            'lr':name_param_lr,
-            'oct':name_param_oct}
+name_params = {'xgboost': name_param_xgb,
+            'rf': name_param_rf, 
+            'cart': name_param_cart, 
+            'lr': name_param_lr,
+            'oct': name_param_oct,
+            'kn': name_param_kn,
+            'svm': name_param_svm,
+            'gpc': name_param_gpc,
+            'mlp': name_param_mlp,
+            'qda': name_param_qda}
 
 def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 'xgboost'):
 
@@ -77,7 +99,6 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
                     "C": trial.suggest_uniform("C", 1e-5, 2),
                     "solver": trial.suggest_categorical("solver", ['saga'])}
 
-
         elif name_algo == 'oct':
 
             from interpretableai import iai
@@ -93,6 +114,36 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
             grid.fit_cv(X, y, n_folds=cv, validation_criterion = 'auc')
             score = float(grid.get_grid_results()[['split' + str(i) + '_valid_score' for i in range(1, cv+1)]].T.mean())
             return score
+
+        elif name_algo == 'kn':
+            params = {"n_neighbors": trial.suggest_int("n_neighbors", 1, 80),
+                    "weights": trial.suggest_categorical("weights", ['uniform', 'distance']),
+                    "algorithm": trial.suggest_categorical("algorithm", ['ball_tree', 'kd_tree']),
+                    "leaf_size": trial.suggest_int("leaf_size", 10, 100),
+                    "p": trial.suggest_int("p", 1, 10)}
+
+        elif name_algo == 'svm':
+            params = {"C": trial.suggest_uniform("C", 1e-10, 25),
+                    "kernel": trial.suggest_categorical("kernel", ['linear', 'poly', 'rbf', 'sigmoid']),
+                    "degree": trial.suggest_int("degree", 1, 10),
+                    "probability": trial.suggest_int("probability", 1, 1),
+                    "gamma": trial.suggest_categorical("gamma", ['scale', 'auto']),
+                    "coef0": trial.suggest_uniform("coef0", -5, 5)}
+
+        elif name_algo == 'gpc':
+            params = {"n_restarts_optimizer": trial.suggest_int("n_restarts_optimizer", 0, 15),
+                    "max_iter_predict": trial.suggest_int("max_iter_predict", 50, 200)}
+
+        elif name_algo == 'mlp':
+            params = {"activation": trial.suggest_categorical("activation", ['identity', 'logistic', 'tanh', 'relu']),
+                    "solver": trial.suggest_categorical("solver", ['lbfgs', 'sgd', 'adam']),
+                    "alpha": trial.suggest_uniform("alpha", 0, 10),
+                    "learning_rate": trial.suggest_categorical("learning_rate", ['constant', 'invscaling', 'adaptive']),
+                    "tol": trial.suggest_uniform("tol", 1e-10, 1)}
+
+        elif name_algo == 'qda':
+            params = {"reg_param": trial.suggest_uniform("reg_param", 1e-10, 1),
+                    "tol": trial.suggest_uniform("tol", 1e-10, 1)}
 
 
         # Add a callback for pruning.
@@ -122,10 +173,6 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
     print('Maximize the average AUC')
     seed = 30
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify = y, test_size=0.1, random_state = seed)
-    model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) #gets in sample performance
-
-    if name_algo != 'oct'and name_algo != 'lr':
-        top_features(model, X)
-    
+    model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params) #gets in sample performance    
     return best_model, best_params
 
