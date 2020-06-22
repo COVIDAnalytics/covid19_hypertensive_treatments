@@ -293,14 +293,14 @@ def create_and_save_pickle_treatments(algorithm, treatment, SEED, split_type,
             'Percentage Training': np.round(np.mean(y_train),2),
             'Percentage Test': np.round(np.mean(y_test),2)}
             
-    if 'alpha' in best_params:
-        explainer = shap.TreeExplainer(best_model); # create shap explainer
-        shap_values = explainer.shap_values(X_train); # compute shap values for imputed training set
+    # if 'alpha' in best_params:
+    #     explainer = shap.TreeExplainer(best_model); # create shap explainer
+    #     shap_values = explainer.shap_values(X_train); # compute shap values for imputed training set
         
-        # shap.summary_plot(shap_values, X_train, show=False, max_display=50)
-        # ft_imp = plt.gcf()
-        # exp['importance']= ft_imp,
-        exp['explainer']= explainer
+    #     # shap.summary_plot(shap_values, X_train, show=False, max_display=50)
+    #     # ft_imp = plt.gcf()
+    #     # exp['importance']= ft_imp,
+    #     exp['explainer']= explainer
 
     if data_in_pickle:
         train = pd.concat((X_train, y_train), axis = 1)
