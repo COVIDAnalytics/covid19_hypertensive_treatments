@@ -158,7 +158,7 @@ def resolve_ties(summary, result, pred_results):
                  algs = temp_res[temp_res['Prescribe']==t]['Algorithm']                
                  list_score.append(pred_results[pred_results.index.isin(algs)][t].mean())
                     
-             best_treatment_idx = list_score.index(min(list_score))    
+             best_treatment_idx = list_score.index(max(list_score))    
              best_treatment = prescriptions[best_treatment_idx]
              
              summary.at[i,'Prescribe']=best_treatment

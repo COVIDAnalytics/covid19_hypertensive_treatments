@@ -58,6 +58,8 @@ result['Prescribe_Prediction'] = result.min(axis=1)
 
 result.to_csv(save_path+data_version+'_bypatient_allmethods.csv')
 
+# result = pd.read_csv(save_path+data_version+'_bypatient_allmethods.csv')
+
 #%% Evaluate Methods
 # =============================================================================
 # Predictive Performance evaluation:
