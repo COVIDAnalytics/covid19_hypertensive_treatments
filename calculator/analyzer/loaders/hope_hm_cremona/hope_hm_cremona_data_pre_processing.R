@@ -9,7 +9,6 @@ library(stringr)
 # source("hope_data_cleaning.R")
 source("hope_hm_cremona_data_cleaning.R")
 
-
 # save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
 # save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 save_path = "~/Dropbox (MIT)/covid19_personal/merging_data/covid19_hope_hm_cremona/"
@@ -64,7 +63,25 @@ fl_data = filter_output[[1]]
 outliers_table = filter_output[[2]]
 str(fl_data)
 
-# Remove missing data
+# Look at column missingness for hope, hm, and cremona separately
+missing_threshold = 0.4
+
+fl_data_hm <- fl_data %>% filter(SOURCE == 'HM')
+filtered_missing_hm = filter_missing(fl_data_hm, missing_threshold)
+fl_data_hm = filtered_missing_hm[[1]]
+na_counts_hm = filtered_missing_hm[[2]]
+
+fl_data_cremona <- fl_data %>% filter(SOURCE == 'Cremona')
+filtered_missing_cremona = filter_missing(fl_data_cremona, missing_threshold)
+fl_data_cremona = filtered_missing_cremona[[1]]
+na_counts_cremona = filtered_missing_cremona[[2]]
+
+fl_data_hope <- fl_data %>% filter(SOURCE == 'Hope')
+filtered_missing_hope = filter_missing(fl_data_hope, missing_threshold)
+fl_data_hope = filtered_missing_hope[[1]]
+na_counts_hope = filtered_missing_hope[[2]]
+
+# Remove missing data on merged dataset
 missing_threshold = 0.4
 filtered_missing = filter_missing(fl_data, missing_threshold)
 fl_data = filtered_missing[[1]]
@@ -85,14 +102,13 @@ write.csv(fl_data, paste(save_path,"hope_hm_cremona_data_clean_filtered.csv",sep
           row.names = FALSE)
 
 # Perform missing data imputation
-
 treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS','REGIMEN')
 outcomes = c('DEATH','COMORB_DEATH')
 indicator_cols = c('SOURCE','SOURCE_COUNTRY')
 
-# Training group
+# Derivation group
 group1 = c("Hope-Spain","HM-Spain","Cremona-Italy")
-# Validation Group
+# Validation group
 group2 = c("Hope-Ecuador","Hope-Germany","Hope-Italy")
 reps = 1
 maxiterations = 10
