@@ -9,6 +9,7 @@ library(stringr)
 # source("hope_data_cleaning.R")
 source("hope_hm_cremona_data_cleaning.R")
 
+# save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/"
 # save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
 # save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 save_path = "~/Dropbox (MIT)/covid19_personal/merging_data/covid19_hope_hm_cremona/"
