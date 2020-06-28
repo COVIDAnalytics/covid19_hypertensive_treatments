@@ -110,9 +110,9 @@ for (i in 1:length(out)){
 }
 
 # Base on that statement we will pick as treatment of reference:
-# Non-Chloroquine with 1274 observations - Hope, HM, and Cremona (1232 after updates)
-base_treatment = 4
-t = 1:4
+# Chloroquine and Anticoagulants with 1641 observations - Hope, HM, and Cremona
+base_treatment = 2
+t = 1:3
 to_match_treatments = t[-base_treatment]
 n_base = nrow(out[[base_treatment]])
 
