@@ -110,11 +110,10 @@ X_test, y_test = ds.create_dataset_treatment(data_test,
 
 ## Need to combine and re-split for consistent one-hot encoding
 X_full =  pd.concat([X_train, X_test], axis = 0)
-train_inds = pd.Series(range(0,X_train.shape[0]))
 
 X_full = pd.get_dummies(X_full, prefix_sep='_', drop_first=True)
-X_train = X_full.iloc[train_inds,:]
-X_test = X_full.iloc[-train_inds,:]
+X_train = X_full.iloc[0:X_train.shape[0],:]
+X_test = X_full.iloc[X_train.shape[0]:,:]
 
 best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 50, name_algo = name_algo)
 # X_test = impute_missing(X_test)
