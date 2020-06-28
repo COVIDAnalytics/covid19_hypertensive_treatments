@@ -92,7 +92,11 @@ features_matching = c("AGE",
                       "LDL_B",
                       "TRANSAMINASES_B",
                       "IN_DVITAMINSUPLEMENT",
-                      "BLOOD_PRESSURE_ABNORMAL_B"
+                      "BLOOD_PRESSURE_ABNORMAL_B",
+                      "AF",
+                      "IN_DVITAMINSUPLEMENT",
+                      "IN_BENZODIACEPINES",
+                      "IN_ANTIDEPRESSANT"
                       )
 
 df <- df_full[,features_matching]
@@ -154,7 +158,7 @@ length(common_control)
 vline = 0.15
 
 # Select a treatment option to investigate
-to_treat=3
+to_treat=1
 t_inds = which(matched_object_list[[to_treat]]$t_ind == 1)
 
 # The loveplot plots the absolute  differences in means 
@@ -236,7 +240,7 @@ write.csv(data, paste0(save_path, "hope_hm_cremona_unmatched_cl_noncl_removed.cs
 # Unmatched
 split_unmatched <- df_full %>% group_split(REGIMEN)
 
-to_split = c(1,2,3,4,5)
+to_split = c(1,2,3)
 unmatched_train = data.frame(matrix(ncol=0,nrow=0))
 unmatched_test = data.frame(matrix(ncol=0,nrow=0))
 for (t in to_split){
@@ -254,7 +258,7 @@ write.csv(unmatched_test, paste0(save_path, "hope_hm_cremona_unmatched_cl_noncl_
 # Matched
 split_matched <- matched_data %>% group_split(REGIMEN)
 
-to_split = c(1,2,3,4,5)
+to_split = c(1,2,3)
 matched_train = data.frame(matrix(ncol=0,nrow=0))
 matched_test = data.frame(matrix(ncol=0,nrow=0))
 for (t in to_split){
