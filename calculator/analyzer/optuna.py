@@ -130,7 +130,7 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
                     "coef0": trial.suggest_uniform("coef0", -5, 5)}
 
         elif name_algo == 'gb':
-            params = {"var_smoothing": trial.suggest_uniform("var_smoothing", 1e-10, 0.5)}
+            params = {"var_smoothing": trial.suggest_uniform("var_smoothing", 1e-13, 1e-5)}
 
         elif name_algo == 'mlp':
             params = {"activation": trial.suggest_categorical("activation", ['tanh', 'relu']),
