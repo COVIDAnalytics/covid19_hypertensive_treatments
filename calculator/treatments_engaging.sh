@@ -11,4 +11,4 @@ module load julia/1.2.0
 
 export IAI_LICENSE_FILE="$HOME/iai.lic"
 
-python3 treatment_cluster.py 'xgboost','rf','cart','lr','oct', 'kn', 'svm', 'mlp', 'qda', 'gb'
+python3 treatment_cluster.py 'xgboost','rf','cart','lr', 'kn', 'svm', 'mlp', 'qda', 'gb'
