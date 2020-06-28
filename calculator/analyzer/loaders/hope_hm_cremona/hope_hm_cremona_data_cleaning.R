@@ -113,6 +113,10 @@ DRUGS_ADMISSIONS = c('HOME_OXIGEN_THERAPY', 'IN_PREVIOUSASPIRIN', 'IN_OTHERANTIP
                          'IN_ORALANTICOAGL',  'IN_ACEI_ARB', 'IN_BETABLOCKERS',
                          'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED',
                          'IN_DVITAMINSUPLEMENT','IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT')
+SELECTED_DRUGS_ADMISSIONS = c('IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
+                     'IN_ORALANTICOAGL', 'IN_BETABLOCKERS',
+                     'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED',
+                     'IN_DVITAMINSUPLEMENT','IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT')
 
 COVID19_TREATMENTS = c('CORTICOSTEROIDS',
                     'CLOROQUINE',
@@ -188,7 +192,7 @@ DATES = c('DT_ONSETSYMPTOMS','DT_TEST_COVID',
 SELECTED_DATES = c('DT_HOSPITAL_ADMISSION')
 
 cols_include = c(LOCATION, SELECTED_DATES, SELECTED_DEMOGRAPHICS, 
-                 SELECTED_COMORBIDITIES, DRUGS_ADMISSIONS, SELECTED_VITALS,
+                 SELECTED_COMORBIDITIES, SELECTED_DRUGS_ADMISSIONS, SELECTED_VITALS,
                  SELECTED_BINARY_LABS_VITALS_ADMISSION, SELECTED_CONTINUE_LABS_ADMISSION,
                  ADD_COVID19_TREATMENTS, SELECTED_TREATMENTS, SELECTED_OUTCOMES)
 
@@ -219,6 +223,10 @@ filter_columns_nonhope<-function(df){
   
   DRUGS_ADMISSIONS = c('HOME_OXIGEN_THERAPY', 'IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
                        'IN_ORALANTICOAGL',  'IN_ACEI_ARB', 'IN_BETABLOCKERS',
+                       'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED',
+                       'IN_DVITAMINSUPLEMENT','IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT')
+  SELECTED_DRUGS_ADMISSIONS = c('IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
+                       'IN_ORALANTICOAGL', 'IN_BETABLOCKERS',
                        'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED',
                        'IN_DVITAMINSUPLEMENT','IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT')
   
@@ -296,7 +304,7 @@ filter_columns_nonhope<-function(df){
   SELECTED_DATES = c('DT_HOSPITAL_ADMISSION')
   
   cols_include = c(LOCATION, SELECTED_DATES, SELECTED_DEMOGRAPHICS,
-                   SELECTED_COMORBIDITIES, DRUGS_ADMISSIONS, SELECTED_VITALS,
+                   SELECTED_COMORBIDITIES, SELECTED_DRUGS_ADMISSIONS, SELECTED_VITALS,
                    SELECTED_BINARY_LABS_VITALS_ADMISSION, SELECTED_CONTINUE_LABS_ADMISSION,
                    ADD_COVID19_TREATMENTS, SELECTED_TREATMENTS_NONHOPE, SELECTED_OUTCOMES_NONHOPE)
   
@@ -310,13 +318,12 @@ filter_columns_nonhope<-function(df){
 #First we will edit the dates to include two variables that indicate the difference between the date of admission and the date of symptom onset and pcr test
 
 clean_columns<-function(data){
-data <- data %>%
+data <- data %>% mutate(DT_HOSPITAL_ADMISSION = as.Date(DT_HOSPITAL_ADMISSION))
           # mutate(ONSET_DATE_DIFF = as.numeric(as.Date(DT_HOSPITAL_ADMISSION) -as.Date(DT_ONSETSYMPTOMS)))%>%
           # mutate(ONSET_DATE_DIFF = replace(ONSET_DATE_DIFF, ONSET_DATE_DIFF<0, NA))%>%
           # mutate(TEST_DATE_DIFF = as.numeric(as.Date(DT_HOSPITAL_ADMISSION) -as.Date(DT_TEST_COVID)))%>%
           # mutate(TEST_DATE_DIFF = replace(TEST_DATE_DIFF, TEST_DATE_DIFF<0, NA))%>%
           # dplyr::select(-DT_ONSETSYMPTOMS, -DT_TEST_COVID)%>%
-          mutate(DT_HOSPITAL_ADMISSION = as.Date(DT_HOSPITAL_ADMISSION))
 
 #Clean MAINHEARTDISEASE
 # data <- data %>%
@@ -351,7 +358,6 @@ data <- data %>%
          CREATININE = as.numeric(as.character(CREATININE)))
 
 #Clean MAXTEMPERATURE_ADMISSION
-data = data_hope
 data <- data %>%
   mutate(MAXTEMPERATURE_ADMISSION = replace(MAXTEMPERATURE_ADMISSION, MAXTEMPERATURE_ADMISSION=="", NA),
          MAXTEMPERATURE_ADMISSION = replace(MAXTEMPERATURE_ADMISSION, MAXTEMPERATURE_ADMISSION=="NORMAL", "36.5"),
@@ -451,11 +457,11 @@ filter_outliers<-function(data, filter_lb, filter_ub){
 
 filter_missing<-function(data, threshold){
   na_counts = t(data %>%
-                  select(everything()) %>% 
+                  dplyr::select(everything()) %>% 
                   summarise_all(funs(sum(is.na(.))/nrow(data)))) %>% 
     as.data.frame() %>%
     mutate(Feature = row.names(.)) %>%
-    select(Feature, Missing_Proportion = V1)
+    dplyr::select(Feature, Missing_Proportion = V1)
   cols_filled = na_counts %>% filter(Missing_Proportion <= threshold) %>% pull(Feature)
   print("Excluded Columns: ")
   print(paste(setdiff(names(data), cols_filled), collapse = ", "))
@@ -468,7 +474,7 @@ imputation <- function(dat, reps, maxiterations, group, treatments, outcomes, in
   #Select the appropriate columns to impute
   DF = dat %>% 
           filter(SOURCE_COUNTRY %in% group)%>%
-          select(-treatments,-outcomes,-indicator_cols)
+          dplyr::select(-treatments,-outcomes)
   
   #Convert characters to factors
   DF[sapply(DF, is.character)] <- lapply(DF[sapply(DF, is.character)], as.factor)
