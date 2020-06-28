@@ -87,7 +87,7 @@ if matched:
 else: 
   data_train = pd.read_csv(data_path+'hope_hm_cremona_unmatched_all_treatments_train.csv')
   data_test = pd.read_csv(data_path+'hope_hm_cremona_unmatched_all_treatments_test.csv')
-  file_name = str(t) + '_unmatched_' prediction.lower() + '_seed' + str(SEED) 
+  file_name = str(t) + '_unmatched_' + prediction.lower() + '_seed' + str(SEED) 
 
 X_train, y_train = ds.create_dataset_treatment(data_train, 
                         treatment,
