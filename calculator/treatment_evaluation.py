@@ -38,7 +38,8 @@ algorithm_list = ['lr','rf','cart','xgboost','oct', 'kn', 'qda']
 #%% Generate predictions
 
 split = 'bycountry'
-X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, split = split)
+X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, 
+                                                                split = split)
 
 data_version = 'test'
 
@@ -164,9 +165,25 @@ pr_table.to_csv(save_path+data_version+'prescription_robustness_summary.csv')
 
 
 
+#%%  Alternative voting scheme
+
+wm = lambda x: np.average(x, weights=result.iloc[x.index,1])
 
 
 
+
+result_join = pd.DataFrame(result.loc[:,col]).merge(pred_results.loc[:,col], on = 'Algorithm')
+
+result_join.groupby('ID')
+
+summary = pd.concat([result.groupby('ID')[treatment_list].agg({'mean'}),
+          result.groupby('ID')['Prescribe'].apply(
+              lambda x:  ', '.join(pd.Series.mode(x).sort_values())),  
+          Z, y], axis=1)
+
+
+
+result.groupby('ID')
 
 
 

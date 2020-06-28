@@ -8,8 +8,8 @@ library(reshape2)
 source('descriptive_functions.R')
 
 # Generate results --------------------------------------------------------
-save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
-fl_data <- read.csv(paste0(save_path,"hope_data_clean_filtered.csv"), stringsAsFactors = FALSE)
+# save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope_data/"
+# fl_data <- read.csv(paste0(save_path,"hope_data_clean_filtered.csv"), stringsAsFactors = FALSE)
 
 summ_list <- descriptive_table(fl_data,  short_version = TRUE)
 summ_numeric <- summ_list[[1]]
@@ -39,6 +39,41 @@ results_bycountry_cat <- lapply(unique(fl_data$COUNTRY), function(c){
 write.csv(results_bycountry, paste0(save_path, "description_bycountry.csv"), row.names = FALSE)
 write.csv(results_bycountry_cat, paste0(save_path, "description_bycountry_categoric.csv"), row.names = FALSE)
 
+
+# Results by source -------------------------------------------------------
+
+save_path = "~/Dropbox (MIT)/COVID_risk/covid19_treatments_data/"
+fl_data <- read.csv(paste0(save_path,"hope_hm_cremona_data_clean_filtered.csv"), stringsAsFactors = FALSE)
+
+results_bysource <- lapply(unique(fl_data$SOURCE), function(c){
+  print(c)
+  data_sub = fl_data %>% filter(SOURCE == c)
+  t = descriptive_table(data_sub, short_version = TRUE)[[1]]
+  colnames(t) <- c('Feature', paste0("Summary_",c), paste0("Missing_",c))
+  return(t)}
+) %>% 
+  reduce(left_join, by = "Feature")
+
+results_bysource_cat <- lapply(unique(fl_data$SOURCE), function(c){
+  print(c)
+  data_sub = fl_data %>% filter(SOURCE == c)
+  t = descriptive_table(data_sub, short_version = TRUE)[[2]]
+  colnames(t) <- c('Feature', 'Value', paste0("Freq_",c))
+  return(t)}
+) %>% 
+  reduce(full_join, by = c("Feature","Value")) %>%
+  filter(!Feature %in% c('SOURCE','HOSPITAL','DT_HOSPITAL_ADMISSION')) %>%
+  arrange(Feature, Value)
+
+data_a <- fl_data %>% filter(SOURCE == "Hope")
+label_a <- 'Hope'
+data_b <- fl_data %>% filter(SOURCE == "HM")
+label_b <- 'HM'
+file_name <- 'description_bysource_hm.csv'
+
+pop_compare <- run_ttest(data_a, data_b, label_a, label_b)
+
+write.csv(pop_compare, paste0(save_path, file_name), row.names = FALSE)
 
 # Pairwise significance ---------------------------------------------------
 data_derivation <- fl_data %>% filter(COUNTRY %in% c('SPAIN'))

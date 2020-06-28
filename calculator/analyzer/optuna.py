@@ -34,7 +34,7 @@ name_param_svm = ['C', 'kernel', 'degree', 'probability', 'coef0']
 name_param_mlp = ['activation', 'solver', 'alpha', 'learning_rate', 'tol', 'max_iter']
 name_param_qda = ['reg_param', 'tol']
 
-algo_names = ['xgboost','rf','cart','lr','oct', 'kn', 'svm', 'mlp', 'qda']
+algo_names = ['xgboost','rf','cart','lr','oct', 'kn', 'svm', 'mlp', 'qda', 'gb']
 
 algorithms = {'xgboost': xgb.XGBClassifier,
             'rf': RandomForestClassifier, 
