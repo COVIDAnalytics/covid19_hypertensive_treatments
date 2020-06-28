@@ -115,7 +115,7 @@ X_full = pd.get_dummies(X_full, prefix_sep='_', drop_first=True)
 X_train = X_full.iloc[0:X_train.shape[0],:]
 X_test = X_full.iloc[X_train.shape[0]:,:]
 
-best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 50, name_algo = name_algo)
+best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 300, name_algo = name_algo)
 # X_test = impute_missing(X_test)
 
 # best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params)
