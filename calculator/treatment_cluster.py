@@ -112,9 +112,7 @@ else:
   y_deriv = y_deriv.loc[idx]
   X_train, X_test, y_train, y_test = train_test_split(X_deriv, y_deriv, stratify = y_deriv, test_size=0.1, random_state = SEED)
 
-# Train model
-best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 50, name_algo = name_algo)
-
+best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 300, name_algo = name_algo)
 # X_test = impute_missing(X_test)
 
 # best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params)

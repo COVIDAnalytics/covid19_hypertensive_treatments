@@ -9,7 +9,6 @@ library(stringr)
 # source("hope_data_cleaning.R")
 source("hope_hm_cremona_data_cleaning.R")
 
-# save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/"
 # save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
 # save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 save_path = "~/Dropbox (MIT)/covid19_personal/merging_data/covid19_hope_hm_cremona/"
@@ -49,11 +48,12 @@ data_merged = rbind(data_hope,data_hm,data_cremona)
 
 data_merged["COUNTRY"] = str_to_title(data_merged$COUNTRY)
 data_merged <- data_merged %>% mutate(SOURCE_COUNTRY = paste0(SOURCE, "-", COUNTRY))
+str(data_merged)
 
 # Create summary stats of treatments overall and grouped by dataset
-data_merged %>% group_by(ANTICOAGULANTS, ANTIVIRAL, CLOROQUINE, REGIMEN) %>% summarize(n())
+data_merged %>% group_by(ANTICOAGULANTS, ANTIVIRAL, CLOROQUINE, REGIMEN) %>% dplyr::summarize(n())
 
-data_merged %>% group_by(SOURCE, ANTICOAGULANTS, ANTIVIRAL, CLOROQUINE, REGIMEN) %>% summarize(n())
+data_merged %>% group_by(SOURCE, ANTICOAGULANTS, ANTIVIRAL, CLOROQUINE, REGIMEN) %>% dplyr::summarize(n())
 
 # Filter outliers
 filter_lb=0.01
@@ -98,6 +98,7 @@ INDICATORS <- c('SOURCE',
 cols_nonX = c(SELECTED_TREATMENTS, 'REGIMEN', 'DEATH', 'COMORB_DEATH', INDICATORS)
 col_order = c(setdiff(names(fl_data), cols_nonX), cols_nonX)
 fl_data <- fl_data[col_order]
+str(fl_data)
 
 write.csv(fl_data, paste(save_path,"hope_hm_cremona_data_clean_filtered.csv",sep = ""),
           row.names = FALSE)
