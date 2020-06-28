@@ -127,7 +127,7 @@ X_test, y_test = X.loc[-train_inds,].drop(filter_col, axis=1), y[-train_inds]
 
 # Train model
 ## HMW: get error that y_true is always 0 so can't calculate ROC
-best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 50, name_algo = name_algo)
+best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 300, name_algo = 'xgboost')
 
 # X_test = impute_missing(X_test)
 
