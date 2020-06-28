@@ -47,7 +47,7 @@ match_list = [True,False]
 
 param_list = list(itertools.product(treatment_list, match_list, algorithm_list))
 
-treatment, name_algo, matched = param_list[jobid]
+treatment, matched, name_algo = param_list[jobid]
 print("Treatment = ", treatment, "; Algorithm = ", name_algo)
 if 'oct' == name_algo:
   from julia import Julia
