@@ -19,9 +19,10 @@ import pandas as pd
 
 #%% Set Problem Parameters
 #Paths for data access
-        
+  
 data_path = '../../covid19_hope/hope_matched.csv'
 save_path = '../../covid19_treatments_results/summary/'
+preload = True
 
 dataset = "hope"
 treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants',
@@ -29,14 +30,16 @@ treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants',
 
 
 # algorithm_list = range(0,len(o.algo_names))
-algorithm_list = ['lr','rf','cart','xgboost','oct']
-algorithm_list = ['lr','rf','cart','xgboost']
+algorithm_list = ['lr','rf','cart','xgboost','oct', 'kn', 'qda']
+# algorithm_list = ['lr','rf','cart','xgboost','oct']
+# algorithm_list = ['lr','rf','cart','xgboost']
 
 
 #%% Generate predictions
 
 split = 'bycountry'
-X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, split = split)
+X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, 
+                                                                split = split)
 
 data_version = 'test'
 
@@ -49,25 +52,32 @@ else:
     Z = Z_test
     y = y_test
 
-result = pd.concat([u.algorithm_predictions(X, algorithm = alg, dataset = dataset, treatment_list = treatment_list) 
-                    for alg in algorithm_list], axis = 0)
+if preload: 
+    result = pd.read_csv(save_path+data_version+'_bypatient_allmethods.csv')
+    result.set_index(['ID','Algorithm'], inplace = True)
+    pred_results = pd.read_csv(save_path+data_version+'_performance_allmethods.csv')
+    pred_results.set_index('Algorithm', inplace = True)
+else:
+    result = pd.concat([u.algorithm_predictions(X, algorithm = alg, dataset = dataset, treatment_list = treatment_list) 
+                        for alg in algorithm_list], axis = 0)
+    
+    # Find optimal prescription across methods
+    result['Prescribe'] = result.idxmin(axis=1)
+    result['Prescribe_Prediction'] = result.min(axis=1)
+    
+    result.to_csv(save_path+data_version+'_bypatient_allmethods.csv')
 
-# Find optimal prescription across methods
-result['Prescribe'] = result.idxmin(axis=1)
-result['Prescribe_Prediction'] = result.min(axis=1)
+    # =============================================================================
+    # Predictive Performance evaluation:
+    # - Given a combination of treatment and method calculate the AUC 
+    # - All results are saved in a panda where every column is a treatment and every row is a different algorithm
+    # =============================================================================
+    pred_results = u.algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, dataset, SEED = 1, prediction = 'DEATH', split = 'bycountry')
+    pred_results.to_csv(save_path+data_version+'_performance_allmethods.csv', index_label = 'Algorithm')
 
-result.to_csv(save_path+data_version+'_bypatient_allmethods.csv')
-
-# result = pd.read_csv(save_path+data_version+'_bypatient_allmethods.csv')
 
 #%% Evaluate Methods
-# =============================================================================
-# Predictive Performance evaluation:
-# - Given a combination of treatment and method calculate the AUC 
-# - All results are saved in a panda where every column is a treatment and every row is a different algorithm
-# =============================================================================
-pred_results = u.algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, dataset, SEED = 1, prediction = 'DEATH', split = 'bycountry')
-
+  
 # =============================================================================
 # Summary contains:
 # - Mean probability for each treatment (averaged across methods)
@@ -155,9 +165,25 @@ pr_table.to_csv(save_path+data_version+'prescription_robustness_summary.csv')
 
 
 
+#%%  Alternative voting scheme
+
+wm = lambda x: np.average(x, weights=result.iloc[x.index,1])
 
 
 
+
+result_join = pd.DataFrame(result.loc[:,col]).merge(pred_results.loc[:,col], on = 'Algorithm')
+
+result_join.groupby('ID')
+
+summary = pd.concat([result.groupby('ID')[treatment_list].agg({'mean'}),
+          result.groupby('ID')['Prescribe'].apply(
+              lambda x:  ', '.join(pd.Series.mode(x).sort_values())),  
+          Z, y], axis=1)
+
+
+
+result.groupby('ID')
 
 
 

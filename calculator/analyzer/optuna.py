@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC, LinearSVC
-from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
@@ -29,20 +29,20 @@ name_param_cart = ["max_depth", "min_weight_fraction_leaf", "min_samples_leaf", 
 name_param_lr = ["penalty", "tol", "C", "solver"]
 name_param_oct = ["max_depth", "criterion", "minbucket", "cp"]
 name_param_kn = ['n_neighbors', 'weights', 'algorithm', 'leaf_size', 'p']
-name_param_svm = ['C', 'kernel', 'degree', 'probability', 'gamma', 'coef0']
-name_param_gpc = ['n_restarts_optimizer', 'max_iter_predict']
-name_param_mlp = ['activation', 'solver', 'alpha', 'learning_rate', 'tol']
+name_param_gb = ['var_smoothing']
+name_param_svm = ['C', 'kernel', 'degree', 'probability', 'coef0']
+name_param_mlp = ['activation', 'solver', 'alpha', 'learning_rate', 'tol', 'max_iter']
 name_param_qda = ['reg_param', 'tol']
 
-algo_names = ['xgboost','rf','cart','lr','oct', 'kn', 'svm','gpc', 'mlp', 'qda']
+algo_names = ['xgboost','rf','cart','lr','oct', 'kn', 'svm', 'mlp', 'qda', 'gb']
 
 algorithms = {'xgboost': xgb.XGBClassifier,
             'rf': RandomForestClassifier, 
             'cart': DecisionTreeClassifier, 
             'lr': LogisticRegression,
             'kn': KNeighborsClassifier,
+            'gb': GaussianNB,
             'svm': SVC,
-            'gpc': GaussianProcessClassifier,
             'mlp': MLPClassifier,
             'qda': QuadraticDiscriminantAnalysis}
 
@@ -52,8 +52,8 @@ name_params = {'xgboost': name_param_xgb,
             'lr': name_param_lr,
             'oct': name_param_oct,
             'kn': name_param_kn,
+            'gb': name_param_gb,
             'svm': name_param_svm,
-            'gpc': name_param_gpc,
             'mlp': name_param_mlp,
             'qda': name_param_qda}
 
@@ -94,10 +94,10 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
                     "criterion": trial.suggest_categorical("criterion", ['gini', 'entropy'])}
 
         elif name_algo == 'lr':
-            params = {"penalty": trial.suggest_categorical("penalty", ['l1','l2', 'none']),
-                    "tol": trial.suggest_uniform("tol", 1e-5, 10),
-                    "C": trial.suggest_uniform("C", 1e-5, 2),
-                    "solver": trial.suggest_categorical("solver", ['saga'])}
+            params = {"penalty": trial.suggest_categorical("penalty", ['l2']),
+                    "tol": trial.suggest_uniform("tol", 1e-10, 1),
+                    "C": trial.suggest_uniform("C", 1e-10, 10),
+                    "solver": trial.suggest_categorical("solver", ['lbfgs'])}
 
         elif name_algo == 'oct':
 
@@ -124,22 +124,21 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
 
         elif name_algo == 'svm':
             params = {"C": trial.suggest_uniform("C", 1e-10, 25),
-                    "kernel": trial.suggest_categorical("kernel", ['linear', 'poly', 'rbf', 'sigmoid']),
-                    "degree": trial.suggest_int("degree", 1, 10),
+                    "kernel": trial.suggest_categorical("kernel", ['poly', 'rbf']),
+                    "degree": trial.suggest_int("degree", 1, 5),
                     "probability": trial.suggest_int("probability", 1, 1),
-                    "gamma": trial.suggest_categorical("gamma", ['scale', 'auto']),
                     "coef0": trial.suggest_uniform("coef0", -5, 5)}
 
-        elif name_algo == 'gpc':
-            params = {"n_restarts_optimizer": trial.suggest_int("n_restarts_optimizer", 0, 15),
-                    "max_iter_predict": trial.suggest_int("max_iter_predict", 50, 200)}
+        elif name_algo == 'gb':
+            params = {"var_smoothing": trial.suggest_uniform("var_smoothing", 1e-13, 1e-5)}
 
         elif name_algo == 'mlp':
-            params = {"activation": trial.suggest_categorical("activation", ['identity', 'logistic', 'tanh', 'relu']),
-                    "solver": trial.suggest_categorical("solver", ['lbfgs', 'sgd', 'adam']),
+            params = {"activation": trial.suggest_categorical("activation", ['tanh', 'relu']),
+                    "solver": trial.suggest_categorical("solver", ['lbfgs', 'adam']),
                     "alpha": trial.suggest_uniform("alpha", 0, 10),
-                    "learning_rate": trial.suggest_categorical("learning_rate", ['constant', 'invscaling', 'adaptive']),
-                    "tol": trial.suggest_uniform("tol", 1e-10, 1)}
+                    "learning_rate": trial.suggest_categorical("learning_rate", ['constant', 'adaptive']),
+                    "tol": trial.suggest_uniform("tol", 1e-10, 1),
+                    "max_iter": trial.suggest_int("max_iter", 1000, 1000)}
 
         elif name_algo == 'qda':
             params = {"reg_param": trial.suggest_uniform("reg_param", 1e-10, 1),

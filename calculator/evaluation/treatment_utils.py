@@ -14,7 +14,8 @@ from sklearn import metrics
 
 import analyzer.dataset as ds
 
-def load_data(data_path, split, seed = 1):
+def load_data(data_path, split, seed = 1, file = None):
+        
     data = pd.read_csv(data_path)
 
     X_hope, y_hope = ds.create_dataset_treatment(data)

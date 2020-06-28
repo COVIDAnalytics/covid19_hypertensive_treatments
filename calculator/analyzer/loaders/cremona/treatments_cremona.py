@@ -77,7 +77,7 @@ dataset_lab.loc[dataset_lab['DDDIMER_B'].notna(), 'DDDIMER_B'] = (dataset_lab.lo
 dataset_lab.loc[dataset_lab['PROCALCITONIN_B'].notna(), 'PROCALCITONIN_B'] = (dataset_lab.loc[dataset_lab['PROCALCITONIN_B'].notna(), 'PROCALCITONIN_B'] > 0.5).astype(int)
 dataset_lab.loc[dataset_lab['PCR_B'].notna(), 'PCR_B'] = (dataset_lab.loc[dataset_lab['PCR_B'].notna(), 'PCR_B'] > 100).astype(int)
 dataset_lab.loc[dataset_lab['TRANSAMINASES_B'].notna(), 'TRANSAMINASES_B'] = (dataset_lab.loc[dataset_lab['TRANSAMINASES_B'].notna(), 'TRANSAMINASES_B'] > 40).astype(int)
-dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] = (dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] > 222).astype(int)
+dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] = ((dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] < 240)|(dataset_lab.loc[dataset_lab['LDL_B'].notna(), 'LDL_B'] > 480)) .astype(int)
 
 # Filter patients that are diagnosed for covid
 drugs = drugs[drugs['Nosologico'].isin(patients)]
@@ -129,6 +129,13 @@ for i in range(len(u.IN_TREATMENTS)):
     for j in patients:
         cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(drugs.loc[drugs['Nosologico'] == j, 'ATC'].apply(lambda x: treat in x)) > 0)
 
+# Fill IN_TREATMENTS with specific list of ATCs
+for i in range(len(u.IN_TREATMENTS_LONG)):
+    name = u.IN_TREATMENTS_LONG_NAME[i]
+    treat = u.IN_TREATMENTS_LONG[i]
+    for j in patients:
+        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(drugs.loc[drugs['Nosologico'] == j, 'ATC'].apply(lambda x: u.check_treatment(treat, x))) > 0)
+
 # Fill in Lab and Vitals
 for j in patients:
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, dataset_lab.columns] = dataset_lab.loc[j, :].to_frame().T.values
@@ -157,3 +164,6 @@ cremona_treatments['REGIMEN'] = cremona_treatments.apply(lambda row: u.get_regim
 for j in patients:
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'COMORB_DEATH'] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(u.COMORB_DEATH)) > 0)
 cremona_treatments.loc[:, 'COMORB_DEATH'] = cremona_treatments.apply(lambda row: max(row['DEATH'], row['COMORB_DEATH']), axis = 1)
+
+cremona_treatments = cremona_treatments.drop('NOSOLOGICO', axis = 1)
+cremona_treatments.to_csv('/Users/lucamingardi/Dropbox (MIT)/covid19_treatments/cremona_treatments.csv')
