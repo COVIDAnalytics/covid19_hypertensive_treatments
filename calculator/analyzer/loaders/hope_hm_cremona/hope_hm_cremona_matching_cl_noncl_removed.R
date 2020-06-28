@@ -28,7 +28,7 @@ save_path = "~/Dropbox (MIT)/covid19_personal/merging_data/covid19_hope_hm_cremo
 data = read.csv(paste(save_path, "hope_hm_cremona_data_clean_imputed.csv",sep=""), header = TRUE)
 
 # Remove patients with Cloroquine only regimen
-data <- data %>% filter(REGIMEN != "Chloroquine Only")
+data <- data %>% filter(REGIMEN != "Chloroquine Only" & REGIMEN != "Non-Chloroquine")
 data$REGIMEN <- factor(data$REGIMEN)
 levels(data$REGIMEN)
 
@@ -110,9 +110,9 @@ for (i in 1:length(out)){
 }
 
 # Base on that statement we will pick as treatment of reference:
-# Non-Chloroquine with 1274 observations - Hope, HM, and Cremona (1232 after updates)
-base_treatment = 4
-t = 1:4
+# Chloroquine and Anticoagulants with 1641 observations - Hope, HM, and Cremona
+base_treatment = 2
+t = 1:3
 to_match_treatments = t[-base_treatment]
 n_base = nrow(out[[base_treatment]])
 
@@ -229,5 +229,45 @@ final <- matched_data %>%
 ## check sizes
 table(final$REGIMEN, final$SOURCE_COUNTRY == "Hope-Spain"| final$SOURCE_COUNTRY == "HM-Spain" | final$SOURCE_COUNTRY == "Cremona-Italy")
 
-write.csv(final, paste0(save_path, "hope_hm_cremona_matched_cl_only_removed.csv"), row.names = FALSE)
-write.csv(data, paste0(save_path, "hope_hm_cremona_unmatched_cl_only_removed.csv"), row.names = FALSE)
+write.csv(final, paste0(save_path, "hope_hm_cremona_matched_cl_noncl_removed.csv"), row.names = FALSE)
+write.csv(data, paste0(save_path, "hope_hm_cremona_unmatched_cl_noncl_removed.csv"), row.names = FALSE)
+
+## Split into training, testing, and validation sets
+# Unmatched
+split_unmatched <- df_full %>% group_split(REGIMEN)
+
+to_split = c(1,2,3,4,5)
+unmatched_train = data.frame(matrix(ncol=0,nrow=0))
+unmatched_test = data.frame(matrix(ncol=0,nrow=0))
+for (t in to_split){
+  set.seed(144)
+  split <- createDataPartition(split_unmatched[[t]]$DEATH, p = 0.85, list = FALSE)
+  unmatched.train <- split_unmatched[[t]][split,]
+  unmatched.test <- split_unmatched[[t]][-split,]
+  unmatched_train <- rbind(unmatched_train, unmatched.train)
+  unmatched_test <- rbind(unmatched_test, unmatched.test)
+}
+
+write.csv(unmatched_train, paste0(save_path, "hope_hm_cremona_unmatched_cl_noncl_removed_train.csv"), row.names = FALSE)
+write.csv(unmatched_test, paste0(save_path, "hope_hm_cremona_unmatched_cl_noncl_removed_test.csv"), row.names = FALSE)
+
+# Matched
+split_matched <- matched_data %>% group_split(REGIMEN)
+
+to_split = c(1,2,3,4,5)
+matched_train = data.frame(matrix(ncol=0,nrow=0))
+matched_test = data.frame(matrix(ncol=0,nrow=0))
+for (t in to_split){
+  set.seed(144)
+  split <- createDataPartition(split_matched[[t]]$DEATH, p = 0.85, list = FALSE)
+  matched.train <- split_matched[[t]][split,]
+  matched.test <- split_matched[[t]][-split,]
+  matched_train <- rbind(matched_train, matched.train)
+  matched_test <- rbind(matched_test, matched.test)
+}
+
+write.csv(matched_train, paste0(save_path, "hope_hm_cremona_matched_cl_noncl_removed_train.csv"), row.names = FALSE)
+write.csv(matched_test, paste0(save_path, "hope_hm_cremona_matched_cl_noncl_removed_test.csv"), row.names = FALSE)
+
+# Validation
+write.csv(df_other, paste0(save_path, "hope_hm_cremona_cl_noncl_removed_validation.csv"), row.names = FALSE)
