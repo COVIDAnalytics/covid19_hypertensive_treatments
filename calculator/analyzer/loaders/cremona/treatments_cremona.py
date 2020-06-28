@@ -134,7 +134,7 @@ for i in range(len(u.IN_TREATMENTS_LONG)):
     name = u.IN_TREATMENTS_LONG_NAME[i]
     treat = u.IN_TREATMENTS_LONG[i]
     for j in patients:
-        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(drugs.loc[drugs['Nosologico'] == j, 'ATC'].apply(lambda x: check_treatment(treat, x)) > 0))
+        cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, name] = int(sum(drugs.loc[drugs['Nosologico'] == j, 'ATC'].apply(lambda x: u.check_treatment(treat, x))) > 0)
 
 # Fill in Lab and Vitals
 for j in patients:
