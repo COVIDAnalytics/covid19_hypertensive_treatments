@@ -13,6 +13,7 @@ os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calcula
 
 import evaluation.treatment_utils as u
 import pandas as pd
+from pathlib import Path
 
 
 #%% Set Problem Parameters
@@ -22,51 +23,53 @@ data_path = '../../covid19_treatments_data/'
 results_path = '../../covid19_treatments_results/'
 version_folder = "unmatched_and_matched_all_treatments/"
 save_path = results_path + version_folder + 'summary/'
+Path(save_path).mkdir(parents=True, exist_ok=True)
 preload = False
 
 treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants',
                               'Chloroquine_and_Antivirals', 'Non-Chloroquine']
 
 # algorithm_list = range(0,len(o.algo_names))
-algorithm_list = ['lr','rf','cart','xgboost','oct']
+algorithm_list = ['lr','rf','cart','xgboost']
 # algorithm_list = ['lr','rf','cart','xgboost','oct']
 # algorithm_list = ['lr','rf','cart','xgboost']
 
 
 #%% Generate predictions
 
-            
-X, Z, y = load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
-                    split='validation',matched=True)
+for data_version in ['train','test','validation']:
+    for matched in [True,False]:
+        match_status = 'matched' if matched else 'unmatched'
+        print(data_version + ' - ' + match_status)
+        X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
+                            split=data_version,matched=True)
+        result = pd.concat([u.algorithm_predictions(X, treatment_list = treatment_list, 
+                                                    algorithm = alg,  matched = matched, 
+                                                    result_path = results_path+version_folder) 
+                            for alg in algorithm_list], axis = 0)
+        # Find optimal prescription across methods
+        result['Prescribe'] = result.idxmin(axis=1)
+        result['Prescribe_Prediction'] = result.min(axis=1)
+        #  Save result file
+        result.to_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+        # =============================================================================
+        # Predictive Performance evaluation:
+        # - Given a combination of treatment and method calculate the AUC 
+        # - All results are saved in a panda where every column is a treatment and every row is a different algorithm
+        # =============================================================================
+        pred_results = u.algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, 
+                                                    matched = matched, 
+                                                    result_path = results_path+version_folder)
+        pred_results.to_csv(save_path+data_version+'_'+match_status+'_performance_allmethods.csv', index_label = 'Algorithm')
 
-result = pd.concat([u.algorithm_predictions(X, treatment_list = treatment_list, 
-                                            algorithm = alg,  matched = matched, 
-                                            result_path = results_path+version_folder) 
-                    for alg in algorithm_list], axis = 0)
-    
 
 if preload: 
-    result = pd.read_csv(save_path+data_version+'_bypatient_allmethods.csv')
+    result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
     result.set_index(['ID','Algorithm'], inplace = True)
-    pred_results = pd.read_csv(save_path+data_version+'_performance_allmethods.csv')
+    pred_results = pd.read_csv(save_path+data_version+'_'+match_status+'_performance_allmethods.csv')
     pred_results.set_index('Algorithm', inplace = True)
 else:
-    result = pd.concat([u.algorithm_predictions(X, algorithm = alg, dataset = dataset, treatment_list = treatment_list) 
-                        for alg in algorithm_list], axis = 0)
-    
-    # Find optimal prescription across methods
-    result['Prescribe'] = result.idxmin(axis=1)
-    result['Prescribe_Prediction'] = result.min(axis=1)
-    
-    result.to_csv(save_path+data_version+'_bypatient_allmethods.csv')
 
-    # =============================================================================
-    # Predictive Performance evaluation:
-    # - Given a combination of treatment and method calculate the AUC 
-    # - All results are saved in a panda where every column is a treatment and every row is a different algorithm
-    # =============================================================================
-    pred_results = u.algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, dataset, SEED = 1, prediction = 'DEATH', split = 'bycountry')
-    pred_results.to_csv(save_path+data_version+'_performance_allmethods.csv', index_label = 'Algorithm')
 
 
 #%% Evaluate Methods

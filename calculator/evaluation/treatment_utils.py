@@ -82,10 +82,11 @@ def algorithm_predictions(X, treatment_list, algorithm, matched, result_path, SE
     return df
 
 
-def algorithm_prediction_evaluation(X, Z, y, treatment_list, algorithm, dataset, SEED = 1, prediction = 'DEATH', split = 'bycountry'):
+def algorithm_prediction_evaluation(X, Z, y, treatment_list, algorithm, matched, result_path, SEED = 1, prediction = 'DEATH'):
         
     #Create a list of all the treatment predictions for a given algorithm
-    df = algorithm_predictions(X, algorithm = algorithm, dataset = dataset, treatment_list = treatment_list)       
+    df = algorithm_predictions(X, treatment_list = treatment_list, algorithm = algorithm, matched = matched,
+                               result_path  = result_path, SEED  = SEED, prediction = prediction)       
     
     #Rename the Z to match the names of the treatments  
     Z  = [sub.replace(' ', '_') for sub in list(Z)] 
@@ -106,14 +107,14 @@ def algorithm_prediction_evaluation(X, Z, y, treatment_list, algorithm, dataset,
     return df_results
     
 
-def algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, dataset, SEED = 1, prediction = 'DEATH', split = 'bycountry'):
+def algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, matched, result_path, SEED = 1, prediction = 'DEATH'):
 
      #creates a new dataframe that's empty where we will store all the results
     auc_results = pd.DataFrame(columns = treatment_list)
 
     #Retrieve the AUCs for every algorithm
     for alg in algorithm_list:
-       res_alg = algorithm_prediction_evaluation(X, Z, y, treatment_list, alg, dataset, SEED = 1, prediction = 'DEATH', split = 'bycountry')
+       res_alg = algorithm_prediction_evaluation(X, Z, y, treatment_list, alg, matched, result_path, SEED, prediction)
        res_alg = pd.Series(res_alg, index = auc_results.columns)
        auc_results = auc_results.append(res_alg,ignore_index=True)
 
