@@ -12,45 +12,38 @@ import os
 os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calculator')
 
 import evaluation.treatment_utils as u
-# import evaluation.importance as imp
-# import matplotlib.pyplot as plt
-# import analyzer.optuna as o
 import pandas as pd
+
 
 #%% Set Problem Parameters
 #Paths for data access
-  
-data_path = '../../covid19_hope/hope_matched.csv'
-save_path = '../../covid19_treatments_results/summary/'
-preload = True
 
-dataset = "hope"
+data_path = '../../covid19_treatments_data/'
+results_path = '../../covid19_treatments_results/'
+version_folder = "unmatched_and_matched_all_treatments/"
+save_path = results_path + version_folder + 'summary/'
+preload = False
+
 treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants',
                               'Chloroquine_and_Antivirals', 'Non-Chloroquine']
 
-
 # algorithm_list = range(0,len(o.algo_names))
-algorithm_list = ['lr','rf','cart','xgboost','oct', 'kn', 'qda']
+algorithm_list = ['lr','rf','cart','xgboost','oct']
 # algorithm_list = ['lr','rf','cart','xgboost','oct']
 # algorithm_list = ['lr','rf','cart','xgboost']
 
 
 #%% Generate predictions
 
-split = 'bycountry'
-X_train, Z_train, y_train, X_test, Z_test, y_test = u.load_data(data_path, 
-                                                                split = split)
+            
+X, Z, y = load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
+                    split='validation',matched=True)
 
-data_version = 'test'
-
-if data_version == 'train':
-    X = X_train
-    Z = Z_train
-    y = y_train
-else: 
-    X = X_test
-    Z = Z_test
-    y = y_test
+result = pd.concat([u.algorithm_predictions(X, treatment_list = treatment_list, 
+                                            algorithm = alg,  matched = matched, 
+                                            result_path = results_path+version_folder) 
+                    for alg in algorithm_list], axis = 0)
+    
 
 if preload: 
     result = pd.read_csv(save_path+data_version+'_bypatient_allmethods.csv')
