@@ -13,6 +13,7 @@ os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calcula
 
 import evaluation.treatment_utils as u
 import pandas as pd
+import numpy as np
 from pathlib import Path
 
 
@@ -68,7 +69,7 @@ matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
-result.set_index(['ID','Algorithm'], inplace = True)
+# result.set_index(['ID','Algorithm'], inplace = True)
 pred_results = pd.read_csv(save_path+data_version+'_'+match_status+'_performance_allmethods.csv')
 pred_results.set_index('Algorithm', inplace = True)
 
@@ -76,7 +77,8 @@ pred_results.set_index('Algorithm', inplace = True)
 # =============================================================================
 # Summary contains:
 # - Mean probability for each treatment (averaged across methods)
-# - Prescribe: most common prescription (mode of prescriptions across methods), list if there are ties
+# - Prescribe List: most common prescription (mode of prescriptions across methods), list if there are ties
+# - Prescribe: prescription by method, resolve ties by choosing maximum AUC method
 # - REGIMEN: true prescribed treatment
 # - Match: indicator of whether true regimen is (in list of) optimal prescription(s)
 # =============================================================================
@@ -161,28 +163,25 @@ pr_table.to_csv(save_path+data_version+'_'+match_status+'_prescription_robustnes
 
 #%%  Alternative voting scheme
 
-# wm = lambda x: np.average(x, weights=result.iloc[x.index,1])
+def wavg(group, avg_name, weight_name):
+    """ http://stackoverflow.com/questions/10951341/pandas-dataframe-aggregate-function-using-multiple-columns
+    """
+    d = group[avg_name]
+    w = group[weight_name]
+    try:
+        return (d * w).sum() / w.sum()
+    except ZeroDivisionError:
+        return d.mean()
 
 
+summary_weighted = pd.DataFrame(index = summary.index)
+for col in treatment_list:
+    pred_auc = pred_results.loc[:,col].rename('AUC', axis = 1)
+    result_join = result.merge(pred_auc, on = 'Algorithm').groupby('ID').apply(wavg, col, 'AUC')
+    summary_weighted = pd.concat([summary_weighted,result_join.rename(col)], axis = 1)
 
-
-# result_join = pd.DataFrame(result.loc[:,col]).merge(pred_results.loc[:,col], on = 'Algorithm')
-
-# result_join.groupby('ID')
-
-# summary = pd.concat([result.groupby('ID')[treatment_list].agg({'mean'}),
-#           result.groupby('ID')['Prescribe'].apply(
-#               lambda x:  ', '.join(pd.Series.mode(x).sort_values())),  
-#           Z, y], axis=1)
-
-
-
-# result.groupby('ID')
-
-
-
-
-
-
-
+summary_weighted['Prescribe'] = summary_weighted.idxmin(axis=1)
+summary_weighted = pd.concat([summary_weighted, Z, y],axis=1)
+summary_weighted['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary_weighted['REGIMEN'], summary_weighted['Prescribe'])]
+summary_weighted.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_weighted.csv')
 
