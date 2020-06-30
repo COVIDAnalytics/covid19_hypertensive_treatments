@@ -28,7 +28,7 @@ preload = False
 
 treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants',
                               'Chloroquine_and_Antivirals', 'Non-Chloroquine']
-algorithm_list = ['lr','rf','cart','xgboost','oct']
+algorithm_list = ['lr','rf','cart','xgboost','oct','kn','mlp','qda','gb']
 
 #%% Generate predictions across all combinations
 
@@ -64,11 +64,25 @@ if not preload:
 
 #%% Evaluate Methods for a single variant
 
-data_version = 'validation'
+data_version = 'test'
 matched = True
+weighted = True
 match_status = 'matched' if matched else 'unmatched'
+weighted_status = 'weighted' if weighted else 'no_weights'
+
+algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
+
+
+#Read in the relevant data
+X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
+                                split=data_version,matched=matched)
 
 result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+
+#Filter only to algorithms in the algorithms list
+result =result.loc[result['Algorithm'].isin(algorithm_list)]             
+
+
 # result.set_index(['ID','Algorithm'], inplace = True)
 pred_results = pd.read_csv(save_path+data_version+'_'+match_status+'_performance_allmethods.csv')
 pred_results.set_index('Algorithm', inplace = True)
@@ -84,15 +98,35 @@ pred_results.set_index('Algorithm', inplace = True)
 # =============================================================================
 summary = pd.concat([result.groupby('ID')[treatment_list].agg({'mean'}),
           result.groupby('ID')['Prescribe'].apply(
-              lambda x:  ', '.join(pd.Series.mode(x).sort_values())),  
-          Z, y], axis=1)
+              lambda x:  ', '.join(pd.Series.mode(x).sort_values())), Z, y], axis=1)
 
-summary['Prescribe_list'] =   summary['Prescribe'].str.split(pat = ', ')
+if weighted:
+    summary = pd.DataFrame(index = summary.index)
+    for col in treatment_list:
+        pred_auc = pred_results.loc[:,col].rename('AUC', axis = 1)
+        result_join = result.merge(pred_auc, on = 'Algorithm').groupby('ID').apply(u.wavg, col, 'AUC')
+        summary = pd.concat([summary,result_join.rename(col)], axis = 1)
 
-#Resolve Ties among treatments by selecting the treatment whose models have the highest average AUC
-summary = u.resolve_ties(summary, result, pred_results)
-summary['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
-summary.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary.csv')
+    summary['Prescribe'] = summary.idxmin(axis=1)
+    summary = pd.concat([summary, Z, y],axis=1)
+    summary['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
+
+else:
+    summary['Prescribe_list'] =   summary['Prescribe'].str.split(pat = ', ')
+
+    #Resolve Ties among treatments by selecting the treatment whose models have the highest average AUC
+    summary = u.resolve_ties(summary, result, pred_results)
+    summary['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
+    
+    
+summary.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
+
+# summary['Prescribe_list'] =   summary['Prescribe'].str.split(pat = ', ')
+
+# #Resolve Ties among treatments by selecting the treatment whose models have the highest average AUC
+# summary = u.resolve_ties(summary, result, pred_results)
+# summary['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
+# summary.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary.csv')
 
 # =============================================================================
 # n_summary contains:
@@ -100,7 +134,7 @@ summary.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary.csv')
 # - The proposed probability per method
 # =============================================================================
 merged_summary = u.retrieve_proba_per_prescription(result, summary, pred_results)
-merged_summary.to_csv(save_path+data_version+'_'+match_status+'_detailed_bypatient_summary.csv')
+merged_summary.to_csv(save_path+data_version+'_'+match_status+'_detailed_bypatient_summary_'+weighted_status+'.csv')
 
 
 #Add the average probability and participating algorithms for each patient prescription
@@ -122,7 +156,7 @@ prescription_summary = pd.crosstab(index = summary.Prescribe, columns = summary.
 prescription_summary.columns = ['No Match', 'Match', 'Total']
 prescription_summary.drop('Total',axis=0)
 prescription_summary.sort_values('Total', ascending = False, inplace = True)
-prescription_summary.to_csv(save_path+data_version+'_'+match_status+'_bytreatment_summary.csv')
+prescription_summary.to_csv(save_path+data_version+'_'+match_status+'_bytreatment_summary_'+weighted_status+'.csv')
 
 # ===================================================================================
 # Prescription Accuracy evaluation:
@@ -157,31 +191,39 @@ pr_table = u.prescription_robustness_a(result, summary, pred_results,algorithm_l
 pr_table['PE'] = pe_list
 PR.append(PE)
 pr_table.loc['prescr'] = PR
-pr_table.to_csv(save_path+data_version+'_'+match_status+'_prescription_robustness_summary.csv')
+pr_table.to_csv(save_path+data_version+'_'+match_status+'_prescription_robustness_summary_'+weighted_status+'.csv')
 
 
 
 #%%  Alternative voting scheme
 
-def wavg(group, avg_name, weight_name):
-    """ http://stackoverflow.com/questions/10951341/pandas-dataframe-aggregate-function-using-multiple-columns
-    """
-    d = group[avg_name]
-    w = group[weight_name]
-    try:
-        return (d * w).sum() / w.sum()
-    except ZeroDivisionError:
-        return d.mean()
+# def wavg(group, avg_name, weight_name):
+#     """ http://stackoverflow.com/questions/10951341/pandas-dataframe-aggregate-function-using-multiple-columns
+#     """
+#     d = group[avg_name]
+#     w = group[weight_name]
+#     try:
+#         return (d * w).sum() / w.sum()
+#     except ZeroDivisionError:
+#         return d.mean()
 
 
-summary_weighted = pd.DataFrame(index = summary.index)
-for col in treatment_list:
-    pred_auc = pred_results.loc[:,col].rename('AUC', axis = 1)
-    result_join = result.merge(pred_auc, on = 'Algorithm').groupby('ID').apply(wavg, col, 'AUC')
-    summary_weighted = pd.concat([summary_weighted,result_join.rename(col)], axis = 1)
+# summary_weighted = pd.DataFrame(index = summary.index)
+# for col in treatment_list:
+#     pred_auc = pred_results.loc[:,col].rename('AUC', axis = 1)
+#     result_join = result.merge(pred_auc, on = 'Algorithm').groupby('ID').apply(wavg, col, 'AUC')
+#     summary_weighted = pd.concat([summary_weighted,result_join.rename(col)], axis = 1)
 
-summary_weighted['Prescribe'] = summary_weighted.idxmin(axis=1)
-summary_weighted = pd.concat([summary_weighted, Z, y],axis=1)
-summary_weighted['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary_weighted['REGIMEN'], summary_weighted['Prescribe'])]
-summary_weighted.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_weighted.csv')
+# summary_weighted['Prescribe'] = summary_weighted.idxmin(axis=1)
+# summary_weighted = pd.concat([summary_weighted, Z, y],axis=1)
+# summary_weighted['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary_weighted['REGIMEN'], summary_weighted['Prescribe'])]
+# summary_weighted.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_weighted.csv')
 
+
+
+# prescription_summary_weighted = pd.crosstab(index = summary_weighted.Prescribe, columns = summary.Match, 
+#                                    margins = True, margins_name = 'Total')
+# prescription_summary_weighted.columns = ['No Match', 'Match', 'Total']
+# prescription_summary_weighted.drop('Total',axis=0)
+# prescription_summary_weighted.sort_values('Total', ascending = False, inplace = True)
+# prescription_summary_weighted.to_csv(save_path+data_version+'_'+match_status+'_bytreatment_summary_weighted.csv')
