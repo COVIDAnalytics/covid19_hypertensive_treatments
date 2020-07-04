@@ -109,7 +109,7 @@ def algorithm_prediction_evaluation(X, Z, y, treatment_list, algorithm, matched,
 
 def algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, matched, result_path, SEED = 1, prediction = 'DEATH'):
 
-     #creates a new dataframe that's empty where we will store all the results
+    #creates a new dataframe that's empty where we will store all the results
     auc_results = pd.DataFrame(columns = treatment_list)
 
     #Retrieve the AUCs for every algorithm
@@ -134,12 +134,15 @@ def resolve_ties(summary, result, pred_results):
     for i, row in summary.iterrows():
         #Find all the patients for which there is not agreement on the prescription
         if len(row['Prescribe_list'])>1:
+                        
              #For every option we will find what are the methods that suggest that
              prescriptions = row['Prescribe_list']
              #We will suggest the option with the highest average AUC
-             
+
              #Get from the results table the relevant rows for this ID
-             temp_res = filter_by(result, {'ID' : i})
+             temp_res =result.loc[result['ID'] == i]             
+             #temp_res = filter_by(result, {'ID' : i})
+
              #Reset the index to access easily the algorithm name
              temp_res.reset_index(inplace=True)
              
@@ -161,10 +164,11 @@ def resolve_ties(summary, result, pred_results):
 
 def retrieve_proba_per_prescription(result, summary, pred_results):
 
-    result_red = result[{'Prescribe','Prescribe_Prediction'}]
-    result_red.reset_index(inplace=True)        
+    result_red = result[{'ID','Algorithm','Prescribe','Prescribe_Prediction'}]
+    #result_red.reset_index(inplace=True)        
 
     merged_summary = pd.merge(result_red, summary, left_on='ID', right_index=True)
+    #Keep only the algorithms for which we have agreement
     merged_summary = merged_summary[merged_summary['Prescribe_y']==merged_summary['Prescribe_x']]
 
     merged_summary.drop(columns=['Prescribe_y'], inplace=True)
@@ -280,4 +284,13 @@ def get_prescription_AUC(n_summary):
     return auc_res
 
 
+def wavg(group, avg_name, weight_name):
+    """ http://stackoverflow.com/questions/10951341/pandas-dataframe-aggregate-function-using-multiple-columns
+    """
+    d = group[avg_name]
+    w = group[weight_name]
+    try:
+        return (d * w).sum() / w.sum()
+    except ZeroDivisionError:
+        return d.mean()
 
