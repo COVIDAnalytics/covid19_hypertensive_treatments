@@ -41,8 +41,9 @@ SEED = 1
 
 split_type = 'bycountry'
 prediction = 'DEATH'
-treatment_list = ['Chloroquine Only', 'All', 'Chloroquine and Anticoagulants',
-       'Chloroquine and Antivirals', 'Non-Chloroquine']
+#treatment_list = ['Chloroquine Only', 'All', 'Chloroquine and Anticoagulants',
+#       'Chloroquine and Antivirals', 'Non-Chloroquine']
+treatment_list = ['Non-Chloroquine']
 match_list = [True,False]
 
 param_list = list(itertools.product(treatment_list, match_list, algorithm_list))
