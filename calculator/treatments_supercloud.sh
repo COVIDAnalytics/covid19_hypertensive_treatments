@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -c 5
-#SBATCH --array=1-105
+#SBATCH --array=17
 #SBATCH --time=2-00:00
 #SBATCH --mail-user=agniorf@mit.edu
 #SBATCH --mail-type=END
@@ -12,4 +12,4 @@ unset PYTHONPATH
 export PYTHONNOUSERSITE=True
 conda activate covid19
 cd covid19_calculator/calculator/
-python treatment_cluster_controlled.py  ‘xgboost’,‘rf’,‘cart’,‘lr’,‘qda’,‘gb’,‘svm’
+python treatment_cluster_controlled.py 'xgboost','rf','cart','lr','qda','gb','svm'
