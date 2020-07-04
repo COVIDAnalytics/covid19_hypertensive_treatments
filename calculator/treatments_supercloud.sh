@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -c 5
-#SBATCH --array=17
+#SBATCH --array=1-105
 #SBATCH --time=2-00:00
 #SBATCH --mail-user=agniorf@mit.edu
 #SBATCH --mail-type=END
