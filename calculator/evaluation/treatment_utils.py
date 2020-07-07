@@ -16,7 +16,8 @@ import analyzer.dataset as ds
 
 def load_data(folder, train_name, split, matched):
     file = train_name
-    if split == 'validation':
+    #if split == 'validation':
+    if 'validation'in split:
         file  = file.replace('_matched','')
     elif not matched:
         file  = file.replace('matched','unmatched')
