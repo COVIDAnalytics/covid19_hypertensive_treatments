@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np 
 import analyzer.loaders.cremona.utils as u
+import re
 
 path = '../data/cremona'
 
@@ -52,7 +53,10 @@ drugs['Nosologico'] = drugs['Nosologico'].apply(lambda x: x[:-7])
 patients = np.asarray(list(set(patients).intersection(set(drugs['Nosologico']))))
 
 # Load vitals
-vitals = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
+vitals_before_april = pd.read_csv('%s/emergency_room/vital_signs.csv' % path)
+vitals_before_april = vitals_before_april.loc[vitals_before_april['DATA_PARAMETRO'].astype(str).apply(lambda x: (x[0] != '4')&(x[0] != '5')), :]
+vitals_from_april = pd.read_csv('%s/emergency_room/vital_signs_from_april.csv' % path)
+vitals = pd.concat([vitals_before_april, vitals_from_april], axis = 0)
 vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
 vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
 dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=True)
@@ -62,7 +66,11 @@ dataset_vitals.loc[dataset_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] =
 dataset_vitals.loc[dataset_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] = (dataset_vitals.loc[dataset_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] < 100).astype(int)
 
 # Load lab test
-lab = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
+lab_before_april = pd.read_csv('%s/emergency_room/lab_results.csv' % path)
+lab_before_april = lab_before_april.loc[lab_before_april['DATA_RICHIESTA'].apply(lambda x: ('4' not in (re.search('/(.*)/', str(x)).group(1)))&('5' not in (re.search('/(.*)/', str(x)).group(1)))), :]
+lab_from_april = pd.read_csv('%s/emergency_room/lab_results_from_april.csv' % path)
+lab_from_april = lab_from_april.rename(columns={'PRESTAZIONE_RISULTATO': 'PRESTAZIONE', 'VALORE_NUMERICO': 'VALORE'})
+lab = pd.concat([lab_before_april, lab_from_april[lab_before_april.columns]], axis = 0, sort=False)
 lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
 lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
 lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(u.get_lab_dates)
@@ -112,7 +120,7 @@ cremona_treatments[['PREGNANT', 'SMOKING', 'MAINHEARTDISEASE', 'GLASGOW_COMA_SCO
 cremona_treatments['AGE'] = discharge_info.loc[discharge_info['NOSOLOGICO'].isin(patients), 'Age'].reset_index(drop = True)
 
 # Get the dataframe to map DIAGNOSIS CODE to HCUP_ORDER
-icd_dict = pd.read_csv('../../../analyzer/hcup_dictionary_icd9.csv')
+icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd9.csv')
 comorb_long = comorb_long.merge(icd_dict[['DIAGNOSIS_CODE', 'HCUP_ORDER']], how = 'left', on = 'DIAGNOSIS_CODE').dropna().reset_index(drop = True)
 
 # Fill the comorbidities table
