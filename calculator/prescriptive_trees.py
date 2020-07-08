@@ -104,11 +104,11 @@ grid = iai.GridSearch(
         random_seed=SEED,
     ),
     max_depth=range(3, 6),
-    prescription_factor=np.linspace(0.0, 1.0, 6),
+    prescription_factor=np.linspace(0.0, 1.0, 11),
 )
 grid.fit(X_train, Z_train, y_train, validation_criterion='prediction_accuracy')
 
-def evaluate_opt(X,Z,y):
+def evaluate_opt(lnr,X,Z,y):
   preds = lnr.predict_outcomes(X)
   preds['Prescribe'] = lnr.predict(X)[0]
   preds['REGIMEN'] = Z
@@ -121,6 +121,13 @@ train_preds.to_csv(results_folder+'train_matched_bypatient_summary_opt.csv')
 
 test_preds = evaluate_opt(X_test, Z_test, y_test)
 test_preds.to_csv(results_folder+'test_matched_bypatient_summary_opt.csv')
+
+version_folder = 
+import evaluation.treatment_utils as u
+
+data_version = 'validation_cremona'
+X, Z, y = u.load_data(data_path,'hope_hm_cremona_matched_cl_noncl_removed_train.csv',
+                                split=data_version,matched=matched)
 
 
 # lnr =  grid.get_learner()
