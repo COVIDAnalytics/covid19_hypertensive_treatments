@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np 
 import analyzer.loaders.cremona.utils as u
 
-path = '../../../../data/cremona'
+path = '../data/cremona'
 
 # Load Cremona data
 discharge_info = pd.read_csv('%s/general/discharge_info.csv' % path)
