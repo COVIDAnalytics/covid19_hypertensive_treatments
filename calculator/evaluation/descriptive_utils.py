@@ -202,6 +202,36 @@ def descriptive_table(data, features, short_version = False, digits = 1, outcome
         
     return summary_full[final_cols]
 
+def descriptive_table_treatments(data, features, short_version = False, digits = 1, outcome = 'DEATH'):
+
+    cols_numeric = [i for i in features['numeric']]
+    cols_categoric = [i for i in features['categorical']] + [outcome]
+    
+    summary_numeric = np.transpose(data[cols_numeric].describe())
+    summary_numeric['Type'] = 'Numeric'
+    summary_numeric['output'] = round(summary_numeric['50%'],digits).map(str) + " (" + round(summary_numeric['25%'],digits).map(str) + "-" + round(summary_numeric['75%'],digits).map(str) + ")"
+    
+    summary_categoric = np.transpose(data[cols_categoric].describe())
+    summary_categoric['Type'] = 'Categoric'
+    summary_categoric['output'] = round(summary_categoric['count']*summary_categoric['mean']).map(str) + " (" + round(summary_categoric['mean']*100,digits).map(str) + "%)"
+    
+    summary_full = summary_numeric.append(summary_categoric)
+    summary_full['Missing_Pct'] = round((1 - summary_full['count']/data.shape[0])*100,digits).map(str)+'%'
+    # summary_full.drop(["count"], axis = 1, inplace = True)
+    summary_full.columns = ['Count', 'Mean', 'Standard Deviation', 
+                            'Minimum', '25th Percentile', '50th Percentile',
+                            '75th Percentile', 'Maximum', 'Type',  'Output', 'Percent Missing']
+    final_cols = ['Type', 'Output', 'Percent Missing', 'Count', 'Mean', 'Standard Deviation',
+              'Minimum', '25th Percentile', '50th Percentile','75th Percentile', 'Maximum']
+    summary_full.loc['Patient Count'] = np.nan
+    summary_full.loc['Patient Count','Output'] = data.shape[0] 
+
+    if short_version:
+        final_cols = ['Output', 'Percent Missing']
+        
+    return summary_full[final_cols]
+
+
 # def generate_summary(data, features, title_mapping = None):
     
 #     resAll = descriptive_table(data, features, title_mapping)
