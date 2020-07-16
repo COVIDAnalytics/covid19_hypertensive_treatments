@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from analyzer.loaders.cremona.utils import SPANISH_ITALIAN_DATA, HCUP_LIST
+import analyzer.loaders.cremona.utils as uc
 from analyzer.loaders.partners.utils import COVID_LABELS, PARTNERS_LABS, PARTNERS_VITALS, PARTNERS_COMORBIDITIES, PARTNERS_COMORBS, COLUMNS_WITHOUT_LAB
 path = '../../covid19_partners'
 
@@ -73,16 +73,14 @@ comorbidities = pd.concat([comorbidities_march, comorbidities_april, comorbiditi
 comorbidities = comorbidities.loc[comorbidities['pdgID'].isin(partners_demographics.index), :]
 comorbidities['CurrentICD9ListTXT'] = comorbidities['CurrentICD9ListTXT'].apply(lambda x: x.replace('.', ''))
 icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd9.csv')
-comorbidities = comorbidities.merge(icd_dict[['DIAGNOSIS_CODE', 'HCUP_ORDER', 'GROUP_HCUP']], how = 'left', left_on = 'CurrentICD9ListTXT', right_on = 'DIAGNOSIS_CODE')
-comorbidities = comorbidities.loc[comorbidities['HCUP_ORDER'].isin(HCUP_LIST), ['pdgID', 'GROUP_HCUP']].reset_index(drop=True)
-comorbidities.loc[:, 'GROUP_HCUP'] = comorbidities.loc[:, 'GROUP_HCUP'].apply(lambda x: PARTNERS_COMORBS[x]) #there are only diabetes patients in the data
-comorbidities = comorbidities.drop_duplicates().reset_index(drop = True)
+comorbidities = comorbidities.merge(icd_dict[['DIAGNOSIS_CODE', 'HCUP_ORDER', 'GROUP_HCUP']], how = 'left', left_on = 'CurrentICD9ListTXT', right_on = 'DIAGNOSIS_CODE')[['pdgID', 'DIAGNOSIS_CODE', 'HCUP_ORDER']]
 
-partners_comorbs = pd.DataFrame(0, index = partners_demographics.index, columns = PARTNERS_COMORBIDITIES)
-for patient in comorbidities['pdgID'].unique():
-    for comorb in PARTNERS_COMORBIDITIES:
-        if patient in partners_comorbs.index:
-            partners_comorbs.loc[patient, comorb] = int(len(comorbidities.loc[(comorbidities['pdgID'] == patient) & (comorbidities['GROUP_HCUP'] == comorb), :]) > 0)
+partners_comorbs = pd.DataFrame(0, index = partners_demographics.index, columns = uc.COMORBS_TREATMENTS_NAMES)
+for i in range(len(uc.COMORBS_TREATMENTS_HCUP)):
+    name = uc.COMORBS_TREATMENTS_NAMES[i]
+    hcups = uc.COMORBS_TREATMENTS_HCUP[i]
+    for j in partners_comorbs.index:
+        partners_comorbs.loc[j, name] = int(sum(comorbidities.loc[comorbidities['pdgID'] == j, 'HCUP_ORDER'].isin(hcups)) > 0)
 
 patients = list(set(partners_demographics.index).intersection(set(partners_labs.index)).intersection(partners_vitals.index).intersection(partners_comorbs.index))
 partners_demographics = partners_demographics.reindex(patients)
@@ -93,5 +91,14 @@ partners_comorbs = partners_comorbs.reindex(patients)
 #Replace the ABG SaO2 test, which is almost absent, with the vital measurement
 partners_labs.loc[:, 'ABG: Oxygen Saturation (SaO2)'] = partners_vitals.loc[:, 'SaO2']
 
-partners_with_lab = pd.concat([partners_demographics, partners_labs, partners_vitals, partners_comorbs], axis = 1)[SPANISH_ITALIAN_DATA + ['Outcome']]
-partners_without_lab = pd.concat([partners_demographics, partners_labs, partners_vitals, partners_comorbs], axis = 1)[COLUMNS_WITHOUT_LAB + ['Outcome']]
+
+# Load the Medication ID
+medid = pd.read_csv('%s/data/v2/medicationid_AHFSCD_link.csv' %path)
+medid = medid.drop_duplicates('MedicationID').reset_index(drop=True)
+treatments_march = pd.read_csv('%s/data/v2/20200301_20200331/hospital_meds.csv' %path)
+treatments_april = pd.read_csv('%s/data/v2/20200401_20200430/hospital_meds.csv' %path)
+treatments_may = pd.read_csv('%s/data/v2/20200501_20200531/hospital_meds.csv' %path)
+treatments_june = pd.read_csv('%s/data/v2/20200601_20200610/hospital_meds.csv' %path)
+treatments = pd.concat([treatments_march, treatments_april, treatments_may, treatments_june], axis=0)
+treatments = treatments.loc[treatments['pdgID'].isin(partners_demographics.index), :].reset_index(drop=True)
+treatments = treatments.merge(medid[['MedicationID', 'AHFSCD']], on = 'MedicationID')
