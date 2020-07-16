@@ -34,14 +34,18 @@ except:
   print("Must provide algorithm list")
 
 #Define the name of the dataset for saving the results
-version_folder = "matched_limited_treatments_der_val_update/"
+#version_folder = "matched_limited_treatments_der_val_update/"
+version_folder = "matched_all_treatments_der_val_update/"
+
 data_path = "../../covid19_treatments_data/"+version_folder
 
 SEEDS = range(1,6)
 
 split_type = 'bycountry'
 prediction = 'DEATH'
-treatment_list = ['All', 'Chloroquine and Anticoagulants','Chloroquine and Antivirals']
+#treatment_list = ['All', 'Chloroquine and Anticoagulants','Chloroquine and Antivirals']
+treatment_list = ['Chloroquine Only', 'All', 'Chloroquine and Anticoagulants',
+                  'Chloroquine and Antivirals', 'Non-Chloroquine']
 #match_list = [True,False]
 
 param_list = list(itertools.product(treatment_list, algorithm_list, SEEDS))
@@ -80,8 +84,8 @@ other_tx=True
 # print(name_datasets[mask])
 
 # if matched:
-data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_train.csv')
-data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_test.csv')
+data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_train.csv')
+data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_test.csv')
 file_name = str(t) + '_matched_' + prediction.lower() + '_seed' + str(SEED) 
 # else: 
 # data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_train.csv')
