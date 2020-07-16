@@ -94,7 +94,7 @@ partners_labs.loc[:, 'ABG: Oxygen Saturation (SaO2)'] = partners_vitals.loc[:, '
 
 # Load the Medication ID
 medid = pd.read_csv('%s/data/v2/medicationid_AHFSCD_link.csv' %path)
-medid = medid.drop_duplicates('MedicationID').reset_index(drop=True)
+# medid = medid.drop_duplicates('MedicationID').reset_index(drop=True)
 treatments_march = pd.read_csv('%s/data/v2/20200301_20200331/hospital_meds.csv' %path)
 treatments_april = pd.read_csv('%s/data/v2/20200401_20200430/hospital_meds.csv' %path)
 treatments_may = pd.read_csv('%s/data/v2/20200501_20200531/hospital_meds.csv' %path)
