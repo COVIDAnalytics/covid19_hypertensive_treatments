@@ -22,24 +22,29 @@ from pathlib import Path
 
 data_path = '../../covid19_treatments_data/'
 results_path = '../../covid19_treatments_results/'
-version_folder = "matched_limited_treatments_der_val_update/"
+#version_folder = "matched_limited_treatments_der_val_update/"
+version_folder = "matched_all_treatments_der_val_update/"
 save_path = results_path + version_folder + 'summary/'
 preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
-treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
-algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
-# algorithm_list = ['lr','rf','cart','qda','gb']
+#treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
+treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
+#algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
+#algorithm_list = ['lr','rf','cart','qda','gb']
+algorithm_list = ['lr','cart','qda','gb']
+
+training_set_name = 'hope_hm_cremona_matched_all_treatments_train.csv'
 
 #%% Generate predictions across all combinations
 
 if not preload:
     # create summary folder if it does not exist
     Path(save_path).mkdir(parents=True, exist_ok=True)
-    for data_version in ['train','test','validation','validation_cremona','validation_hope']:
+    for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
         print(data_version)
-        X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_cl_noncl_removed_train.csv',
+        X, Z, y = u.load_data(data_path+version_folder,training_set_name,
                             split=data_version, matched=matched)
         print("X observations: ", str(X.shape[0]))
         result = pd.concat([u.algorithm_predictions(X, treatment_list = treatment_list, 
@@ -66,11 +71,11 @@ if not preload:
 
 #The options for datasets are: 'train','test','validation','validation_cremona','validation_hope'
 
-for data_version in ['train','test','validation','validation_cremona','validation_hope']:
+for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
     print(data_version)
 
     #Read in the relevant data
-    X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_cl_noncl_removed_train.csv',
+    X, Z, y = u.load_data(data_path+version_folder,training_set_name,
                                     split=data_version,matched=matched)
     
     result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
