@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import analyzer.loaders.cremona.utils as uc
-from analyzer.loaders.partners.utils import COVID_LABELS, PARTNERS_LABS, PARTNERS_VITALS, PARTNERS_COMORBIDITIES, PARTNERS_COMORBS, COLUMNS_WITHOUT_LAB
+import analyzer.loaders.partners.utils as u 
 path = '../../covid19_partners'
 
 partners_demographics_march = pd.read_csv('%s/data/v2/20200301_20200331/demographics.csv' %path)
@@ -9,7 +9,7 @@ partners_demographics_april = pd.read_csv('%s/data/v2/20200401_20200430/demograp
 partners_demographics_may = pd.read_csv('%s/data/v2/20200501_20200531/demographics.csv' %path)
 partners_demographics_june = pd.read_csv('%s/data/v2/20200601_20200610/demographics.csv' %path)
 partners_demographics = pd.concat([partners_demographics_march, partners_demographics_april, partners_demographics_may, partners_demographics_june], axis = 0)
-partners_demographics = partners_demographics.loc[partners_demographics['COV2Result'].isin(COVID_LABELS), :]
+partners_demographics = partners_demographics.loc[partners_demographics['COV2Result'].isin(u.COVID_LABELS), :]
 partners_demographics = partners_demographics.rename(columns = {'age': 'Age', 'gender': 'Gender', 'deathMinPostAdmission': 'Outcome'})
 partners_demographics['Gender'] = (partners_demographics['Gender'] == 'Female').astype(int)
 partners_demographics['Outcome'] = (partners_demographics['Outcome'].notna()).astype(int)
@@ -24,11 +24,11 @@ labs_may = pd.read_csv('%s/data/v2/20200501_20200531/labs.csv' %path)
 labs_june = pd.read_csv('%s/data/v2/20200601_20200610/labs.csv' %path)
 labs = pd.concat([labs_march, labs_april, labs_may, labs_june], axis = 0)
 labs = labs.loc[labs['pdgID'].isin(partners_demographics.index), :]
-labs['componentNM'] = labs['componentNM'].apply(lambda x: PARTNERS_LABS[x])
+labs['componentNM'] = labs['componentNM'].apply(lambda x: u.PARTNERS_LABS[x])
 labs = labs.sort_values(['pdgID', 'resultDTSMinPostAdmission'], ascending = [True, False])
 labs = labs.drop_duplicates(['pdgID', 'componentNM']).reset_index(drop = True)
 
-partners_labs = pd.DataFrame(np.NaN, index = labs['pdgID'].unique(), columns = PARTNERS_LABS.values())
+partners_labs = pd.DataFrame(np.NaN, index = labs['pdgID'].unique(), columns = u.PARTNERS_LABS.values())
 
 for patient in labs['pdgID'].unique():
     for exam in labs['componentNM'].unique():
@@ -49,11 +49,11 @@ vitals_may = pd.read_csv('%s/data/v2/20200501_20200531/vitals.csv' %path)
 vitals_june = pd.read_csv('%s/data/v2/20200601_20200610/vitals.csv' %path)
 vitals = pd.concat([vitals_march, vitals_april, vitals_may, vitals_june], axis = 0)
 vitals = vitals.loc[vitals['pdgID'].isin(partners_demographics.index), :]
-vitals.loc[:, 'FlowsheetMeasureNM'] = vitals.loc[:, 'FlowsheetMeasureNM'].apply(lambda x: PARTNERS_VITALS[x])
+vitals.loc[:, 'FlowsheetMeasureNM'] = vitals.loc[:, 'FlowsheetMeasureNM'].apply(lambda x: u.PARTNERS_VITALS[x])
 vitals = vitals.sort_values(['pdgID', 'recordedDTSMinPostAdmission'], ascending = [True, False])
 vitals = vitals.drop_duplicates(['pdgID', 'FlowsheetMeasureNM']).reset_index(drop = True)
 
-partners_vitals = pd.DataFrame(np.NaN, index = vitals['pdgID'].unique(), columns = PARTNERS_VITALS.values())
+partners_vitals = pd.DataFrame(np.NaN, index = vitals['pdgID'].unique(), columns = u.PARTNERS_VITALS.values())
 for patient in vitals['pdgID'].unique():
     for exam in vitals['FlowsheetMeasureNM'].unique():
             value = vitals.loc[(vitals['pdgID'] == patient) & (vitals['FlowsheetMeasureNM'] == exam), 'MeasureTXT'].values
@@ -102,3 +102,16 @@ treatments_june = pd.read_csv('%s/data/v2/20200601_20200610/hospital_meds.csv' %
 treatments = pd.concat([treatments_march, treatments_april, treatments_may, treatments_june], axis=0)
 treatments = treatments.loc[treatments['pdgID'].isin(partners_demographics.index), :].reset_index(drop=True)
 treatments = treatments.merge(medid[['MedicationID', 'AHFSCD']], on = 'MedicationID')
+
+partners_treatments = pd.DataFrame(0, index = patients, columns = u.IN_TREATMENTS_NAME + u.TREATMENTS_NAME)
+for i in range(1, len(u.IN_TREATMENTS)): #oxygen is not available, so we start from 1
+    name = u.IN_TREATMENTS_NAME[i]
+    treat = u.IN_TREATMENTS[i]
+    for j in patients:
+        partners_treatments.loc[j, name] = int(sum(treatments.loc[treatments['pdgID'] == j, 'AHFSCD'].apply(lambda x: uc.check_treatment(treat, x))) > 0)
+
+for i in range(len(u.TREATMENTS)):
+    name = u.TREATMENTS_NAME[i]
+    treat = u.TREATMENTS[i]
+    for j in patients:
+        partners_treatments.loc[j, name] = int(sum(treatments.loc[treatments['pdgID'] == j, 'AHFSCD'].apply(lambda x: uc.check_treatment(treat, x))) > 0)
