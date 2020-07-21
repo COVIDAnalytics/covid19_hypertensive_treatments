@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import analyzer.loaders.cremona.utils as uc
 import analyzer.loaders.partners.utils as u 
+import re
 path = '../../covid19_partners'
 
 partners_demographics_march = pd.read_csv('%s/data/v2/20200301_20200331/demographics.csv' %path)
@@ -41,7 +42,16 @@ for patient in labs['pdgID'].unique():
 partners_labs.loc[partners_labs['CBC: Hemoglobin'] > 20, 'CBC: Hemoglobin'] = np.NaN
 partners_labs.loc[partners_labs['CBC: Leukocytes'] > 50, 'CBC: Leukocytes'] = np.NaN
 partners_labs.loc[partners_labs['CBC: Mean Corpuscular Volume (MCV)'] > 120, 'CBC: Mean Corpuscular Volume (MCV)'] = np.NaN
+partners_labs.loc[partners_labs['ABSOLUTE LYMPHS'] > 10, 'ABSOLUTE LYMPHS'] = np.NaN
+partners_labs.loc[:, 'ABSOLUTE LYMPHS'] = partners_labs.loc[:, 'ABSOLUTE LYMPHS']*1000
 partners_labs.loc[partners_labs['CBC: Platelets'] > 800, 'CBC: Platelets'] = np.NaN
+partners_labs.loc[:, 'CBC: Platelets'] = partners_labs.loc[:, 'CBC: Platelets']*1000
+partners_labs.loc[:, 'CBC: Leukocytes'] = partners_labs.loc[:, 'CBC: Leukocytes']*1000
+partners_labs.loc[:, 'D-DIMER'] = partners_labs.loc[:, 'D-DIMER']/1000
+partners_labs.loc[partners_labs['D-DIMER'] > 20, 'D-DIMER'] = np.NaN
+partners_labs.loc[partners_labs['Blood Creatinine'] > 10, 'Blood Creatinine'] = np.NaN
+partners_labs.loc[partners_labs['PROCALCITONIN'] > 5, 'PROCALCITONIN'] = np.NaN
+partners_labs.loc[partners_labs['LDH'] > 1000, 'LDH'] = np.NaN
 
 vitals_march = pd.read_csv('%s/data/v2/20200301_20200331/vitals.csv' %path)
 vitals_april = pd.read_csv('%s/data/v2/20200401_20200430/vitals.csv' %path)
@@ -64,6 +74,7 @@ for patient in vitals['pdgID'].unique():
                     partners_vitals.loc[patient, exam] = float(value)
                 except:
                     partners_vitals.loc[patient, exam] = value
+partners_vitals['Systolic Blood Pressure'] = partners_vitals['Systolic Blood Pressure'].apply(lambda x: float(x.split('/')[0]))
 
 comorbidities_march = pd.read_csv('%s/data/v2/20200301_20200331/medical_history.csv' %path)
 comorbidities_april = pd.read_csv('%s/data/v2/20200401_20200430/medical_history.csv' %path)
@@ -90,7 +101,8 @@ partners_comorbs = partners_comorbs.reindex(patients)
 
 #Replace the ABG SaO2 test, which is almost absent, with the vital measurement
 partners_labs.loc[:, 'ABG: Oxygen Saturation (SaO2)'] = partners_vitals.loc[:, 'SaO2']
-
+partners_vitals = partners_vitals.rename(columns = uc.VITALS_TREAT_RENAME)
+partners_labs = partners_labs.rename(columns = uc.LABS_TREAT_RENAME)
 
 # Load the Medication ID
 medid = pd.read_csv('%s/data/v2/medicationid_AHFSCD_link.csv' %path)
@@ -115,3 +127,44 @@ for i in range(len(u.TREATMENTS)):
     treat = u.TREATMENTS[i]
     for j in patients:
         partners_treatments.loc[j, name] = int(sum(treatments.loc[treatments['pdgID'] == j, 'AHFSCD'].apply(lambda x: uc.check_treatment(treat, x))) > 0)
+
+partners_treatments.loc[:, 'HOME_OXIGEN_THERAPY'] = np.NaN
+
+partners_final = pd.DataFrame(np.NaN, index = patients, columns = uc.COLS_TREATMENTS)
+partners_final.loc[:, 'HOSPITAL'] = 'PARTNERS'
+partners_final.loc[:, 'COUNTRY'] = 'USA'
+partners_final.loc[partners_demographics['Gender'] == 1, 'GENDER'] = 'FEMALE'
+partners_final.loc[partners_demographics['Gender'] == 0, 'GENDER'] = 'MALE'
+partners_final.loc[:, 'RACE'] = partners_demographics.loc[:, 'ethnicity']
+partners_final.loc[:, 'AGE'] = partners_demographics.loc[:, 'Age']
+partners_final.loc[:, ['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA',
+       'OBESITY', 'RENALINSUF', 'ANYLUNGDISEASE', 'AF', 'VIH',
+       'ANYHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE',
+       'CONECTIVEDISEASE', 'LIVER_DISEASE', 'CANCER']] = partners_comorbs.loc[:, ['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA',
+                                                                            'OBESITY', 'RENALINSUF', 'ANYLUNGDISEASE', 
+                                                                            'AF', 'VIH', 'ANYHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE',
+                                                                            'CONECTIVEDISEASE', 'LIVER_DISEASE', 'CANCER']]
+partners_final[u.IN_TREATMENTS_NAME + u.TREATMENTS_NAME] = partners_treatments[u.IN_TREATMENTS_NAME + u.TREATMENTS_NAME]
+
+partners_final.loc[partners_labs['SAT02_BELOW92'].notna(), 'SAT02_BELOW92'] = (partners_labs.loc[partners_labs['SAT02_BELOW92'].notna(), 'SAT02_BELOW92'] < 92).astype(int)
+partners_final.loc[partners_labs['D-DIMER'].notna(), 'DDDIMER_B'] = (partners_labs.loc[partners_labs['D-DIMER'].notna(), 'D-DIMER'] > 0.5).astype(int)
+partners_final.loc[partners_labs['PROCALCITONIN'].notna(), 'PROCALCITONIN_B'] = (partners_labs.loc[partners_labs['PROCALCITONIN'].notna(), 'PROCALCITONIN'] > 0.5).astype(int)
+partners_final.loc[partners_labs['PCR_B'].notna(), 'PCR_B'] = (partners_labs.loc[partners_labs['PCR_B'].notna(), 'PCR_B'] > 100).astype(int)
+partners_final.loc[partners_labs['TRANSAMINASES_B'].notna(), 'TRANSAMINASES_B'] = (partners_labs.loc[partners_labs['TRANSAMINASES_B'].notna(), 'TRANSAMINASES_B'] > 40).astype(int)
+partners_final.loc[partners_labs['LDH'].notna(), 'LDL_B'] = ((partners_labs.loc[partners_labs['LDH'].notna(), 'LDH'] < 240)|(partners_labs.loc[partners_labs['LDH'].notna(), 'LDH'] > 480)) .astype(int)
+partners_final.loc[:, ['CREATININE', 'SODIUM', 'LEUCOCYTES', 'HEMOGLOBIN', 'PLATELETS']] = partners_labs.loc[:, ['CREATININE', 'SODIUM', 'LEUCOCYTES', 'HEMOGLOBIN', 'PLATELETS']]
+partners_final.loc[:, 'LYMPHOCYTES'] = partners_labs.loc[:, 'ABSOLUTE LYMPHS']
+
+partners_final.loc[partners_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] = (partners_vitals.loc[partners_vitals['FAST_BREATHING'].notna(), 'FAST_BREATHING'] > 22).astype(int)
+partners_final.loc[partners_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] = (partners_vitals.loc[partners_vitals['BLOOD_PRESSURE_ABNORMAL_B'].notna(), 'BLOOD_PRESSURE_ABNORMAL_B'] < 100).astype(int)
+partners_final.loc[:, 'MAXTEMPERATURE_ADMISSION'] = partners_vitals.loc[:, 'MAXTEMPERATURE_ADMISSION']
+
+partners_final['REGIMEN'] = partners_final.apply(lambda row: uc.get_regimen(row['CLOROQUINE'], row['ANTIVIRAL'], row['ANTICOAGULANTS']), axis = 1)
+partners_final.loc[:, 'DEATH'] = partners_demographics.loc[:, 'Outcome']
+
+# Fill COMORB_DEATH
+for j in patients:
+    partners_final.loc[j, 'COMORB_DEATH'] = int(sum(comorbidities.loc[comorbidities['pdgID'] == j, 'HCUP_ORDER'].isin(uc.COMORB_DEATH)) > 0)
+partners_final.loc[:, 'COMORB_DEATH'] = partners_final.apply(lambda row: max(row['DEATH'], row['COMORB_DEATH']), axis = 1)
+
+partners_final.to_csv('/Users/lucamingardi/Dropbox (MIT)/covid19_treatments/partners_treatments.csv', index = False)
