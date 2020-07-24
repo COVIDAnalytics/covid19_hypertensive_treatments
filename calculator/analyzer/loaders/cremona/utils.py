@@ -557,7 +557,7 @@ def get_regimen(cloroquine, antiviral, anticoagulant):
         return 'Chloroquine Only'
     
 def check_treatment(l, obs):
-    c = 0
+    c = 0 
     for i in l:
         if i in obs:
             c += 1
