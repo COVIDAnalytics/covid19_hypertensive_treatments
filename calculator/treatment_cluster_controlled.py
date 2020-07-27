@@ -35,9 +35,8 @@ except:
 
 #Define the name of the dataset for saving the results
 #version_folder = "matched_limited_treatments_der_val_update/"
-version_folder = "matched_all_treatments_der_val_update/"
-
-data_path = "../../covid19_treatments_data/"+version_folder
+data_path = "../../covid19_treatments_data/matched_all_treatments_der_val_update/"
+version_folder = "matched_all_treatments_der_val_update_nomedhx/"
 
 SEEDS = range(1,6)
 
@@ -78,7 +77,7 @@ demographics = True
 comorbidities = True
 vitals = True
 lab_tests=True
-med_hx=True
+med_hx=False ## change on 7/27
 other_tx=True
 # mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
 # print(name_datasets[mask])
