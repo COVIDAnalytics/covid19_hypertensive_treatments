@@ -14,7 +14,7 @@ from sklearn import metrics
 
 import analyzer.dataset as ds
 
-def load_data(folder, train_name, split, matched):
+def load_data(folder, train_name, split, matched, prediction = 'DEATH'):
     file = train_name
     #if split == 'validation':
     if 'validation'in split:
@@ -24,7 +24,7 @@ def load_data(folder, train_name, split, matched):
     file  = file.replace('train',split)
     print(file)
     df = pd.read_csv(folder+file)
-    X, y = ds.create_dataset_treatment(df)
+    X, y = ds.create_dataset_treatment(df, prediction = prediction)
     X.index.name = 'ID'
     y.index.name = 'ID'
     Z = X['REGIMEN']
@@ -54,7 +54,7 @@ def generate_preds(X, treatment, algorithm, matched, result_path, SEED = 1, pred
              model_file = pickle.load(file)
           
         ## Match data to dummy variables for this dataframe
-        train = model_file['train'].drop('DEATH', axis=1)
+        train = model_file['train'].drop(prediction, axis=1)
         X = X.reindex(labels = train.columns,  axis = 1).replace(np.nan,0)
         
                     
@@ -182,17 +182,17 @@ def retrieve_proba_per_prescription(result, summary, pred_results):
     
     return merged_summary
 
-def prescription_effectiveness(result_df, summary, pred_results,algorithm_list):
+def prescription_effectiveness(result_df, summary, pred_results,algorithm_list, prediction = 'DEATH'):
     
     
     result_df = result_df.reset_index()        
     #Add the prescription decision and the outcome for every patient
-    merged_summary = pd.merge(result_df, summary[{'Prescribe','DEATH'}], left_on='ID', right_index=True)
+    merged_summary = pd.merge(result_df, summary[{'Prescribe',prediction}], left_on='ID', right_index=True)
     
     merged_summary.drop(columns={'Prescribe_x'}, inplace=True)
     merged_summary.rename(columns={"Prescribe_y":"Prescribe"}, inplace=True)
     
-    merged_summary = merged_summary.melt(id_vars=['ID', 'Algorithm','Prescribe_Prediction', 'DEATH', 'Prescribe'])
+    merged_summary = merged_summary.melt(id_vars=['ID', 'Algorithm','Prescribe_Prediction', prediction, 'Prescribe'])
     
     pe_list = list()
     for alg in algorithm_list: 
@@ -200,25 +200,25 @@ def prescription_effectiveness(result_df, summary, pred_results,algorithm_list):
         # Convert to long format
         res = merged_summary[(merged_summary['Algorithm']==alg) & (merged_summary['Prescribe']==merged_summary['variable'])]
 
-        pe = res.value.mean() - res.DEATH.mean()
+        pe = res.value.mean() - res[prediction].mean()
         pe_list.append(pe)
         
     pe_list = pd.Series(pe_list, index = algorithm_list)
 
     return pe_list
 
-def prescription_robustness_a(result, summary, pred_results,algorithm_list):
+def prescription_robustness_a(result, summary, pred_results,algorithm_list, prediction = 'DEATH'):
     
     result_df = result
     
     result_df = result_df.reset_index()        
     #Add the prescription decision and the outcome for every patient
-    merged_summary = pd.merge(result_df, summary[{'Prescribe','DEATH','REGIMEN'}], left_on='ID', right_index=True)
+    merged_summary = pd.merge(result_df, summary[{'Prescribe',prediction,'REGIMEN'}], left_on='ID', right_index=True)
     
     merged_summary.drop(columns={'Prescribe_x'}, inplace=True)
     merged_summary.rename(columns={"Prescribe_y":"Prescribe"}, inplace=True)
     
-    merged_summary = merged_summary.melt(id_vars=['ID', 'Algorithm','Prescribe_Prediction', 'DEATH', 'REGIMEN','Prescribe'])
+    merged_summary = merged_summary.melt(id_vars=['ID', 'Algorithm','Prescribe_Prediction', prediction, 'REGIMEN','Prescribe'])
 
     #Add the pads in the columns
     merged_summary['REGIMEN']  = [sub.replace(' ', '_') for sub in list(merged_summary['REGIMEN'])]   
@@ -240,18 +240,18 @@ def prescription_robustness_a(result, summary, pred_results,algorithm_list):
     return df
 
 
-def algorithm_prescription_robustness(result, n_summary, pred_results,algorithm_list):
+def algorithm_prescription_robustness(result, n_summary, pred_results,algorithm_list, prediction = 'DEATH'):
     
     result_df = result
     
     result_df = result_df.reset_index()        
     #Add the prescription decision and the outcome for every patient
-    merged_summary = pd.merge(result_df, n_summary[{'Prescribe','DEATH','REGIMEN','AverageProbability'}], left_on='ID', right_index=True)
+    merged_summary = pd.merge(result_df, n_summary[{'Prescribe',prediction,'REGIMEN','AverageProbability'}], left_on='ID', right_index=True)
     
     merged_summary.drop(columns={'Prescribe_x'}, inplace=True)
     merged_summary.rename(columns={"Prescribe_y":"Prescribe"}, inplace=True)
     
-    merged_summary = merged_summary.melt(id_vars=['ID', 'Algorithm','Prescribe_Prediction', 'DEATH', 'REGIMEN','Prescribe','AverageProbability'])
+    merged_summary = merged_summary.melt(id_vars=['ID', 'Algorithm','Prescribe_Prediction', prediction, 'REGIMEN','Prescribe','AverageProbability'])
 
     #Add the pads in the columns
     merged_summary['REGIMEN']  = [sub.replace(' ', '_') for sub in list(merged_summary['REGIMEN'])] 
@@ -275,9 +275,9 @@ def algorithm_prescription_robustness(result, n_summary, pred_results,algorithm_
 
 
 
-def get_prescription_AUC(n_summary):
+def get_prescription_AUC(n_summary, prediction = 'DEATH'):
     
-    y_t = n_summary[n_summary['Match']==True]['DEATH']
+    y_t = n_summary[n_summary['Match']==True][prediction]
     pred_t = n_summary[n_summary['Match']==True]['AverageProbability']
     
     auc_res = metrics.roc_auc_score(y_t, pred_t)
