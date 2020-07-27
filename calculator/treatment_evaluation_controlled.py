@@ -26,12 +26,12 @@ outcome = 'COMORB_DEATH'
 results_path = '../../covid19_treatments_results/'
 #version_folder = "matched_limited_treatments_der_val_update/"
 save_path = results_path + version_folder + 'summary/'
-preload = True
+preload = False
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 #treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
-treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
+treatment_list = ['Chloroquine_Only', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
 algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
 #algorithm_list = ['lr','rf','cart','qda','gb']
 # algorithm_list = ['lr','cart','qda','gb']
