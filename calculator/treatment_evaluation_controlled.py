@@ -20,9 +20,16 @@ from pathlib import Path
 #%% Set Problem Parameters
 #Paths for data access
 
+## with comorbidities
+# data_path = '../../covid19_treatments_data/matched_all_treatments_der_val_update/'
+# version_folder = "matched_all_treatments_der_val_update/COMORB_DEATH/"
+# outcome = 'COMORB_DEATH'
+
+## death only
 data_path = '../../covid19_treatments_data/matched_all_treatments_der_val_update/'
-version_folder = "matched_all_treatments_der_val_update/COMORB_DEATH/"
-outcome = 'COMORB_DEATH'
+version_folder = "matched_all_treatments_der_val_update/"
+outcome = 'DEATH'
+
 results_path = '../../covid19_treatments_results/'
 #version_folder = "matched_limited_treatments_der_val_update/"
 save_path = results_path + version_folder + 'summary/'
