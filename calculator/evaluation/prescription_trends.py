@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import itertools
 from scipy import stats
+import matplotlib.pyplot as plt
+
 
 from julia import Julia           
 # jl = Julia(compiled_modules = False)
@@ -36,6 +38,7 @@ X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_all_trea
 
 summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
 Z_presc = summary['Prescribe']
+Y_presc = summary['AverageProbability']
 
 #%% Create multi-class classification tre
 grid = iai.GridSearch(
@@ -119,5 +122,63 @@ for idx, pair in enumerate(list(itertools.combinations(treatment_list, 2))):
 desc_all['Min_Significance'] = np.min(desc_all.loc[:,desc_all.columns.str.startswith('SigTest')], axis =  1)
 desc_all.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_prescription_descriptive.csv', index = True)
 
-    
+#%%
+#We would like to see how the treatments get distributed
+X['Z'] = Z     
+X['Z_presc'] = Z_presc
+X['Y'] = y
+X['Y_presc'] = Y_presc
+
+cross_treatments = X[['Z_presc', 'Z']].groupby(['Z_presc', 'Z']).size().to_frame('size').reset_index()
+cross_treatments = cross_treatments.pivot(index='Z_presc', columns='Z', values='size')
+
+cross_treatments_norm = cross_treatments.div(cross_treatments.sum(axis=1), axis=0)
+cross_treatments_norm['size'] = cross_treatments.sum(axis=1)
+cross_treatments_norm.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_cross_prescription_summary.csv', index = True)
+
+#%%
+#Plot by age the mortality rate
+# data to plot
+bins= [0,40,55,70,110]
+X['AgeGroup'] = pd.cut(X['AGE'], bins=bins,right=False)
+
+age_table = X.groupby('AgeGroup')[['Y','Y_presc']].mean()
+ax = age_table.plot.bar(rot=0)
+# Add title and axis names
+plt.title('Mortality Rate by Age Group')
+plt.ylabel('Mortality Rate')
+
+#%%
+gender_table = X.groupby('GENDER_MALE')[['Y','Y_presc']].mean()
+ax = gender_table.plot.bar(rot=0)
+# Add title and axis names
+plt.title('Mortality Rate by Gender')
+plt.ylabel('Mortality Rate')
+
+#%%
+so2_table = X.groupby('SAT02_BELOW92')[['Y','Y_presc']].mean()
+ax = so2_table.plot.bar(rot=0)
+# Add title and axis names
+plt.title('Mortality Rate by SATO2')
+plt.ylabel('Mortality Rate')
+
+#%%
+bins= [0,0.8,2]
+X['CreatinineGroups'] = pd.cut(X['CREATININE'], bins=bins,right=False)
+
+cr_table = X.groupby('CreatinineGroups')[['Y','Y_presc']].mean()
+ax = cr_table.plot.bar(rot=0)
+# Add title and axis names
+plt.title('Mortality Rate by Creatinine Group')
+plt.ylabel('Mortality Rate')
+
+
+
+
+
+
+
+
+
+
 

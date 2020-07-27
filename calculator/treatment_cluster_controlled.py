@@ -42,9 +42,9 @@ data_path = "../../covid19_treatments_data/"+version_folder
 SEEDS = range(1,6)
 
 split_type = 'bycountry'
-prediction = 'DEATH'
+prediction = 'COMORB_DEATH'#'DEATH'
 #treatment_list = ['All', 'Chloroquine and Anticoagulants','Chloroquine and Antivirals']
-treatment_list = ['Chloroquine Only', 'All', 'Chloroquine and Anticoagulants',
+treatment_list = ['Chloroquine Only','All', 'Chloroquine and Anticoagulants',
                   'Chloroquine and Antivirals', 'Non-Chloroquine']
 #match_list = [True,False]
 
@@ -68,7 +68,7 @@ algorithm = o.algorithms[name_algo]
 t = treatment.replace(" ", "_")
 # file_name = str(dataset)+'_results_treatment_'+str(t)+'_seed' + str(SEED) + '_split_' + str(split_types[split_type]) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 # output_folder = 'predictors/treatment_mortality'
-results_folder = '../../covid19_treatments_results/' + version_folder + str(name_algo) +'/'
+results_folder = '../../covid19_treatments_results/' + version_folder + str(prediction) +'/' + str(name_algo) +'/'
 # make folder if it does not exist
 Path(results_folder).mkdir(parents=True, exist_ok=True)
 
