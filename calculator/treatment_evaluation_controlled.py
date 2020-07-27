@@ -31,9 +31,9 @@ match_status = 'matched' if matched else 'unmatched'
 
 #treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
 treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
-#algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
+algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
 #algorithm_list = ['lr','rf','cart','qda','gb']
-algorithm_list = ['lr','cart','qda','gb']
+# algorithm_list = ['lr','cart','qda','gb']
 
 training_set_name = 'hope_hm_cremona_matched_all_treatments_train.csv'
 
@@ -164,6 +164,8 @@ for data_version in ['train','test','validation','validation_cremona','validatio
         
         #We can create a table and save all the results
         pr_table['PE'] = pe_list
+        pr_min = np.diag(pr_table).min()
+        pr_max = np.diag(pr_table).max()
         PR.append(PE)
         pr_table.loc['prescr'] = PR
         pr_table.to_csv(save_path+data_version+'_'+match_status+'_prescription_robustness_summary_'+weighted_status+'.csv')
@@ -174,7 +176,16 @@ for data_version in ['train','test','validation','validation_cremona','validatio
         print("Match Rate: ", match_rate)
         print("Average AUC: ", average_auc)
         print("PE: ", PE)
+        print("PR Range: ", pr_max,  " - ", pr_min)
 
+
+for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
+    print(data_version)
+    pr_table = pd.read_csv(save_path+data_version+'_matched_prescription_robustness_summary_weighted.csv')
+    pr_table = pr_table.drop('Unnamed: 0', axis=1)
+    pr_min = np.diag(pr_table)[:-1].min()
+    pr_max = np.diag(pr_table)[:-1].max()
+    print("PR Range: ", round(pr_max,3),  " - ", round(pr_min,3))
 
 #%%  
 print("Prescription scheme = ", s)

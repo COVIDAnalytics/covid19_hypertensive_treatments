@@ -5,32 +5,33 @@ import numpy as np
 import itertools
 from scipy import stats
 
-# from julia import Julia           
-# # jl = Julia(compiled_modules = False)
-# jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
-# from interpretableai import iai
+from julia import Julia           
+# jl = Julia(compiled_modules = False)
+jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
+from interpretableai import iai
 
 #%% Set Problem Parameters
 #Paths for data access
 
 data_path = '../../covid19_treatments_data/'
 results_path = '../../covid19_treatments_results/'
-version_folder = "matched_limited_treatments_der_val_update/"
+version_folder = "matched_all_treatments_der_val_update/"
 save_path = results_path + version_folder + 'summary/'
 preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
-treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
+# treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
+treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
 algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
 # algorithm_list = ['lr','rf','cart','qda','gb']
 
 #%%  Evaluate specific version
-data_version = 'test' # in ['train','test','validation','validation_cremona','validation_hope']:
+data_version = 'train' # in ['train','test','validation','validation_cremona','validation_hope']:
 weighted_status = 'weighted'
 
 #Read in the relevant data
-X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_cl_noncl_removed_train.csv',
+X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
                                 split=data_version,matched=matched)
 
 summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
@@ -45,9 +46,31 @@ grid = iai.GridSearch(
     criterion = ['gini','entropy']
 )
 grid.fit(X, Z_presc, validation_criterion = 'entropy')
-lnr = grid.get_learner()
 
+lnr = grid.get_learner()
 lnr.write_html(save_path+data_version+'_'+match_status+'_'+weighted_status+'_prescription_explanations.html')
+
+lnr.score(X, Z_presc, criterion = 'misclassification')
+
+df_list = [pd.Series(['dataset','misclassification','entropy','gini'])]
+for data_version in ['train','test','validation','validation_cremona','validation_hope']:
+  X_test, Z_test, y_test = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
+                                  split=data_version,matched=matched)
+  X_test = X_test.reindex(X.columns, axis = 1, fill_value = 0)
+  # Load presccriptions
+  summary_test = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
+  Z_test_presc = summary_test['Prescribe']
+  # compute misclassification
+  s1 = lnr.score(X_test, Z_test_presc, criterion = 'misclassification')
+  s2 = lnr.score(X_test, Z_test_presc, criterion = 'entropy')
+  s3 = lnr.score(X_test, Z_test_presc, criterion = 'gini')
+  df_list.append(pd.Series([data_version, s1, s2, s3]))
+  print("Version = ", data_version, "; Score = ", s1)
+
+df_performance = pd.concat(df_list, axis=1)
+df_performance.to_csv(save_path+data_version+'_'+match_status+'_prescription_explanations_performance.csv',
+  index = False, header = False)
+
 
 #%% Descriptive Analysis
 

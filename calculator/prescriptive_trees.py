@@ -31,16 +31,14 @@ name_algo = 'opt'
 # jobid = int(jobid)-1
 # print('Jobid = ', jobid)
 
-version_folder = "matched_limited_treatments_der_val_update/"
+version_folder = "matched_all_treatments_der_val_update/"
 data_path = "../../covid19_treatments_data/"+version_folder
 
 SEED = 1 
 SEED = int(jobid)
 
-treatment = 'All'
 prediction = 'DEATH'
 ## Results path and file names
-t = treatment.replace(" ", "_")
 # file_name = str(dataset)+'_results_treatment_'+str(t)+'_seed' + str(SEED) + '_split_' + str(split_types[split_type]) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 # output_folder = 'predictors/treatment_mortality'
 results_folder = '../../covid19_treatments_results/' + version_folder + str(name_algo) +'/'
@@ -59,9 +57,8 @@ other_tx=True
 # print(name_datasets[mask])
 
 # if matched:
-data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_train.csv')
-data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_test.csv')
-file_name = str(t) + '_matched_' + prediction.lower() + '_seed' + str(SEED) 
+data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_train.csv')
+data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_test.csv')
 # else: 
 # data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_train.csv')
 # data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_test.csv')
@@ -116,22 +113,18 @@ def evaluate_opt(lnr,X,Z,y):
   preds['Match'] = preds['Prescribe'] == preds['REGIMEN']
   return preds
 
-train_preds = evaluate_opt(X_train, Z_train, y_train)
+lnr =  grid.get_learner()
+lnr.write_html(results_folder+'opt.html')
+
+train_preds = evaluate_opt(lnr,X_train, Z_train, y_train)
 train_preds.to_csv(results_folder+'train_matched_bypatient_summary_opt.csv')
 
-test_preds = evaluate_opt(X_test, Z_test, y_test)
+test_preds = evaluate_opt(lnr,X_test, Z_test, y_test)
 test_preds.to_csv(results_folder+'test_matched_bypatient_summary_opt.csv')
-
-version_folder = 
-import evaluation.treatment_utils as u
 
 data_version = 'validation_cremona'
 X, Z, y = u.load_data(data_path,'hope_hm_cremona_matched_cl_noncl_removed_train.csv',
                                 split=data_version,matched=matched)
-
-
-# lnr =  grid.get_learner()
-# lnr.write_html(results_folder+'opt_example.html')
 
 # grid = iai.GridSearch(
 #     iai.OptimalTreePrescriptionMinimizer(
