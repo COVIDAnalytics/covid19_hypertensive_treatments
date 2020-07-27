@@ -183,7 +183,7 @@ for data_version in ['train','test','validation','validation_cremona','validatio
         print("PE: ", PE)
         print("PR Range: ", round(pr_max,3),  " - ", round(pr_min,3))
         
-        metrics_agg.loc[data_version] = [data_version, weighted_status, match_rate, average_auc, PE, pr_max, pr_min]
+        metrics_agg.loc[len(metrics_agg)] = [data_version, weighted_status, match_rate, average_auc, PE, pr_max, pr_min]
 
 metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
 
