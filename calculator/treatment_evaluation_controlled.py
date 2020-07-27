@@ -9,7 +9,7 @@ Created on Wed Jun 17 13:57:19 2020
 #%% Prepare environment
 import os
 
-os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calculator')
+# os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calculator')
 
 import evaluation.treatment_utils as u
 import pandas as pd
@@ -26,13 +26,13 @@ outcome = 'COMORB_DEATH'
 results_path = '../../covid19_treatments_results/'
 #version_folder = "matched_limited_treatments_der_val_update/"
 save_path = results_path + version_folder + 'summary/'
-preload = False
+preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 #treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
 treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
-algorithm_list = ['lr','rf','cart','xgboost','qda','gb']
+algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
 #algorithm_list = ['lr','rf','cart','qda','gb']
 # algorithm_list = ['lr','cart','qda','gb']
 
@@ -72,6 +72,9 @@ if not preload:
 #%% Evaluate Methods for a single variant
 
 #The options for datasets are: 'train','test','validation','validation_cremona','validation_hope'
+
+metrics_agg = pd.DataFrame(columns = ['match_rate','average_auc','PE','pr_low','pr_high'])
+
 
 for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
     print(data_version)
@@ -179,7 +182,10 @@ for data_version in ['train','test','validation','validation_cremona','validatio
         print("Average AUC: ", average_auc)
         print("PE: ", PE)
         print("PR Range: ", round(pr_max,3),  " - ", round(pr_min,3))
+        
+        metrics_agg.loc[data_version] = [match_rate, average_auc, PE, pr_max, pr_min]
 
+metrics_agg.to_csv(save_path+match_status+'_metrics_summary_'+weighted_status+'.csv')
 
 # for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
 #     print(data_version)
