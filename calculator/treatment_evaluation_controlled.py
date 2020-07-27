@@ -73,7 +73,7 @@ if not preload:
 
 #The options for datasets are: 'train','test','validation','validation_cremona','validation_hope'
 
-metrics_agg = pd.DataFrame(columns = ['match_rate','average_auc','PE','pr_low','pr_high'])
+metrics_agg = pd.DataFrame(columns = ['data_version','weighted_status','match_rate','average_auc','PE','pr_low','pr_high'])
 
 
 for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
@@ -183,9 +183,9 @@ for data_version in ['train','test','validation','validation_cremona','validatio
         print("PE: ", PE)
         print("PR Range: ", round(pr_max,3),  " - ", round(pr_min,3))
         
-        metrics_agg.loc[data_version] = [match_rate, average_auc, PE, pr_max, pr_min]
+        metrics_agg.loc[data_version] = [data_version, weighted_status, match_rate, average_auc, PE, pr_max, pr_min]
 
-metrics_agg.to_csv(save_path+match_status+'_metrics_summary_'+weighted_status+'.csv')
+metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
 
 # for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
 #     print(data_version)
