@@ -37,12 +37,12 @@ def generate_preds(X, treatment, algorithm, matched, result_path, SEED = 1, pred
     ## Results path and file names
     match_status =  'matched' if matched else 'unmatched'
     result_path = result_path + str(algorithm) +'/'
-file_list = os.listdir(result_path)
-file_start = str(treatment) + '_' + match_status + '_' + prediction.lower() + '_seed' + str(SEED)
-file_name = ''
-for f in file_list:
-    if f.startswith(file_start) & ~f.endswith('.json'):
-        file_name = result_path+f
+    file_list = os.listdir(result_path)
+    file_start = str(treatment) + '_' + match_status + '_' + prediction.lower() + '_seed' + str(SEED)
+    file_name = ''
+    for f in file_list:
+        if f.startswith(file_start) & ~f.endswith('.json'):
+            file_name = result_path+f
 
     if file_name == '':
         print("Invalid treatment/algorithm combination (" + str(treatment) + ", " + str(algorithm)+ ")")
