@@ -27,8 +27,8 @@ from pathlib import Path
 
 ## death only
 data_path = '../../covid19_treatments_data/matched_all_treatments_der_val_update/'
-version_folder = "matched_all_treatments_der_val_update/"
-outcome = 'DEATH'
+version_folder = "matched_all_treatments_der_val_update_nomedhx/COMORB_DEATH/"
+outcome = 'COMORB_DEATH'
 
 results_path = '../../covid19_treatments_results/'
 #version_folder = "matched_limited_treatments_der_val_update/"
