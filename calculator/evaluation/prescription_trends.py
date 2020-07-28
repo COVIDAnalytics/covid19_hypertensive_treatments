@@ -15,26 +15,34 @@ from interpretableai import iai
 #%% Set Problem Parameters
 #Paths for data access
 
+outcome = "COMORB_DEATH"
+
+if outcome == "COMORB_DEATH":
+    outcome_path = 'COMORB_DEATH/'
+else:
+     outcome_path = ''
+
 data_path = '../../covid19_treatments_data/'
 results_path = '../../covid19_treatments_results/'
 version_folder = "matched_all_treatments_der_val_update/"
-save_path = results_path + version_folder + 'summary/'
+save_path = results_path + version_folder + outcome_path + 'summary/'
 preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 # treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
-treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
+#treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
+treatment_list = ['Chloroquine_Only', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
 algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
 # algorithm_list = ['lr','rf','cart','qda','gb']
 
 #%%  Evaluate specific version
-data_version = 'train' # in ['train','test','validation','validation_cremona','validation_hope']:
+data_version = 'test' # in ['train','test','validation','validation_cremona','validation_hope']:
 weighted_status = 'weighted'
 
 #Read in the relevant data
 X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
-                                split=data_version,matched=matched)
+                            split=data_version, matched=matched, prediction = outcome)
 
 summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
 Z_presc = summary['Prescribe']
@@ -147,13 +155,14 @@ ax = age_table.plot.bar(rot=0)
 # Add title and axis names
 plt.title('Mortality Rate by Age Group')
 plt.ylabel('Mortality Rate')
-
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'ageplot.png')
 #%%
 gender_table = X.groupby('GENDER_MALE')[['Y','Y_presc']].mean()
 ax = gender_table.plot.bar(rot=0)
 # Add title and axis names
 plt.title('Mortality Rate by Gender')
 plt.ylabel('Mortality Rate')
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'genderplot.png')
 
 #%%
 so2_table = X.groupby('SAT02_BELOW92')[['Y','Y_presc']].mean()
@@ -161,6 +170,7 @@ ax = so2_table.plot.bar(rot=0)
 # Add title and axis names
 plt.title('Mortality Rate by SATO2')
 plt.ylabel('Mortality Rate')
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'sa02plot.png')
 
 #%%
 bins= [0,0.8,2]
@@ -171,6 +181,7 @@ ax = cr_table.plot.bar(rot=0)
 # Add title and axis names
 plt.title('Mortality Rate by Creatinine Group')
 plt.ylabel('Mortality Rate')
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'creatplot.png')
 
 
 
