@@ -24,6 +24,7 @@ discharge_info['Modalità di dimissione'] = \
 discharge_info.drop_duplicates(['NumeroScheda', 'Modalità di dimissione'],
                                 inplace=True)
 discharge_info.drop_duplicates(['NumeroScheda'], inplace=True)
+discharge_info.loc[:, u.PROCEDURE_COLUMNS] = discharge_info.loc[:, u.PROCEDURE_COLUMNS].replace(np.NaN, -1)
 discharge_info['Ventilation'] = ((discharge_info['Proc0'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
                                 discharge_info['Proc1'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
                                     discharge_info['Proc2'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
@@ -31,7 +32,6 @@ discharge_info['Ventilation'] = ((discharge_info['Proc0'].apply(lambda x: int(u.
                                             discharge_info['Proc4'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
                                                 discharge_info['Proc5'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x))))) > 0).astype(int)
 discharge_info = discharge_info[['NumeroScheda', 'Sesso', 'Età', 'Data di ricovero', 'Modalità di dimissione', 'Ventilation']]
-discharge_info.loc[:, u.PROCEDURE_COLUMNS] = discharge_info.loc[:, u.PROCEDURE_COLUMNS].replace(np.NaN, -1)
 discharge_info = discharge_info.rename(columns={'NumeroScheda': 'NOSOLOGICO',
                                                 'Sesso': 'Gender',
                                                 'Età':'Age',
