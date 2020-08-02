@@ -24,7 +24,14 @@ discharge_info['Modalità di dimissione'] = \
 discharge_info.drop_duplicates(['NumeroScheda', 'Modalità di dimissione'],
                                 inplace=True)
 discharge_info.drop_duplicates(['NumeroScheda'], inplace=True)
-discharge_info = discharge_info[['NumeroScheda', 'Sesso', 'Età', 'Data di ricovero', 'Modalità di dimissione']]
+discharge_info['Ventilation'] = ((discharge_info['Proc0'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
+                                discharge_info['Proc1'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
+                                    discharge_info['Proc2'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
+                                        discharge_info['Proc3'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
+                                            discharge_info['Proc4'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x)))) + \
+                                                discharge_info['Proc5'].apply(lambda x: int(u.check_treatment(u.LIST_PROCEDURES, str(x))))) > 0).astype(int)
+discharge_info = discharge_info[['NumeroScheda', 'Sesso', 'Età', 'Data di ricovero', 'Modalità di dimissione', 'Ventilation']]
+discharge_info.loc[:, u.PROCEDURE_COLUMNS] = discharge_info.loc[:, u.PROCEDURE_COLUMNS].replace(np.NaN, -1)
 discharge_info = discharge_info.rename(columns={'NumeroScheda': 'NOSOLOGICO',
                                                 'Sesso': 'Gender',
                                                 'Età':'Age',
@@ -58,6 +65,7 @@ vitals_before_april = vitals_before_april.loc[vitals_before_april['DATA_PARAMETR
 vitals_from_april = pd.read_csv('%s/emergency_room/vital_signs_from_april.csv' % path)
 vitals = pd.concat([vitals_before_april, vitals_from_april], axis = 0)
 vitals = vitals.rename(columns={"SCHEDA_PS": "NOSOLOGICO"})
+vitals = vitals.loc[vitals['NOSOLOGICO'].isin(patients), :]
 vitals['NOSOLOGICO'] = vitals['NOSOLOGICO'].astype(str)
 dataset_vitals = u.create_vitals_dataset(vitals, patients, lab_tests=True)
 dataset_vitals = dataset_vitals[u.VITALS_TREAT]
@@ -73,6 +81,7 @@ lab_from_april = lab_from_april.rename(columns={'PRESTAZIONE_RISULTATO': 'PRESTA
 lab = pd.concat([lab_before_april, lab_from_april[lab_before_april.columns]], axis = 0, sort=False)
 lab = lab.rename(columns={"SC_SCHEDA": "NOSOLOGICO"})
 lab['NOSOLOGICO'] = lab['NOSOLOGICO'].astype(str)
+lab = lab.loc[lab['NOSOLOGICO'].isin(patients), :]
 lab['DATA_RICHIESTA'] = lab['DATA_RICHIESTA'].apply(u.get_lab_dates)
 lab = lab[lab['NOSOLOGICO'].isin(patients)]
 dates_pcr = lab[lab.DESCR_PRESTAZIONE == 'CORONAVIRUS COVID19 PCR Real Time                                               '][['NOSOLOGICO', 'DATA_RICHIESTA']].drop_duplicates('NOSOLOGICO').reset_index(drop = True)
