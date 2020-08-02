@@ -261,6 +261,10 @@ TREATMENTS = [CORTICOSTEROIDS, INTERFERONOR, TOCILIZUMAB, ANTIBIOTICS, ACEI_ARBS
 
 # HCUP for COMORB_DEATH columns. SEPSIS = 2; Acute Renal Failure: 145; Heart Failure: 97; Embolic Event: 105
 COMORB_DEATH = [2, 145, 97, 105]
+SEPSIS = [2]
+ARF = [145]
+HF = [97]
+EMBOLIC = [105]
 
 def clean_lab_features(lab_feat):
     features = [x for x in lab_feat

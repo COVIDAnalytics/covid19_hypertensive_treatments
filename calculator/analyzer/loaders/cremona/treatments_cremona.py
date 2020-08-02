@@ -168,9 +168,19 @@ for j in patients:
 # Add the regimen for each patient
 cremona_treatments['REGIMEN'] = cremona_treatments.apply(lambda row: u.get_regimen(row['CLOROQUINE'], row['ANTIVIRAL'], row['ANTICOAGULANTS']), axis = 1)
 
+# Add rows for SEPSIS, Acute Renal Failure (ARF), Heart Failure (HF), Embolic event
+cremona_treatments.loc[:, 'SEPSIS'] = 0
+cremona_treatments.loc[:, 'ARF'] = 0
+cremona_treatments.loc[:, 'HF'] = 0
+cremona_treatments.loc[:, 'EMBOLIC'] = 0
+
 # Fill COMORB_DEATH
 for j in patients:
     cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'COMORB_DEATH'] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(u.COMORB_DEATH)) > 0)
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'SEPSIS'] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(u.SEPSIS)) > 0)
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'ARF'] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(u.ARF)) > 0)
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'HF'] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(u.HF)) > 0)
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'EMBOLIC'] = int(sum(comorb_long.loc[comorb_long['NOSOLOGICO'] == j, 'HCUP_ORDER'].isin(u.EMBOLIC)) > 0)
 cremona_treatments.loc[:, 'COMORB_DEATH'] = cremona_treatments.apply(lambda row: max(row['DEATH'], row['COMORB_DEATH']), axis = 1)
 
 cremona_treatments = cremona_treatments.drop('NOSOLOGICO', axis = 1)
