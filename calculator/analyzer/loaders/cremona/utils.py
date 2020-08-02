@@ -266,6 +266,10 @@ ARF = [145]
 HF = [97]
 EMBOLIC = [105]
 
+# Respiratory procedures 9390 = Continuous Respiratory Pressure, 9396 = other oxygen treatment, 9671 = less than 96 hours of ventilation, 9672 = more than 96 hours of ventilation
+PROCEDURE_COLUMNS = ['Proc1', 'Proc2', 'Proc3', 'Proc4', 'Proc5']
+LIST_PROCEDURES = ['9390', '9396', '9671', '9672']
+
 def clean_lab_features(lab_feat):
     features = [x for x in lab_feat
                 if all(s not in x for s in LAB_FEATURES_NOT_CONTAIN) and
