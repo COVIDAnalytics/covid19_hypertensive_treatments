@@ -193,7 +193,9 @@ for j in patients:
 cremona_treatments.loc[:, 'COMORB_DEATH'] = cremona_treatments.apply(lambda row: max(row['DEATH'], row['COMORB_DEATH']), axis = 1)
 
 # Add column for ventilation
-cremona_treatments.loc[:, 'Outcome'] = 0
+cremona_treatments.loc[:, 'OUTCOME'] = 0
+for j in patients:
+    cremona_treatments.loc[cremona_treatments['NOSOLOGICO'] == j, 'OUTCOME'] = discharge_info.loc[discharge_info['NOSOLOGICO'] == j, 'Ventilation']
 
 cremona_treatments = cremona_treatments.drop('NOSOLOGICO', axis = 1)
 cremona_treatments.to_csv('/Users/lucamingardi/Dropbox (MIT)/covid19_treatments/cremona_treatments.csv')
