@@ -21,9 +21,9 @@ source("matching_functions.R")
 source("descriptive_functions.R")
 
 # Set the path
-save_path = "~/Dropbox (MIT)/covid19_personal/merging_data/covid19_hope_hm_cremona/"
+# save_path = "~/Dropbox (MIT)/covid19_personal/merging_data/covid19_hope_hm_cremona/"
 # save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
-# save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_hope/"
+ save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/filter_imputed_cremona_in_val/"
 
 # Read in the data
 data = read.csv(paste(save_path, "hope_hm_cremona_data_clean_imputed.csv",sep=""), header = TRUE)
@@ -34,6 +34,10 @@ merge_mult <- function(x, y){
   return(df)
 }
 
+# Treatment for which we will split on
+z = "CORTICOSTEROIDS"
+outcomes = c('DEATH','COMORB_DEATH')
+
 data_hope <- data %>% filter(SOURCE == 'Hope')
 stats_data_hope <- descriptive_table(data_hope, short_version = TRUE)[[1]] %>% dplyr::select(-Missing) %>% rename(Hope_Summary = Summary)
 data_hm <- data %>% filter(SOURCE == 'HM')
@@ -43,11 +47,11 @@ stats_data_cremona <- descriptive_table(data_cremona, short_version = TRUE)[[1]]
 stats_compare <- Reduce(merge_mult, list(stats_data_hope, stats_data_hm, stats_data_cremona))
 
 stats_data_hope_text <- descriptive_table(data_hope, short_version = TRUE)[[2]] %>%
-  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'REGIMEN') %>% dplyr::select(-Feature) %>% rename(Hope_Freq = Freq, Feature = Value)
+  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(Hope_Freq = Freq, Feature = Value)
 stats_data_hm_text <- descriptive_table(data_hm, short_version = TRUE)[[2]] %>% 
-  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'REGIMEN') %>% dplyr::select(-Feature) %>% rename(HM_Freq = Freq, Feature = Value)
+  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(HM_Freq = Freq, Feature = Value)
 stats_data_cremona_text <- descriptive_table(data_cremona, short_version = TRUE)[[2]] %>% 
-  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'REGIMEN') %>% dplyr::select(-Feature) %>% rename(Cremona_Freq = Freq, Feature = Value)
+  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(Cremona_Freq = Freq, Feature = Value)
 stats_compare_text <- Reduce(merge_mult, list(stats_data_hope_text, stats_data_hm_text, stats_data_cremona_text))
 
 # Source and countries to include
@@ -55,15 +59,18 @@ stats_compare_text <- Reduce(merge_mult, list(stats_data_hope_text, stats_data_h
 groups = c("Hope-Spain","HM-Spain","Cremona-Italy")
 # groups = c("SPAIN")
 
-treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS','REGIMEN')
+#Treatments for which we need to control
+treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS')#,'REGIMEN')
 outcomes = c('DEATH','COMORB_DEATH')
 
 # Filter the appropriate dataframe
-df_full = data %>% filter(SOURCE_COUNTRY %in% groups) 
-df_other = data %>% filter(!(SOURCE_COUNTRY %in% groups))
+df_full = data %>% filter(SOURCE_COUNTRY %in% groups)%>%dplyr::select(-REGIMEN)
+df_other = data %>% filter(!(SOURCE_COUNTRY %in% groups))%>%dplyr::select(-REGIMEN)
 
 # Keep the treatment as an independent vector
-regimens_col = df_full %>% dplyr::select(REGIMEN)
+regimens_col = df_full %>%dplyr::select(z) 
+regimens_col = replace(regimens_col, regimens_col==0, paste("NO_",z,sep=""))
+regimens_col =replace(regimens_col, regimens_col==1, z)
 
 # Select columns based on which the matching will take place
 features_matching = c("AGE",
@@ -86,9 +93,10 @@ features_matching = c("AGE",
                       "PCR_B",
                       "DDDIMER_B",
                       "LDL_B",
-                      "TRANSAMINASES_B",
-                      "IN_DVITAMINSUPLEMENT",
-                      "BLOOD_PRESSURE_ABNORMAL_B"
+                      treatments
+                      #"TRANSAMINASES_B",
+                      #"IN_DVITAMINSUPLEMENT",
+                      #"BLOOD_PRESSURE_ABNORMAL_B"
                       )
 
 df <- df_full[,features_matching]
@@ -101,15 +109,21 @@ one_hot = predict(dmy_out, newdata = df)
 out <- split(data.frame(one_hot), f = regimens_col)
 
 # We will pick as reference the treatment option that has the highest sample size
+min_treat = nrow(df_full)
+idx = 0
 for (i in 1:length(out)){
   print(paste("Treatment option ", names(out)[i], " has ", nrow(out[[i]]), " observations.", sep = ""))
+  if(nrow(out[[i]])<min_treat){
+    min_treat = nrow(out[[i]])
+    idx = i
+    }
 }
 
 # Base on that statement we will pick as treatment of reference:
 # Chloroquine Only with 725 observations - Hope ONLY
 # Chloroquine Only with 885 observations - Hope, HM, and Cremona (879 after updates)
-base_treatment = 4
-t = 1:5
+base_treatment = idx
+t = 1:2
 to_match_treatments = t[-base_treatment]
 n_base = nrow(out[[base_treatment]])
 
@@ -151,7 +165,7 @@ length(common_control)
 vline = 0.15
 
 # Select a treatment option to investigate
-to_treat=1
+to_treat=base_treatment
 t_inds = which(matched_object_list[[to_treat]]$t_ind == 1)
 
 # The loveplot plots the absolute  differences in means 
