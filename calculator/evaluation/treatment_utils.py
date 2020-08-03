@@ -10,7 +10,8 @@ import numpy as np
 import os
 import pickle
 from sklearn import metrics
-
+from scipy import stats
+import math
 
 import analyzer.dataset as ds
 
@@ -272,6 +273,19 @@ def algorithm_prescription_robustness(result, n_summary, pred_results,algorithm_
                 
     return pr_list
 
+def CI_printout(series, interval = 0.95, method = 't'):
+  mean_val = series.mean()
+  n = series.count()
+  stdev = series.std()
+  if method == 't':
+    test_stat = stats.t.ppf((interval + 1)/2, n)
+  elif method == 'z':
+    test_stat = stats.norm.ppf((interval + 1)/2)
+  lower_bound =  round(mean_val - test_stat * stdev / math.sqrt(n),3)
+  upper_bound =  round(mean_val + test_stat * stdev / math.sqrt(n),3)
+
+  output = str(round(mean_val,3))+' ('+str(lower_bound)+':'+str(upper_bound)+')'
+  return output
 
 
 
