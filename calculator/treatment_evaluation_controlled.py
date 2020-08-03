@@ -100,6 +100,10 @@ for data_version in ['train','test','validation','validation_cremona','validatio
     pred_results = pd.read_csv(save_path+data_version+'_'+match_status+'_performance_allmethods.csv')
     pred_results.set_index('Algorithm', inplace = True)
     
+    #Predictive performance table to base decisions from
+    pred_perf_results = pd.read_csv(save_path+'train'+'_'+match_status+'_performance_allmethods.csv')
+    pred_perf_results.set_index('Algorithm', inplace = True)
+  
     #Compare different schemes
     
     schemes = ['weighted','no_weights']
@@ -114,7 +118,7 @@ for data_version in ['train','test','validation','validation_cremona','validatio
         if weighted_status == 'weighted':
             summary = pd.DataFrame(index = summary.index)
             for col in treatment_list:
-                pred_auc = pred_results.loc[:,col].rename('AUC', axis = 1)
+                pred_auc = pred_perf_results.loc[:,col].rename('AUC', axis = 1)
                 result_join = result.merge(pred_auc, on = 'Algorithm').groupby('ID').apply(u.wavg, col, 'AUC')
                 summary = pd.concat([summary,result_join.rename(col)], axis = 1)
         
@@ -129,10 +133,10 @@ for data_version in ['train','test','validation','validation_cremona','validatio
             summary['Prescribe_list'] =   summary['Prescribe'].str.split(pat = ', ')
         
             #Resolve Ties among treatments by selecting the treatment whose models have the highest average AUC
-            summary = u.resolve_ties(summary, result, pred_results)
+            summary = u.resolve_ties(summary, result, pred_perf_results)
             summary['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
             
-            merged_summary = u.retrieve_proba_per_prescription(result, summary, pred_results)
+            merged_summary = u.retrieve_proba_per_prescription(result, summary, pred_perf_results)
             merged_summary.to_csv(save_path+data_version+'_'+match_status+'_detailed_bypatient_summary_'+weighted_status+'.csv')
             
             #Add the average probability and participating algorithms for each patient prescription

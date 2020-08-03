@@ -14,7 +14,7 @@ from sklearn import metrics
 
 import analyzer.dataset as ds
 
-def load_data(folder, train_name, split, matched, prediction = 'DEATH'):
+def load_data(folder, train_name, split, matched, prediction = 'DEATH', med_hx=False):
     file = train_name
     #if split == 'validation':
     if 'validation'in split:
@@ -24,7 +24,7 @@ def load_data(folder, train_name, split, matched, prediction = 'DEATH'):
     file  = file.replace('train',split)
     print(file)
     df = pd.read_csv(folder+file)
-    X, y = ds.create_dataset_treatment(df, prediction = prediction)
+    X, y = ds.create_dataset_treatment(df, prediction = prediction, med_hx=med_hx)
     X.index.name = 'ID'
     y.index.name = 'ID'
     Z = X['REGIMEN']

@@ -25,7 +25,9 @@ else:
 data_path = '../../covid19_treatments_data/'
 results_path = '../../covid19_treatments_results/'
 version_folder = "matched_all_treatments_der_val_update/"
-save_path = results_path + version_folder + outcome_path + 'summary/'
+version_folder_results = "matched_all_treatments_der_val_update_nomedhx/"
+
+save_path = results_path + version_folder_results + outcome_path + 'summary/'
 preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
