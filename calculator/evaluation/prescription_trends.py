@@ -7,10 +7,10 @@ from scipy import stats
 import matplotlib.pyplot as plt
 
 
-from julia import Julia           
-# jl = Julia(compiled_modules = False)
-jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
-from interpretableai import iai
+# from julia import Julia           
+# # jl = Julia(compiled_modules = False)
+# jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
+# from interpretableai import iai
 
 #%% Set Problem Parameters
 #Paths for data access
@@ -22,12 +22,16 @@ if outcome == "COMORB_DEATH":
 else:
      outcome_path = ''
 
-data_path = '../../covid19_treatments_data/'
-results_path = '../../covid19_treatments_results/'
-version_folder = "matched_all_treatments_der_val_update/"
-version_folder_results = "matched_all_treatments_der_val_update_nomedhx/"
+data_path = '../../covid19_treatments_data/matched_all_treatments_der_val_update/'
+results_path = '../../covid19_treatments_results/matched_all_treatments_der_val_update_nomedhx/'
+save_path = results_path + outcome_path + 'summary/'
 
-save_path = results_path + version_folder_results + outcome_path + 'summary/'
+# data_path = '../../covid19_treatments_data/'
+# results_path = '../../covid19_treatments_results/'
+# version_folder = "matched_all_treatments_der_val_update/"
+# version_folder_results = "matched_all_treatments_der_val_update_nomedhx/"
+# save_path = results_path + version_folder_results + outcome_path + 'summary/'
+
 preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
@@ -39,11 +43,11 @@ algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
 # algorithm_list = ['lr','rf','cart','qda','gb']
 
 #%%  Evaluate specific version
-data_version = 'test' # in ['train','test','validation','validation_cremona','validation_hope']:
+data_version = 'train' # in ['train','test','validation','validation_cremona','validation_hope']:
 weighted_status = 'weighted'
 
 #Read in the relevant data
-X, Z, y = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
+X, Z, y = u.load_data(data_path,'hope_hm_cremona_matched_all_treatments_train.csv',
                             split=data_version, matched=matched, prediction = outcome)
 
 summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
@@ -67,7 +71,7 @@ lnr.score(X, Z_presc, criterion = 'misclassification')
 
 df_list = [pd.Series(['dataset','misclassification','entropy','gini'])]
 for data_version in ['train','test','validation','validation_cremona','validation_hope']:
-  X_test, Z_test, y_test = u.load_data(data_path+version_folder,'hope_hm_cremona_matched_all_treatments_train.csv',
+  X_test, Z_test, y_test = u.load_data(data_path,'hope_hm_cremona_matched_all_treatments_train.csv',
                                   split=data_version,matched=matched)
   X_test = X_test.reindex(X.columns, axis = 1, fill_value = 0)
   # Load presccriptions
@@ -81,7 +85,7 @@ for data_version in ['train','test','validation','validation_cremona','validatio
   print("Version = ", data_version, "; Score = ", s1)
 
 df_performance = pd.concat(df_list, axis=1)
-df_performance.to_csv(save_path+data_version+'_'+match_status+'_prescription_explanations_performance.csv',
+df_performance.to_csv(save_path+match_status+'_prescription_explanations_performance.csv',
   index = False, header = False)
 
 
@@ -107,7 +111,7 @@ desc_list = []
 
 for p in treatment_list:
     df_sub = df.loc[df['Prescribe']==p,:]
-    desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
+    desc = d.descriptive_table_treatments(df_sub, features, short_version = True, outcome = outcome)
     desc = desc.drop('Percent Missing', axis=1)
     desc.loc['Treatment'] = p
     desc = desc.add_suffix('_'+p)
@@ -188,10 +192,46 @@ plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'cre
 
 
 
+#%% Look at prescription trends by subpopulation
+# import matplotlib
+# matplotlib.use('Agg') ## suppress display for cluster
 
+column = 'GENDER_MALE'
+col_rename = 'Gender (Male)'
 
+X['Z'] = Z
+X['Z_presc'] = Z_presc.str.replace('_',' ')
+X['Y'] = y
+X['Y_presc'] = Y_presc
 
+hist_true =  X.groupby([column, 'Z']).size().reset_index()
+hist_true.columns = [col_rename, 'Treatment','Given']
+hist_presc =  X.groupby([column, 'Z_presc']).size().reset_index()
+hist_presc.columns = [col_rename, 'Treatment','Prescribed']
 
+hist = hist_true.merge(hist_presc, on = [col_rename, 'Treatment'], how = 'left')
+hist.Treatment = hist.Treatment.str.replace('Chloroquine','HCQ')
 
+#%% Create plot
+from matplotlib import style
+style.use('ggplot')
 
+cols = X[column].value_counts().shape[0]
+fig, axes = plt.subplots(1, cols, figsize=(8*cols, 8), sharey = True)
+
+for x, i in enumerate(sorted(X[column].unique())):
+    data = hist[hist[col_rename] == i]
+    n = data['Given'].sum()
+    data['Given'] = data['Given']/n
+    data['Prescribed'] = data['Prescribed']/n
+    print (data)
+    data.plot(x="Treatment", y=["Given", "Prescribed"], kind="bar",
+              ax = axes[x])    # axes[x].set_xticklabels(data.index.values)
+    axes[x].legend(loc='best')
+    axes[x].grid(True)
+    axes[x].set_title(col_rename+' = '+str(i))
+
+fig.suptitle('Prescription trends by '+col_rename, fontsize=20)
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+col_rename+'_prescriptions.png',
+            bbox_inches = "tight")
 

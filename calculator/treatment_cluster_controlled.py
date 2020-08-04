@@ -35,22 +35,23 @@ except:
 
 #Define the name of the dataset for saving the results
 #version_folder = "matched_limited_treatments_der_val_update/"
-data_path = "../../covid19_treatments_data/matched_all_treatments_der_val_update/"
-version_folder = "matched_all_treatments_der_val_update_nomedhx/"
+data_path = "../../covid19_treatments_data/matched_all_treatments_der_val_update_addl_outcomes/"
+version_folder = "matched_all_treatments_der_val_update_addl_outcomes/"
 
-SEEDS = range(1,6)
+# SEEDS = range(1,6)
+SEEDS = [1]
 
 split_type = 'bycountry'
-prediction = 'COMORB_DEATH'#'DEATH'
 #treatment_list = ['All', 'Chloroquine and Anticoagulants','Chloroquine and Antivirals']
 treatment_list = ['Chloroquine Only','All', 'Chloroquine and Anticoagulants',
                   'Chloroquine and Antivirals', 'Non-Chloroquine']
+prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS','EMBOLIC']
 #match_list = [True,False]
 
-param_list = list(itertools.product(treatment_list, algorithm_list, SEEDS))
+param_list = list(itertools.product(prediction_list, treatment_list, algorithm_list, SEEDS))
 
-treatment, name_algo, SEED = param_list[jobid]
-print("Treatment = ", treatment, "; Algorithm = ", name_algo, "; Seed = ", SEED)
+prediction, treatment, name_algo, SEED = param_list[jobid]
+print("Treatment = ", treatment, "; Algorithm = ", name_algo, "; Seed = ", SEED, "; Outcome = ", prediction)
 if 'oct' == name_algo:
   from julia import Julia
   jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
@@ -83,8 +84,8 @@ other_tx=True
 # print(name_datasets[mask])
 
 # if matched:
-data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_train.csv')
-data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_test.csv')
+data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_train_addl_outcomes.csv')
+data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_test_addl_outcomes.csv')
 file_name = str(t) + '_matched_' + prediction.lower() + '_seed' + str(SEED) 
 # else: 
 # data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_train.csv')
