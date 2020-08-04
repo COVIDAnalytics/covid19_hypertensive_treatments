@@ -19,9 +19,9 @@ med_hx_cols = ['IN_PREVIOUSASPIRIN',
        'IN_BETABLOCKERS', 'IN_BETAGONISTINHALED', 'IN_GLUCORTICOIDSINHALED',
        'IN_DVITAMINSUPLEMENT', 'IN_BENZODIACEPINES', 'IN_ANTIDEPRESSANT']
 
-other_tx_cols = ['CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS']
+other_tx_cols = ['CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS','CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS']
 
-outcome_cols = ['DEATH', 'COMORB_DEATH']
+outcome_cols = ['DEATH', 'COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS','EMBOLIC']
 
 excluded_cols = ['COUNTRY','FAST_BREATHING', 'PREGNANT', 
     'HOME_OXIGEN_THERAPY', 'MAINHEARTDISEASE', 'SMOKING', 'PROCALCITONIN_B', 
@@ -35,17 +35,16 @@ def create_dataset_treatment(data, treatment = None,
                         med_hx=True,
                         other_tx=True,
                         prediction = 'DEATH'):
-
+    
     cols_include = (demographics*demographic_cols + 
         comorbidities*comorb_cols + vitals*vital_cols + 
-        lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)
+        lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)    
     
-    if treatment == None:
-        cols_include.append('REGIMEN')
-        data_sub = data
-    else: 
-        data_sub = data.loc[data['REGIMEN']==treatment,]
-
+    cols_include.remove(treatment)
+    
+    cols_include.append('REGIMEN')
+    data_sub = data
+  
     return data_sub[cols_include], data_sub[prediction]
 
 

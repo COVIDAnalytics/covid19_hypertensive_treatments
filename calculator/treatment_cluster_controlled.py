@@ -20,7 +20,6 @@ from analyzer.utils import impute_missing, train_and_evaluate
 import analyzer.utils as utils
 import itertools
 
-
 ## Set up experiment based on job specifications
 jobid = os.getenv('SLURM_ARRAY_TASK_ID')
 jobid = int(jobid)-1
@@ -35,16 +34,15 @@ except:
 
 #Define the name of the dataset for saving the results
 #version_folder = "matched_limited_treatments_der_val_update/"
-data_path = "../../covid19_treatments_data/matched_all_treatments_der_val_update_addl_outcomes/"
-version_folder = "matched_all_treatments_der_val_update_addl_outcomes/"
+data_path = "../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/"
+version_folder = "matched_single_treatments_der_val_addl_outcomes/"
 
 # SEEDS = range(1,6)
 SEEDS = [1]
 
 split_type = 'bycountry'
 #treatment_list = ['All', 'Chloroquine and Anticoagulants','Chloroquine and Antivirals']
-treatment_list = ['Chloroquine Only','All', 'Chloroquine and Anticoagulants',
-                  'Chloroquine and Antivirals', 'Non-Chloroquine']
+treatment_list = ['CORTICOSTEROIDS','NO_CORTICOSTEROIDS']
 prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS','EMBOLIC']
 #match_list = [True,False]
 
@@ -68,7 +66,7 @@ algorithm = o.algorithms[name_algo]
 t = treatment.replace(" ", "_")
 # file_name = str(dataset)+'_results_treatment_'+str(t)+'_seed' + str(SEED) + '_split_' + str(split_types[split_type]) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 # output_folder = 'predictors/treatment_mortality'
-results_folder = '../../covid19_treatments_results/' + version_folder + str(prediction) +'/' + str(name_algo) +'/'
+results_folder = '../../covid19_treatments_results/' + version_folder + str(treatment_list[0]) +'/' + str(prediction) +'/' + str(name_algo) +'/'
 # make folder if it does not exist
 Path(results_folder).mkdir(parents=True, exist_ok=True)
 
@@ -80,20 +78,26 @@ vitals = True
 lab_tests=True
 med_hx=False ## change on 7/27
 other_tx=True
+treatment_col = str(treatment_list[0])
 # mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
 # print(name_datasets[mask])
 
+train_name = str(treatment_col)+'_hope_hm_cremona_matched_all_treatments_train.csv'
+test_name = str(treatment_col)+'_hope_hm_cremona_matched_all_treatments_test.csv'
+
 # if matched:
-data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_train_addl_outcomes.csv')
-data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_all_treatments_test_addl_outcomes.csv')
+data_train = pd.read_csv(data_path+train_name)
+data_test = pd.read_csv(data_path+test_name)
 file_name = str(t) + '_matched_' + prediction.lower() + '_seed' + str(SEED) 
 # else: 
 # data_train = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_train.csv')
 # data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_test.csv')
 # file_name = str(t) + '_unmatched_' + prediction.lower() + '_seed' + str(SEED) 
 
+
+
 X_train, y_train = ds.create_dataset_treatment(data_train, 
-                        treatment,
+                        treatment_col,
                         demographics,
                         comorbidities,
                         vitals,
@@ -103,7 +107,7 @@ X_train, y_train = ds.create_dataset_treatment(data_train,
                         prediction = prediction)
 
 X_test, y_test = ds.create_dataset_treatment(data_test, 
-                        treatment,
+                        treatment_col,
                         demographics,
                         comorbidities,
                         vitals,
