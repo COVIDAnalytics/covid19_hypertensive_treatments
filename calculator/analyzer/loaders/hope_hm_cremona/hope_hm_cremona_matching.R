@@ -23,10 +23,12 @@ source("descriptive_functions.R")
 # Set the path
 # save_path = "~/Dropbox (MIT)/covid19_personal/merging_data/covid19_hope_hm_cremona/"
 # save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
- save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/filter_imputed_cremona_in_val/"
+save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/"
 
+write_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/"
+ 
 # Read in the data
-data = read.csv(paste(save_path, "hope_hm_cremona_data_clean_imputed.csv",sep=""), header = TRUE)
+data = read.csv(paste(save_path, "hope_hm_cremona_data_clean_imputed_addl_outcomes.csv",sep=""), header = TRUE)
 
 # Look at descriptive stats on the different sources of data
 merge_mult <- function(x, y){
@@ -36,7 +38,7 @@ merge_mult <- function(x, y){
 
 # Treatment for which we will split on
 z = "CORTICOSTEROIDS"
-outcomes = c('DEATH','COMORB_DEATH')
+outcomes = c('DEATH','COMORB_DEATH',"HF" ,"ARF","SEPSIS","EMBOLIC","OUTCOME_VENT")
 
 data_hope <- data %>% filter(SOURCE == 'Hope')
 stats_data_hope <- descriptive_table(data_hope, short_version = TRUE)[[1]] %>% dplyr::select(-Missing) %>% rename(Hope_Summary = Summary)
@@ -56,12 +58,11 @@ stats_compare_text <- Reduce(merge_mult, list(stats_data_hope_text, stats_data_h
 
 # Source and countries to include
 # Derivation group
-groups = c("Hope-Spain","HM-Spain","Cremona-Italy")
+groups = c("Hope-Spain","HM-Spain")
 # groups = c("SPAIN")
 
 #Treatments for which we need to control
 treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS')#,'REGIMEN')
-outcomes = c('DEATH','COMORB_DEATH')
 
 # Filter the appropriate dataframe
 df_full = data %>% filter(SOURCE_COUNTRY %in% groups)%>%dplyr::select(-REGIMEN)
@@ -93,10 +94,10 @@ features_matching = c("AGE",
                       "PCR_B",
                       "DDDIMER_B",
                       "LDL_B",
-                      treatments
-                      #"TRANSAMINASES_B",
-                      #"IN_DVITAMINSUPLEMENT",
-                      #"BLOOD_PRESSURE_ABNORMAL_B"
+                      treatments,
+                      "TRANSAMINASES_B",
+                      "IN_DVITAMINSUPLEMENT",
+                      "BLOOD_PRESSURE_ABNORMAL_B"
                       )
 
 df <- df_full[,features_matching]
@@ -120,8 +121,6 @@ for (i in 1:length(out)){
 }
 
 # Base on that statement we will pick as treatment of reference:
-# Chloroquine Only with 725 observations - Hope ONLY
-# Chloroquine Only with 885 observations - Hope, HM, and Cremona (879 after updates)
 base_treatment = idx
 t = 1:2
 to_match_treatments = t[-base_treatment]
@@ -165,7 +164,7 @@ length(common_control)
 vline = 0.15
 
 # Select a treatment option to investigate
-to_treat=base_treatment
+to_treat=2
 t_inds = which(matched_object_list[[to_treat]]$t_ind == 1)
 
 # The loveplot plots the absolute  differences in means 
@@ -177,7 +176,7 @@ loveplot_common(names(out)[to_treat], #
                 common_control, # common base treatment indices (common)
                 v_line=0.15) 
 
-x = compare_features(df_full, base_treatment, to_treat, common_control = common_control)
+x = compare_features(df_full, base_treatment, to_treat, regimens_col, common_control = common_control)
 ttest_original = x[['original']] 
 ttest_filtered = x[['filtered']] 
 ttest_compare = x[['compare']] 
@@ -186,18 +185,19 @@ ttest_compare %>% arrange(P_Filtered) %>% head(10)
 # Save all selected data -------------------------------------------------
 # Initialize with base treatment
 
-matched_data = df_full %>% filter(REGIMEN ==names(out)[[base_treatment]]) %>% slice(common_control)
+matched_data = df_full %>% filter(get(z)==1) %>% slice(common_control)
 
 # Add in all other treatments 
 for (t in to_match_treatments){
   c_id = matched_object_list[[t]]$c_id - n_base #adjust down
-  c_data = df_full %>% filter(REGIMEN == names(out)[[t]]) %>% slice(c_id)
+  c_data = df_full %>% filter(get(z)==0) %>% slice(c_id)
   matched_data = rbind(matched_data, c_data)
 }
 
 # Look at summary stats stratified by treatment before and after matching ---------------------------------------------
 covariateNames <- c(
-  "REGIMEN",
+  #Treatments
+  z,
   # Demographic
   "AGE", "GENDER", "RACE",
   # Pre-Admission Comorbidities
@@ -220,9 +220,9 @@ factorVars <- c(
 df_pre_treat_full <- df_full[covariateNames]
 df_pre_treat_matched <- matched_data[covariateNames]
 
-tableOne_beforematching <- CreateTableOne(vars = covariateNames, strata = "REGIMEN", 
+tableOne_beforematching <- CreateTableOne(vars = covariateNames, strata = z, 
                                 data = df_pre_treat_full, factorVars = factorVars)
-tableOne_aftermatching <- CreateTableOne(vars = covariateNames, strata = "REGIMEN", 
+tableOne_aftermatching <- CreateTableOne(vars = covariateNames, strata =z, 
                                           data = df_pre_treat_matched, factorVars = factorVars)
 
 print(tableOne_beforematching, smd = TRUE, quote = TRUE, noSpaces = TRUE)
@@ -235,18 +235,20 @@ matched_data = rbind(matched_data, df_other)
 ## Remove irrelevant columns and regimen components
 ## keep source_country for train/test split
 final <- matched_data %>% 
-  dplyr::select(-c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS','DT_HOSPITAL_ADMISSION','HOSPITAL','SOURCE'))
+  dplyr::select(-c('DT_HOSPITAL_ADMISSION','HOSPITAL','SOURCE'))
 
 ## check sizes
-table(final$REGIMEN, final$SOURCE_COUNTRY == "Hope-Spain"| final$SOURCE_COUNTRY == "HM-Spain" | final$SOURCE_COUNTRY == "Cremona-Italy")
+table(final[,z], final$SOURCE_COUNTRY == "Hope-Spain"| final$SOURCE_COUNTRY == "HM-Spain" | final$SOURCE_COUNTRY == "Cremona-Italy")
 
-write.csv(final, paste0(save_path, "hope_hm_cremona_matched.csv"), row.names = FALSE)
+final= final%>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)
+
+write.csv(final, paste0(write_path, z,"_hope_hm_cremona_matched.csv"), row.names = FALSE)
 
 ## Split into training, testing, and validation sets
 # Unmatched
-split_unmatched <- df_full %>% group_split(REGIMEN)
+split_unmatched <- df_full %>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)%>%group_split(REGIMEN)
 
-to_split = c(1,2,3,4,5)
+to_split = c(1,2)
 unmatched_train = data.frame(matrix(ncol=0,nrow=0))
 unmatched_test = data.frame(matrix(ncol=0,nrow=0))
 for (t in to_split){
@@ -258,13 +260,13 @@ for (t in to_split){
   unmatched_test <- rbind(unmatched_test, unmatched.test)
 }
 
-write.csv(unmatched_train, paste0(save_path, "hope_hm_cremona_unmatched_all_treatments_train.csv"), row.names = FALSE)
-write.csv(unmatched_test, paste0(save_path, "hope_hm_cremona_unmatched_all_treatments_test.csv"), row.names = FALSE)
+write.csv(unmatched_train, paste0(write_path, z, "_hope_hm_cremona_unmatched_all_treatments_train.csv"), row.names = FALSE)
+write.csv(unmatched_test, paste0(write_path, z, "_hope_hm_cremona_unmatched_all_treatments_test.csv"), row.names = FALSE)
 
 # Matched
-split_matched <- matched_data %>% group_split(REGIMEN)
+split_matched <- matched_data %>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)%>%group_split(REGIMEN)
 
-to_split = c(1,2,3,4,5)
+to_split = c(1,2)
 matched_train = data.frame(matrix(ncol=0,nrow=0))
 matched_test = data.frame(matrix(ncol=0,nrow=0))
 for (t in to_split){
@@ -276,8 +278,10 @@ for (t in to_split){
   matched_test <- rbind(matched_test, matched.test)
 }
 
-write.csv(matched_train, paste0(save_path, "hope_hm_cremona_matched_all_treatments_train.csv"), row.names = FALSE)
-write.csv(matched_test, paste0(save_path, "hope_hm_cremona_matched_all_treatments_test.csv"), row.names = FALSE)
+write.csv(matched_train, paste0(write_path, z, "_hope_hm_cremona_matched_all_treatments_train.csv"), row.names = FALSE)
+write.csv(matched_test, paste0(write_path, z, "_hope_hm_cremona_matched_all_treatments_test.csv"), row.names = FALSE)
 
 # Validation
-write.csv(df_other, paste0(save_path, "hope_hm_cremona_all_treatments_validation.csv"), row.names = FALSE)
+df_other = df_other%>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)
+
+write.csv(df_other, paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation.csv"), row.names = FALSE)

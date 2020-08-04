@@ -22,14 +22,14 @@ data_hope <- clean_columns(data_hope)
 str(data_hope)
 
 # Read in HM Foundation data (should be cleaned and formatted) and filter columns
-df_hm = read.csv(paste(save_path,"hm_treatments.csv",sep = ""), header=TRUE, stringsAsFactors = FALSE)
+df_hm = read.csv(paste(save_path,"hm_treatments_2020-08-02.csv",sep = ""), header=TRUE, stringsAsFactors = FALSE)
 data_hm <- filter_columns_nonhope(df_hm)
 # Convert admission date to date format
 data_hm <- data_hm %>% mutate(DT_HOSPITAL_ADMISSION = as.Date(DT_HOSPITAL_ADMISSION))
 str(data_hm)
 
 # Read in Cremona data (should be cleaned and formatted) and filter columns
-df_cremona = read.csv(paste(save_path,"cremona_treatments.csv",sep = ""), header=TRUE, stringsAsFactors = FALSE)
+df_cremona = read.csv(paste(save_path,"cremona_treatments_2020-08-02.csv",sep = ""), header=TRUE, stringsAsFactors = FALSE)
 data_cremona <- filter_columns_nonhope(df_cremona)  
 # Convert admission date to date format
 data_cremona <- data_cremona %>% mutate(DT_HOSPITAL_ADMISSION = as.Date(DT_HOSPITAL_ADMISSION))
@@ -59,7 +59,7 @@ data_merged %>% group_by(SOURCE, ANTICOAGULANTS, ANTIVIRAL, CLOROQUINE, REGIMEN)
 filter_lb=0.01
 filter_ub=0.99
 filter_output = filter_outliers(data_merged, filter_lb, filter_ub)
-  
+
 fl_data = filter_output[[1]]
 outliers_table = filter_output[[2]]
 str(fl_data)
@@ -100,7 +100,7 @@ col_order = c(setdiff(names(fl_data), cols_nonX), cols_nonX)
 fl_data <- fl_data[col_order]
 str(fl_data)
 
-write.csv(fl_data, paste(save_path,"hope_hm_cremona_data_clean_filtered.csv",sep = ""),
+write.csv(fl_data, paste(save_path,"hope_hm_cremona_data_clean_filtered_addl_outcomes.csv",sep = ""),
           row.names = FALSE)
 
 # Perform missing data imputation
@@ -109,17 +109,17 @@ outcomes = c('DEATH','COMORB_DEATH')
 indicator_cols = c('SOURCE','SOURCE_COUNTRY')
 
 # Derivation group
-group1 = c("Hope-Spain","HM-Spain","Cremona-Italy")
+group1 = c("Hope-Spain","HM-Spain")
 # Validation group
-group2 = c("Hope-Ecuador","Hope-Germany","Hope-Italy")
+group2 = c("Hope-Ecuador","Hope-Germany","Hope-Italy","Cremona-Italy")
 reps = 1
 maxiterations = 10
 
 derivation_cohort = imputation(fl_data, reps, maxiterations, group1, treatments, outcomes, indicator_cols)
 validation_cohort = imputation(fl_data, reps, maxiterations, group2, treatments, outcomes, indicator_cols)
-  
+
 data_imputed = rbind(derivation_cohort, validation_cohort) 
-write.csv(data_imputed, paste(save_path,"hope_hm_cremona_data_clean_imputed.csv",sep = ""),
+write.csv(data_imputed, paste(save_path,"hope_hm_cremona_data_clean_imputed_addl_outcomes.csv",sep = ""),
           row.names = FALSE)
 
 # fl_data %>%

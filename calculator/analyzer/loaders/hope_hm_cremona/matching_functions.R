@@ -133,15 +133,15 @@ loveplot_common<- function (treatment_name, X_mat, t_id, t_id_new, c_id, t_id_co
 }
 
 
-compare_features <- function (df_full, base_treat, var_treat, common_control=c()){
+compare_features <- function (df_full, base_treat, var_treat, regimens_col, common_control=c()){
   # data A = base treatment
   label_a = names(out)[base_treat]
   
   # data B = changing treatment ("control")
   label_b = names(out)[var_treat]
   
-  data_a = df_full %>%filter(REGIMEN == label_a)
-  data_b = df_full %>%filter(REGIMEN == label_b)
+  data_a = df_full %>%filter(get(label_a) == 1)
+  data_b = df_full %>%filter(get(label_a) == 0)
   
   nrow(data_a) + nrow(data_b) == nrow(matched_object_list[[to_treat]]$mdt0)
   
@@ -153,9 +153,9 @@ compare_features <- function (df_full, base_treat, var_treat, common_control=c()
   c_id = matched_object_list[[to_treat]]$c_id - nrow(data_a) #adjust down
   data_b_filtered = data_b[c_id,]
   
-  ttest_original = run_ttest(data_a, data_b, label_a, label_b, cols_exclude = treatments) %>%
+  ttest_original = run_ttest(data_a, data_b, label_a, label_b, cols_exclude = label_a) %>%
     mutate_if(is.numeric, funs(round(., digits = 3)))
-  ttest_filtered = run_ttest(data_a_filtered, data_b_filtered, label_a, label_b, cols_exclude = treatments) %>%
+  ttest_filtered = run_ttest(data_a_filtered, data_b_filtered, label_a, label_b, cols_exclude = label_a) %>%
     mutate_if(is.numeric, funs(round(., digits = 3)))
   
   violate_original = ttest_original %>% filter(`P-Value` < 0.01) %>% pull(Feature) %>% sort
