@@ -24,11 +24,14 @@ from pathlib import Path
 # data_path = '../../covid19_treatments_data/matched_all_treatments_der_val_update/'
 # version_folder = "matched_all_treatments_der_val_update/COMORB_DEATH/"
 # outcome = 'COMORB_DEATH'
+# prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS','EMBOLIC']
+
+outcome = 'EMBOLIC'
+treatment = 'CORTICOSTEROIDS'
 
 ## death only
-data_path = '../../covid19_treatments_data/matched_all_treatments_der_val_update/'
-version_folder = "matched_all_treatments_der_val_update_nomedhx/COMORB_DEATH/"
-outcome = 'COMORB_DEATH'
+data_path = '../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'
+version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(treatment)+'/'+str(outcome)+'/'
 
 results_path = '../../covid19_treatments_results/'
 #version_folder = "matched_limited_treatments_der_val_update/"
@@ -37,15 +40,15 @@ preload = False
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
-SEEDS = range(2, 6)
+SEEDS = range(1, 2)
 
 #treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
-treatment_list = ['Chloroquine_Only', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
-algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
-#algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
+treatment_list = [treatment, 'NO_'+treatment]
+#algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
+algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
 # algorithm_list = ['lr','cart','qda','gb']
 
-training_set_name = 'hope_hm_cremona_matched_all_treatments_train.csv'
+training_set_name = 'CORTICOSTEROIDS_hope_hm_cremona_matched_all_treatments_train.csv'
 
 #%% Generate predictions across all combinations
 
@@ -55,7 +58,7 @@ if not preload:
     for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
         print(data_version)
         X, Z, y = u.load_data(data_path,training_set_name,
-                            split=data_version, matched=matched, prediction = outcome)
+                            split=data_version, matched=matched, prediction = outcome,treatment=treatment)
         print("X observations: ", str(X.shape[0]))
         result = pd.concat([u.algorithm_predictions(X, treatment_list = treatment_list, 
                                                     algorithm = alg,  matched = matched, 
@@ -78,20 +81,20 @@ if not preload:
         pred_results.to_csv(save_path+data_version+'_'+match_status+'_performance_allmethods.csv', index_label = 'Algorithm')
         
         #Average results across multiple seeds
-        pred_list = pred_results
-        pred_list['seed'] = 1 
-        for seed in SEEDS:
-            temp = u.algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, 
-                                                    matched = matched, SEED = seed, prediction = outcome,
-                                                    result_path = results_path+version_folder)
-            temp['seed']=seed
-            pred_list = pred_list.append(temp)
+        # pred_list = pred_results
+        # pred_list['seed'] = 1 
+        # for seed in SEEDS:
+        #     temp = u.algorithms_pred_evaluation(X, Z, y, treatment_list, algorithm_list, 
+        #                                             matched = matched, SEED = seed, prediction = outcome,
+        #                                             result_path = results_path+version_folder)
+        #     temp['seed']=seed
+        #     pred_list = pred_list.append(temp)
         
-        #Convert to long format to calculate the mean and 95% confidence intervals and then flip back to wide format
-        pred_list = pd.melt(pred_list.reset_index(), id_vars=['index', 'seed'], value_vars=treatment_list)
-        pred_list_summary = pd.DataFrame(pred_list.groupby(['index','variable'])['value'].agg(u.CI_printout)).reset_index()
-        pred_list_summary = pred_list_summary.pivot(index='index', columns='variable', values='value')
-        pred_list_summary.to_csv(save_path+data_version+'_'+match_status+'_average_performance_allmethods.csv', index_label = 'Algorithm')
+        # #Convert to long format to calculate the mean and 95% confidence intervals and then flip back to wide format
+        # pred_list = pd.melt(pred_list.reset_index(), id_vars=['index', 'seed'], value_vars=treatment_list)
+        # pred_list_summary = pd.DataFrame(pred_list.groupby(['index','variable'])['value'].agg(u.CI_printout)).reset_index()
+        # pred_list_summary = pred_list_summary.pivot(index='index', columns='variable', values='value')
+        # pred_list_summary.to_csv(save_path+data_version+'_'+match_status+'_average_performance_allmethods.csv', index_label = 'Algorithm')
 
 
  
@@ -106,7 +109,7 @@ for data_version in ['train','test','validation','validation_cremona','validatio
 
     #Read in the relevant data
     X, Z, y = u.load_data(data_path,training_set_name,
-                                    split=data_version,matched=matched,prediction = outcome)
+                                    split=data_version,matched=matched,prediction = outcome,treatment=treatment)
     
     result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
     

@@ -140,8 +140,14 @@ compare_features <- function (df_full, base_treat, var_treat, regimens_col, comm
   # data B = changing treatment ("control")
   label_b = names(out)[var_treat]
   
-  data_a = df_full %>%filter(get(label_a) == 1)
-  data_b = df_full %>%filter(get(label_a) == 0)
+  if(base_treat==1){
+    data_a = df_full %>%filter(get(label_a) == 1)
+    data_b = df_full %>%filter(get(label_a) == 0)
+  }else{
+    data_a = df_full %>%filter(get(label_b) == 1)
+    data_b = df_full %>%filter(get(label_b) == 0)
+  }
+  
   
   nrow(data_a) + nrow(data_b) == nrow(matched_object_list[[to_treat]]$mdt0)
   

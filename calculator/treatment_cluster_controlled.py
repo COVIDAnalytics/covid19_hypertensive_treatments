@@ -41,8 +41,12 @@ version_folder = "matched_single_treatments_der_val_addl_outcomes/"
 SEEDS = [1]
 
 split_type = 'bycountry'
-#treatment_list = ['All', 'Chloroquine and Anticoagulants','Chloroquine and Antivirals']
-treatment_list = ['CORTICOSTEROIDS','NO_CORTICOSTEROIDS']
+
+treatment_list = ['CORTICOSTEROIDS', 'ACEI_ARBS','INTERFERONOR']
+                     #ANTICOAGULANTS, 'TOCILIZUMAB', 'ANTIBIOTICS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS']
+neg_treatment_options = ['NO_' + s for s in treatment_list]
+treatment_list.extend(neg_treatment_options)
+
 prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS','EMBOLIC']
 #match_list = [True,False]
 
@@ -64,9 +68,11 @@ algorithm = o.algorithms[name_algo]
 
 ## Results path and file names
 t = treatment.replace(" ", "_")
+treatment_col = treatment.replace("NO_", "")
+
 # file_name = str(dataset)+'_results_treatment_'+str(t)+'_seed' + str(SEED) + '_split_' + str(split_types[split_type]) + '_' + prediction.lower() + '_jobid_' + str(jobid)
 # output_folder = 'predictors/treatment_mortality'
-results_folder = '../../covid19_treatments_results/' + version_folder + str(treatment_list[0]) +'/' + str(prediction) +'/' + str(name_algo) +'/'
+results_folder = '../../covid19_treatments_results/' + version_folder + str(treatment_col) +'/' + str(prediction) +'/' + str(name_algo) +'/'
 # make folder if it does not exist
 Path(results_folder).mkdir(parents=True, exist_ok=True)
 
@@ -78,7 +84,6 @@ vitals = True
 lab_tests=True
 med_hx=False ## change on 7/27
 other_tx=True
-treatment_col = str(treatment_list[0])
 # mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
 # print(name_datasets[mask])
 
@@ -123,12 +128,14 @@ X_full = pd.get_dummies(X_full, prefix_sep='_', drop_first=True)
 X_train = X_full.iloc[0:X_train.shape[0],:]
 X_test = X_full.iloc[X_train.shape[0]:,:]
 
-best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 300, name_algo = name_algo)
+best_model, best_params = o.optimizer(algorithm, name_param, X_train, y_train, cv = 20, n_calls = 10, name_algo = name_algo)
 # X_test = impute_missing(X_test)
 
 # best_model, accTrain, accTest, isAUC, ofsAUC = train_and_evaluate(algorithm, X_train, X_test, y_train, y_test, best_params)
 
 print(algorithm)
+print(treatment)
+
 
 utils.create_and_save_pickle_treatments(algorithm, treatment, SEED, split_type,
                                       X_train, X_test, y_train, y_test, 

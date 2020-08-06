@@ -36,33 +36,36 @@ merge_mult <- function(x, y){
   return(df)
 }
 
+
 # Treatment for which we will split on
-z = "CORTICOSTEROIDS"
+create_treatment_specific_dataset <- function(z){
+
 outcomes = c('DEATH','COMORB_DEATH',"HF" ,"ARF","SEPSIS","EMBOLIC","OUTCOME_VENT")
+treatment_options = c('CORTICOSTEROIDS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS',
+                      'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS')
 
-data_hope <- data %>% filter(SOURCE == 'Hope')
-stats_data_hope <- descriptive_table(data_hope, short_version = TRUE)[[1]] %>% dplyr::select(-Missing) %>% rename(Hope_Summary = Summary)
-data_hm <- data %>% filter(SOURCE == 'HM')
-stats_data_hm <- descriptive_table(data_hm, short_version = TRUE)[[1]] %>% dplyr::select(-Missing) %>% rename(HM_Summary = Summary)
-data_cremona <- data %>% filter(SOURCE == 'Cremona')
-stats_data_cremona <- descriptive_table(data_cremona, short_version = TRUE)[[1]] %>% dplyr::select(-Missing) %>% rename(Cremona_Summary = Summary)
-stats_compare <- Reduce(merge_mult, list(stats_data_hope, stats_data_hm, stats_data_cremona))
+treatments = treatment_options[!treatment_options %in% z]
 
-stats_data_hope_text <- descriptive_table(data_hope, short_version = TRUE)[[2]] %>%
-  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(Hope_Freq = Freq, Feature = Value)
-stats_data_hm_text <- descriptive_table(data_hm, short_version = TRUE)[[2]] %>% 
-  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(HM_Freq = Freq, Feature = Value)
-stats_data_cremona_text <- descriptive_table(data_cremona, short_version = TRUE)[[2]] %>% 
-  dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(Cremona_Freq = Freq, Feature = Value)
-stats_compare_text <- Reduce(merge_mult, list(stats_data_hope_text, stats_data_hm_text, stats_data_cremona_text))
+# data_hope <- data %>% filter(SOURCE == 'Hope')
+# stats_data_hope <- descriptive_table(data_hope, short_version = TRUE)[[1]] %>% dplyr::select(-Missing) %>% rename(Hope_Summary = Summary)
+# data_hm <- data %>% filter(SOURCE == 'HM')
+# stats_data_hm <- descriptive_table(data_hm, short_version = TRUE)[[1]] %>% dplyr::select(-Missing) %>% rename(HM_Summary = Summary)
+# data_cremona <- data %>% filter(SOURCE == 'Cremona')
+# stats_data_cremona <- descriptive_table(data_cremona, short_version = TRUE)[[1]] %>% dplyr::select(-Missing) %>% rename(Cremona_Summary = Summary)
+# stats_compare <- Reduce(merge_mult, list(stats_data_hope, stats_data_hm, stats_data_cremona))
+# 
+# stats_data_hope_text <- descriptive_table(data_hope, short_version = TRUE)[[2]] %>%
+#   dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(Hope_Freq = Freq, Feature = Value)
+# stats_data_hm_text <- descriptive_table(data_hm, short_version = TRUE)[[2]] %>% 
+#   dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(HM_Freq = Freq, Feature = Value)
+# stats_data_cremona_text <- descriptive_table(data_cremona, short_version = TRUE)[[2]] %>% 
+#   dplyr::filter(Feature == 'GENDER'|Feature == 'RACE'|Feature == 'CORTICOSTEROIDS') %>% dplyr::select(-Feature) %>% rename(Cremona_Freq = Freq, Feature = Value)
+# stats_compare_text <- Reduce(merge_mult, list(stats_data_hope_text, stats_data_hm_text, stats_data_cremona_text))
 
 # Source and countries to include
 # Derivation group
 groups = c("Hope-Spain","HM-Spain")
 # groups = c("SPAIN")
-
-#Treatments for which we need to control
-treatments = c('CLOROQUINE','ANTIVIRAL','ANTICOAGULANTS')#,'REGIMEN')
 
 # Filter the appropriate dataframe
 df_full = data %>% filter(SOURCE_COUNTRY %in% groups)%>%dplyr::select(-REGIMEN)
@@ -154,7 +157,7 @@ for (i in to_match_treatments) {
   print(paste("The base dataframe has now ", nrow(referenced_data[[i]]), " from ", nrow(out[[base_treatment]]) , " observations"), sep = "")
   print("")
   control_inds = matched_object_list[[i]]$t_id
-  # common_control = intersect(common_control, control_inds)
+  common_control = intersect(common_control, control_inds)
   # common_control = union(common_control, control_inds)
 }
 
@@ -164,7 +167,7 @@ length(common_control)
 vline = 0.15
 
 # Select a treatment option to investigate
-to_treat=2
+to_treat=to_match_treatments
 t_inds = which(matched_object_list[[to_treat]]$t_ind == 1)
 
 # The loveplot plots the absolute  differences in means 
@@ -230,7 +233,7 @@ print(tableOne_aftermatching, smd = TRUE, quote = TRUE, noSpaces = TRUE)
 # Look at summary stats stratified by treatment before and after matching ---------------------------------------------
 
 # Add in other countries (which will be test set)
-matched_data = rbind(matched_data, df_other)
+# matched_data = rbind(matched_data, df_other)
 
 ## Remove irrelevant columns and regimen components
 ## keep source_country for train/test split
@@ -285,3 +288,19 @@ write.csv(matched_test, paste0(write_path, z, "_hope_hm_cremona_matched_all_trea
 df_other = df_other%>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)
 
 write.csv(df_other, paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation.csv"), row.names = FALSE)
+
+write.csv(df_other%>%filter(COUNTRY=='Italy', HOSPITAL=='Cremona'), paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation_cremona.csv"), row.names = FALSE)
+
+write.csv(df_other%>%filter(COUNTRY=='Italy', HOSPITAL!='Cremona'), paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation_hope_italy.csv"), row.names = FALSE)
+
+write.csv(df_other%>%filter(HOSPITAL!='Cremona'), paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation_hope.csv"), row.names = FALSE)
+ return(z)
+}
+
+
+treatment_options = c('CORTICOSTEROIDS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS',
+                      'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS')
+
+z = "ANTICOAGULANTS"
+create_treatment_specific_dataset(z)
+  
