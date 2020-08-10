@@ -34,16 +34,18 @@ def create_dataset_treatment(data, treatment = None,
                         lab_tests=True,
                         med_hx=True,
                         other_tx=True,
-                        prediction = 'DEATH'):
+                        prediction = 'DEATH', treatment_ind = 1):
     
     cols_include = (demographics*demographic_cols + 
         comorbidities*comorb_cols + vitals*vital_cols + 
         lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)    
     
-    cols_include.remove(treatment)
+    # Remove treatment column of interest - replace NO_ if running negative treatment
+    cols_include.remove(treatment.replace("NO_", ""))
+    data_sub = data.loc[data['REGIMEN']==treatment,:]
     
-    cols_include.append('REGIMEN')
-    data_sub = data
+    # cols_include.append('REGIMEN')
+    # data_sub = data
   
     return data_sub[cols_include], data_sub[prediction]
 

@@ -12,6 +12,12 @@ import matplotlib.pyplot as plt
 # jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
 # from interpretableai import iai
 
+
+treatments = ['CORTICOSTEROIDS','ACEI_ARBS','INTERFERONOR']
+#%% Frequency of individual drugs
+df = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
+df.groupby('SOURCE_COUNTRY')[treatments].mean()
+
 #%% Set Problem Parameters
 #Paths for data access
 
@@ -22,8 +28,8 @@ if outcome == "COMORB_DEATH":
 else:
      outcome_path = ''
 
-data_path = '../../covid19_treatments_data/matched_all_treatments_der_val_update/'
-results_path = '../../covid19_treatments_results/matched_all_treatments_der_val_update_nomedhx/'
+data_path = '../../covid19_treatments_data/matched_single_treatment_der_val_update/'
+results_path = '../../covid19_treatments_results/matched_single_treatment_der_val_update/'
 save_path = results_path + outcome_path + 'summary/'
 
 # data_path = '../../covid19_treatments_data/'

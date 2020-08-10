@@ -48,7 +48,7 @@ treatment_list = [treatment, 'NO_'+treatment]
 algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
 # algorithm_list = ['lr','cart','qda','gb']
 
-training_set_name = 'CORTICOSTEROIDS_hope_hm_cremona_matched_all_treatments_train.csv'
+training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
 
 #%% Generate predictions across all combinations
 

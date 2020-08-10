@@ -99,10 +99,8 @@ file_name = str(t) + '_matched_' + prediction.lower() + '_seed' + str(SEED)
 # data_test = pd.read_csv(data_path+'hope_hm_cremona_matched_cl_noncl_removed_test.csv')
 # file_name = str(t) + '_unmatched_' + prediction.lower() + '_seed' + str(SEED) 
 
-
-
 X_train, y_train = ds.create_dataset_treatment(data_train, 
-                        treatment_col,
+                        t,
                         demographics,
                         comorbidities,
                         vitals,
@@ -112,7 +110,7 @@ X_train, y_train = ds.create_dataset_treatment(data_train,
                         prediction = prediction)
 
 X_test, y_test = ds.create_dataset_treatment(data_test, 
-                        treatment_col,
+                        t,
                         demographics,
                         comorbidities,
                         vitals,

@@ -13,4 +13,4 @@ export IAI_LICENSE_FILE="$HOME/iai.lic"
 
 # python3 treatment_cluster.py 'kn','mlp','qda','gb'
 #python3 treatment_cluster.py 'xgboost','rf','cart','lr','oct'
-python3 treatment_cluster_controlled.py 'oct'
+python3 treatment_cluster_controlled.py 'xgboost','rf','cart','lr','oct','qda','gb'
