@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --array=1-25
+#SBATCH --array=1-42
 #SBATCH --cpus-per-task=2
 #SBATCH --mem-per-cpu=4000
 #SBATCH -p sched_mit_sloan_batch
