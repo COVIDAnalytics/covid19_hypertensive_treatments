@@ -17,40 +17,30 @@ import numpy as np
 from pathlib import Path
 
 
-#%% Set Problem Parameters
-#Paths for data access
+#%% Set Problem Parameters - general across treatments
 
-## with comorbidities
-# data_path = '../../covid19_treatments_data/matched_all_treatments_der_val_update/'
-# version_folder = "matched_all_treatments_der_val_update/COMORB_DEATH/"
-# outcome = 'COMORB_DEATH'
-# prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS','EMBOLIC']
-
-outcome = 'EMBOLIC'
-treatment = 'CORTICOSTEROIDS'
-
-## death only
 data_path = '../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'
-version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(treatment)+'/'+str(outcome)+'/'
+outcome = 'COMORB_DEATH'
 
-results_path = '../../covid19_treatments_results/'
-#version_folder = "matched_limited_treatments_der_val_update/"
-save_path = results_path + version_folder + 'summary/'
 preload = False
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
-
-#treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
-treatment_list = [treatment, 'NO_'+treatment]
-#algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
-algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
-# algorithm_list = ['lr','cart','qda','gb']
-
-training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
+# algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
+algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
 
 #%% Generate predictions across all combinations
+ #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
+
+treatment = 'CORTICOSTEROIDS'
+treatment_list = [treatment, 'NO_'+treatment]
+
+results_path = '../../covid19_treatments_results/'
+version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(treatment)+'/'+str(outcome)+'/'
+save_path = results_path + version_folder + 'summary/'
+
+training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
 
 if not preload:
     # create summary folder if it does not exist
@@ -58,8 +48,9 @@ if not preload:
     for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
         print(data_version)
         X, Z, y = u.load_data(data_path,training_set_name,
-                            split=data_version, matched=matched, prediction = outcome,treatment=treatment)
-        print("X observations: ", str(X.shape[0]))
+                            split=data_version, matched=matched, prediction = outcome)
+        print("X observations: "
+              , str(X.shape[0]))
         result = pd.concat([u.algorithm_predictions(X, treatment_list = treatment_list, 
                                                     algorithm = alg,  matched = matched, 
                                                     prediction = outcome,

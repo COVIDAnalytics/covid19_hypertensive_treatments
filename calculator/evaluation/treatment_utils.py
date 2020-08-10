@@ -25,7 +25,8 @@ def load_data(folder, train_name, split, matched, prediction = 'DEATH', med_hx=F
     file  = file.replace('train',split)
     print(file)
     df = pd.read_csv(folder+file)
-    X, y = ds.create_dataset_treatment(df, prediction = prediction, med_hx=med_hx,treatment=treatment)
+    X, y = ds.create_dataset_treatment(df, prediction = prediction, 
+                                       med_hx=med_hx, include_regimen=True)
     X.index.name = 'ID'
     y.index.name = 'ID'
     Z = X['REGIMEN']

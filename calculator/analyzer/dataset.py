@@ -34,19 +34,27 @@ def create_dataset_treatment(data, treatment = None,
                         lab_tests=True,
                         med_hx=True,
                         other_tx=True,
-                        prediction = 'DEATH', treatment_ind = 1):
-    
+                        prediction = 'DEATH', include_regimen = False):
+
     cols_include = (demographics*demographic_cols + 
         comorbidities*comorb_cols + vitals*vital_cols + 
-        lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)    
-    
+        lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)   
+
     # Remove treatment column of interest - replace NO_ if running negative treatment
-    cols_include.remove(treatment.replace("NO_", ""))
-    data_sub = data.loc[data['REGIMEN']==treatment,:]
-    
-    # cols_include.append('REGIMEN')
-    # data_sub = data
-  
+    if treatment != None:
+        cols_include.remove(treatment.replace("NO_", ""))
+        data_sub = data.loc[data['REGIMEN']==treatment,:]
+    else:
+        data_sub = data
+
+    missing_cols = list(set(cols_include).difference(data.columns))
+    cols_include = list(set(cols_include).intersection(data.columns))
+    if len(missing_cols) > 0:
+        print("Warning: missing columns "+str(missing_cols))
+        
+    if include_regimen:
+        cols_include.append('REGIMEN')
+
     return data_sub[cols_include], data_sub[prediction]
 
 
