@@ -22,7 +22,7 @@ from pathlib import Path
 data_path = '../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'
 outcome = 'COMORB_DEATH'
 
-preload = False
+preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
@@ -33,7 +33,7 @@ algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
 #%% Generate predictions across all combinations
  #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
 
-treatment = 'CORTICOSTEROIDS'
+treatment = 'ACEI_ARBS'
 treatment_list = [treatment, 'NO_'+treatment]
 
 results_path = '../../covid19_treatments_results/'
@@ -42,6 +42,7 @@ save_path = results_path + version_folder + 'summary/'
 
 training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
 
+#%% Run results
 if not preload:
     # create summary folder if it does not exist
     Path(save_path).mkdir(parents=True, exist_ok=True)
@@ -100,8 +101,7 @@ for data_version in ['train','test','validation','validation_cremona','validatio
 
     #Read in the relevant data
     X, Z, y = u.load_data(data_path,training_set_name,
-                                    split=data_version,matched=matched,prediction = outcome,treatment=treatment)
-    
+                        split=data_version, matched=matched, prediction = outcome)
     result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
     
     #Filter only to algorithms in the algorithms list
@@ -137,7 +137,7 @@ for data_version in ['train','test','validation','validation_cremona','validatio
             summary['Prescribe'] = summary.idxmin(axis=1)
             summary['AverageProbability'] = summary.min(axis=1)
             summary = pd.concat([summary, Z, y],axis=1)
-            summary['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
+            summary['Match'] = [x.replace(' ','_') == y for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
         
             summary.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
             n_summary = summary
@@ -146,7 +146,7 @@ for data_version in ['train','test','validation','validation_cremona','validatio
         
             #Resolve Ties among treatments by selecting the treatment whose models have the highest average AUC
             summary = u.resolve_ties(summary, result, pred_perf_results)
-            summary['Match'] = [x.replace(' ','_') in(y) for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
+            summary['Match'] = [x.replace(' ','_') == y for x,y in zip(summary['REGIMEN'], summary['Prescribe'])]
             
             merged_summary = u.retrieve_proba_per_prescription(result, summary, pred_perf_results)
             merged_summary.to_csv(save_path+data_version+'_'+match_status+'_detailed_bypatient_summary_'+weighted_status+'.csv')
@@ -229,3 +229,15 @@ metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
 # print("Match Rate: ", match_rate)
 # print("Average AUC: ", average_auc)
 # print("PE: ", PE)
+
+
+#%% SUmmarize across datasets
+for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
+    print("Data version = ", data_version)
+    for treatment in ['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']:
+        results_path = '../../covid19_treatments_results/'
+        version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(treatment)+'/'+str(outcome)+'/'
+        save_path = results_path + version_folder + 'summary/'
+        pred_results = pd.read_csv(save_path+data_version+'_'+match_status+'_metrics_summary.csv')
+        res = round(np.mean(pred_results,axis=0),3)
+        print(res)
