@@ -14,47 +14,44 @@ import matplotlib.pyplot as plt
 
 
 treatments = ['CORTICOSTEROIDS','ACEI_ARBS','INTERFERONOR']
-#%% Frequency of individual drugs
-df = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
-df.groupby('SOURCE_COUNTRY')[treatments].mean()
 
-#%% Set Problem Parameters
-#Paths for data access
 
-outcome = "COMORB_DEATH"
-
-if outcome == "COMORB_DEATH":
-    outcome_path = 'COMORB_DEATH/'
-else:
-     outcome_path = ''
-
-data_path = '../../covid19_treatments_data/matched_single_treatment_der_val_update/'
-results_path = '../../covid19_treatments_results/matched_single_treatment_der_val_update/'
-save_path = results_path + outcome_path + 'summary/'
-
-# data_path = '../../covid19_treatments_data/'
-# results_path = '../../covid19_treatments_results/'
-# version_folder = "matched_all_treatments_der_val_update/"
-# version_folder_results = "matched_all_treatments_der_val_update_nomedhx/"
-# save_path = results_path + version_folder_results + outcome_path + 'summary/'
+data_path = '../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'
+outcome = 'COMORB_DEATH'
 
 preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
-# treatment_list = ['All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals']
-#treatment_list = ['Chloroquine_Only', 'All', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
-treatment_list = ['Chloroquine_Only', 'Chloroquine_and_Anticoagulants','Chloroquine_and_Antivirals', 'Non-Chloroquine']
-algorithm_list = ['lr','rf','cart','xgboost','oct','qda','gb']
-# algorithm_list = ['lr','rf','cart','qda','gb']
+SEEDS = range(1, 2)
+# algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
+algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
+
+#%% Generate predictions across all combinations
+ #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
+
+treatment = 'CORTICOSTEROIDS'
+treatment_list = [treatment, 'NO_'+treatment]
+
+results_path = '../../covid19_treatments_results/'
+version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(treatment)+'/'+str(outcome)+'/'
+save_path = results_path + version_folder + 'summary/'
+
+training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
+
+
+#%% Frequency of individual drugs
+df = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
+df.groupby('SOURCE_COUNTRY')[treatments].mean()
+df.groupby([treatment])[outcome].mean()
 
 #%%  Evaluate specific version
 data_version = 'train' # in ['train','test','validation','validation_cremona','validation_hope']:
 weighted_status = 'weighted'
 
 #Read in the relevant data
-X, Z, y = u.load_data(data_path,'hope_hm_cremona_matched_all_treatments_train.csv',
-                            split=data_version, matched=matched, prediction = outcome)
+X, Z, y = u.load_data(data_path,training_set_name,
+                    split=data_version, matched=matched, prediction = outcome)
 
 summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
 Z_presc = summary['Prescribe']
@@ -102,15 +99,19 @@ features = {'categorical':['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY'
        'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE', 'LIVER_DISEASE',
        'CANCER', 'SAT02_BELOW92',
        'BLOOD_PRESSURE_ABNORMAL_B', 'DDDIMER_B', 'PCR_B', 'TRANSAMINASES_B',
-       'LDL_B', 'IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
-       'IN_ORALANTICOAGL', 'IN_BETABLOCKERS', 'IN_BETAGONISTINHALED',
-       'IN_GLUCORTICOIDSINHALED', 'IN_DVITAMINSUPLEMENT', 'IN_BENZODIACEPINES',
-       'IN_ANTIDEPRESSANT', 'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
+       'LDL_B', 
+       # 'IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
+       # 'IN_ORALANTICOAGL', 'IN_BETABLOCKERS', 'IN_BETAGONISTINHALED',
+       # 'IN_GLUCORTICOIDSINHALED', 'IN_DVITAMINSUPLEMENT', 'IN_BENZODIACEPINES',
+       # 'IN_ANTIDEPRESSANT', 
+       'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
        'ANTIBIOTICS', 'ACEI_ARBS', 'GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN',
        'RACE_ORIENTAL', 'RACE_OTHER'],
                 'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES',
        'HEMOGLOBIN', 'PLATELETS'],
                 'multidrop':[]}
+
+features['categorical'].remove(treatment)
 
 df = pd.concat([X,y,Z_presc], axis=1)
 desc_list = []
@@ -149,6 +150,10 @@ X['Z_presc'] = Z_presc
 X['Y'] = y
 X['Y_presc'] = Y_presc
 
+## run this and replace png with _treatfreq.png to see frequency of prescription
+X['Y'] = Z.replace({treatment:1, 'NO_'+treatment: 0})
+X['Y_presc'] = Z_presc.replace({treatment:1, 'NO_'+treatment: 0})
+
 cross_treatments = X[['Z_presc', 'Z']].groupby(['Z_presc', 'Z']).size().to_frame('size').reset_index()
 cross_treatments = cross_treatments.pivot(index='Z_presc', columns='Z', values='size')
 
@@ -162,19 +167,20 @@ cross_treatments_norm.to_csv(save_path+data_version+'_'+match_status+'_'+weighte
 bins= [0,40,55,70,110]
 X['AgeGroup'] = pd.cut(X['AGE'], bins=bins,right=False)
 
+
 age_table = X.groupby('AgeGroup')[['Y','Y_presc']].mean()
 ax = age_table.plot.bar(rot=0)
 # Add title and axis names
 plt.title('Mortality Rate by Age Group')
 plt.ylabel('Mortality Rate')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'ageplot.png')
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'ageplot_treatfreq.png')
 #%%
 gender_table = X.groupby('GENDER_MALE')[['Y','Y_presc']].mean()
 ax = gender_table.plot.bar(rot=0)
 # Add title and axis names
 plt.title('Mortality Rate by Gender')
 plt.ylabel('Mortality Rate')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'genderplot.png')
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'genderplot_treatfreq.png')
 
 #%%
 so2_table = X.groupby('SAT02_BELOW92')[['Y','Y_presc']].mean()
@@ -182,7 +188,7 @@ ax = so2_table.plot.bar(rot=0)
 # Add title and axis names
 plt.title('Mortality Rate by SATO2')
 plt.ylabel('Mortality Rate')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'sa02plot.png')
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'sa02plot_treatfreq.png')
 
 #%%
 bins= [0,0.8,2]
@@ -193,8 +199,17 @@ ax = cr_table.plot.bar(rot=0)
 # Add title and axis names
 plt.title('Mortality Rate by Creatinine Group')
 plt.ylabel('Mortality Rate')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'creatplot.png')
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'creatplot_treatfreq.png')
 
+
+#%% Assess expected benefit
+
+summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
+summary['PROB_DIFF'] = np.abs(summary[treatment]  - summary['NO_'+treatment])
+ax = plt.hist(summary['PROB_DIFF'], 20)
+plt.title('Difference in Outcome Probabilities')
+plt.ylabel('Frequency')
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'expected_difference.png')
 
 
 
@@ -205,7 +220,7 @@ plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'cre
 column = 'GENDER_MALE'
 col_rename = 'Gender (Male)'
 
-X['Z'] = Z
+X['Z'] = Z.str.replace('_',' ')
 X['Z_presc'] = Z_presc.str.replace('_',' ')
 X['Y'] = y
 X['Y_presc'] = Y_presc
