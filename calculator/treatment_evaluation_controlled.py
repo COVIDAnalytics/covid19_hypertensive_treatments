@@ -33,7 +33,7 @@ algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
 #%% Generate predictions across all combinations
  #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
 
-treatment = 'ACEI_ARBS'
+treatment = 'CORTICOSTEROIDS'
 treatment_list = [treatment, 'NO_'+treatment]
 
 results_path = '../../covid19_treatments_results/'
@@ -231,13 +231,13 @@ metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
 # print("PE: ", PE)
 
 
-#%% SUmmarize across datasets
+save#%% SUmmarize across datasets
 for data_version in ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']:
     print("Data version = ", data_version)
     for treatment in ['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']:
         results_path = '../../covid19_treatments_results/'
         version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(treatment)+'/'+str(outcome)+'/'
         save_path = results_path + version_folder + 'summary/'
-        pred_results = pd.read_csv(save_path+data_version+'_'+match_status+'_metrics_summary.csv')
+        pred_results = pd.read_csv(save_path+data_version+'_'+match_status+'_performance_allmethods.csv')
         res = round(np.mean(pred_results,axis=0),3)
         print(res)
