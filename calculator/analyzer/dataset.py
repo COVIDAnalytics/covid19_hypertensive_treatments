@@ -48,7 +48,8 @@ def create_dataset_treatment(data, treatment = None,
         data_sub = data
 
     missing_cols = list(set(cols_include).difference(data.columns))
-    cols_include = list(set(cols_include).intersection(data.columns))
+    cols_include = [x for x in cols_include if x not in missing_cols]
+    
     if len(missing_cols) > 0:
         print("Warning: missing columns "+str(missing_cols))
         

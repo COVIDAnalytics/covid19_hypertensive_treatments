@@ -27,15 +27,15 @@ website_path = '../../website/assets/treatment_calculators/'+outcome
 
 training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
 
-# X, Z, y = u.load_data('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/',
-#                        training_set_name, split='train', matched=True, prediction = outcome)
+X, Z, y = u.load_data('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/',
+                        training_set_name, split='train', matched=True, prediction = outcome)
 
 load_file_path = os.path.join(path,outcome,'lr','NO_CORTICOSTEROIDS_matched_comorb_death_seed1')
 
 with open(load_file_path, 'rb') as file:
     load_file = pickle.load(file)
                     
-X = load_file['train'].drop(outcome, axis=1)
+X_test = load_file['train'].drop(outcome, axis=1)
 
 #%% Load pickle for comparison
 
