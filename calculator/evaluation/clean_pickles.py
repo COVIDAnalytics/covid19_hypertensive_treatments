@@ -28,47 +28,34 @@ website_path = '../../website/assets/treatment_calculators/'+outcome
 training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
 
 X, Z, y = u.load_data('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/',
-                       training_set_name, split='train', matched=True, prediction = outcome)
+                        training_set_name, split='train', matched=True, prediction = outcome)
+
+load_file_path = os.path.join(path,outcome,'lr','NO_CORTICOSTEROIDS_matched_comorb_death_seed1')
+
+with open(load_file_path, 'rb') as file:
+    load_file = pickle.load(file)
+                    
+X_test = load_file['train'].drop(outcome, axis=1)
 
 #%% Load pickle for comparison
 
-# with open('../../website/assets/risk_calculators/mortality/model_with_lab.pkl', 'rb') as file:
-#     mort_pkl = pickle.load(file)
-# json = mort_pkl['json']
+with open('../../website/assets/risk_calculators/mortality/model_with_lab.pkl', 'rb') as file:
+    mort_pkl = pickle.load(file)
+json = mort_pkl['json']
 
 #%% Set up feature json
 
-categoric = [{'name':'SAT02_BELOW92',
+checkboxes = [{'name':'',
               'index':[],
-              'vals': [0.0, 1.0],
-              'default': 0.0,
-              'explanation': 'Select if oxygen saturation is below 92'},
-             {'name':'BLOOD_PRESSURE_ABNORMAL_B',
-              'index':[],
-              'vals': [0.0, 1.0],
-              'default': 0.0,
-              'explanation': 'Select if blood pressure is below X'},
-             {'name':'DDDIMER_B',
-              'index':[],
-              'vals': [0.0, 1.0],
-              'default': 0.0,
-              'explanation': 'Select if D-Dimer is below X'},
-             {'name':'PCR_B',
-              'index':[],
-              'vals': [0.0, 1.0],
-              'default': 0.0,
-              'explanation': 'Select if PCR is below X'},
-             {'name':'TRANSAMINASES_B',
-              'index':[],
-              'vals': [0.0, 1.0],
-              'default': 0.0,
-              'explanation': 'Select if transaminases are below X'},
-             {'name':'LDL_B',
-              'index':[],
-              'vals': [0.0, 1.0],
-              'default': 0.0,
-              'explanation': 'Select if LDL Cholesterol is below X'},
-             {'name': 'GENDER_MALE',
+              'vals': ['SAT02_BELOW92',
+                       'BLOOD_PRESSURE_ABNORMAL_B',
+                       'DDDIMER_B',
+                       'PCR_B',
+                       'TRANSAMINASES_B',
+                       'LDL_B'],
+              'explanation': ['Select any abnormal lab results.']}]
+
+categoric = [{'name': 'GENDER_MALE',
               'index': 1,
               'vals': [0.0, 1.0],
               'default': 0.0,
@@ -183,18 +170,23 @@ for i in range(0,len(categoric)):
 for i in range(0,len(multidrop)):
     col_list = multidrop[i]['vals']
     multidrop[i]['index'] = [list(X.columns).index(col) for col in col_list]
+
+for i in range(0,len(checkboxes)):
+    col_list = checkboxes[i]['vals']
+    checkboxes[i]['index'] = [list(X.columns).index(col) for col in col_list]
     
         
 new_json = {'numeric':numeric,
             'categorical':categoric,
-            'multidrop':multidrop}
+            'multidrop':multidrop,
+            'checkboxes':checkboxes}
 
 ## Check indices
 index_list = []
 name_list = []
 for k in new_json:
     for i in range(0,len(new_json[k])):
-        if k == 'multidrop':
+        if k in ['multidrop','checkboxes']:
             index_list.extend([x for x in new_json[k][i]['index']])
             name_list.extend([x for x in new_json[k][i]['vals']])
         elif k in ['numeric','categorical']:
@@ -236,7 +228,7 @@ for treated in [True,False]:
                 alg_pkl['AUC'] = model_file['AUC']
                 alg_pkl['Misclassification'] = model_file['Misclassification']
                 cols = model_file['columns']
-                if np.any(sorted(cols) != name_list):
+                if np.any(cols != X.columns):
                     print("ERROR: columns do not match")
                     break
         treat_pkl[alg] = alg_pkl
@@ -250,3 +242,46 @@ with open(os.path.join(website_path,treatment+'.pkl'), 'wb') as handle:
 # file_name = '/Users/hollywiberg/Dropbox (MIT)/COVID_risk/website/assets/treatment_calculators/COMORB_DEATH/NO_CORTICOSTEROIDS.pkl'
 # with open(file_name, 'rb') as file:
 #     model_file = pickle.load(file)
+
+
+#%% Feeature mapping
+def get_feature_names():
+    return {'ACEI_ARBS': 'ACE Inhibitors or ARBs',
+     'AF': 'Atrial Fibrillation',
+     'AGE': 'Age',
+     'ANTIBIOTICS': 'Antibiotics',
+     'ANTICOAGULANTS':'Anticoagulants',
+     'ANTIVIRAL':'Antivirals',
+     'ANYCEREBROVASCULARDISEASE':'Cerebrovascular Disease',
+     'ANYHEARTDISEASE':'Heart Disease',
+     'ANYLUNGDISEASE':'Lung Disease',
+     'BLOOD_PRESSURE_ABNORMAL_B':'Low systolic blood pressure (<100 mm Hg)',
+     'CANCER':'Cancer',
+     'CLOROQUINE':'Hydroxychloroquine',
+     'CONECTIVEDISEASE':'Connective Tissue Disease',
+     'CREATININE':'Creatinine',
+     'DDDIMER_B':'Elevated D-Dimer (>0.5 mg/L)',
+     'DIABETES':'Diabetes',
+     'DISLIPIDEMIA':'Dislipidemia',
+     'GENDER_MALE':'',
+     'HEMOGLOBIN':'Hemoglobin',
+     'HYPERTENSION':'Hypertension',
+     'INTERFERONOR':'Interferons',
+     'LDL_B':'Elevated Lactic Acid Dehydrogenase (>480 U/L)',
+     'LEUCOCYTES':'White Blood Cell Count',
+     'LIVER_DISEASE':'Liver Disease',
+     'LYMPHOCYTES':'Lymphocytes',
+     'MAXTEMPERATURE_ADMISSION':'Temperature',
+     'OBESITY':'Obesity',
+     'PCR_B':'Elevated C-Reactive Protein (>10 mg/L)',
+     'PLATELETS':'Platelets',
+     'RACE_CAUC':'Caucasian',
+     'RACE_LATIN':'Hispanic',
+     'RACE_ORIENTAL':'Asian',
+     'RACE_OTHER':'Other',
+     'RENALINSUF':'Renal Insufficiency',
+     'SAT02_BELOW92':'Low Oxygen Saturation (< 92)',
+     'SODIUM':'Blood Sodium',
+     'TOCILIZUMAB':'Tocilizumab',
+     'TRANSAMINASES_B':'Elevated Transaminase (>40 U/L)',
+     'VIH':'HIV'}
