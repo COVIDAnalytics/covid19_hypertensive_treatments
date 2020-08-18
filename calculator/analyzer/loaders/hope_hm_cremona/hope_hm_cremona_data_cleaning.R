@@ -6,6 +6,7 @@ library(reshape2)
 library(scales)
 library(mice)
 library(caret)
+library(lubridate)
 library(imputeMissings)
 library(stringr)
 
@@ -318,25 +319,18 @@ filter_columns_nonhope<-function(df){
   
   DATES = c('DT_ONSETSYMPTOMS','DT_TEST_COVID',
             'DT_HOSPITAL_ADMISSION',
-            'DT_USE_CORTICOIDS2',	
-            'DT_USE_CLOROQUINE2',	
-            'DT_USE_ANTIVIRAL_DRUGS2',
-            'DT_USE_TOCILIZUMAB2')
-  SELECTED_DATES = c('DT_HOSPITAL_ADMISSION',
-                     'DT_USE_CORTICOIDS2',	
-                     'DT_USE_CLOROQUINE2',	
-                     'DT_USE_ANTIVIRAL_DRUGS2',
-                     'DT_USE_TOCILIZUMAB2')
+            'CORTICOSTEROIDS_START_DATE','ANTIVIRAL_START_DATE','CLOROQUINE_START_DATE','TOCILIZUMAB_START_DATE')
+  SELECTED_DATES = c('DT_HOSPITAL_ADMISSION','CORTICOSTEROIDS_START_DATE','ANTIVIRAL_START_DATE','CLOROQUINE_START_DATE','TOCILIZUMAB_START_DATE')
   
   cols_include = c(LOCATION, SELECTED_DATES, SELECTED_DEMOGRAPHICS,
                    SELECTED_COMORBIDITIES, SELECTED_DRUGS_ADMISSIONS, SELECTED_VITALS,
                    SELECTED_BINARY_LABS_VITALS_ADMISSION, SELECTED_CONTINUE_LABS_ADMISSION,
                    ADD_COVID19_TREATMENTS, SELECTED_TREATMENTS_NONHOPE, SELECTED_OUTCOMES_NONHOPE,
                    NEW_SELECTED_OUTCOMES_NONHOPE)
-  
+
   data <- df[,cols_include]
-  
-  df[,SELECTED_COMORBIDITIES]
+
+  df%>%dplyr::select(cols_include)
   
   return(data)
 }
@@ -344,7 +338,11 @@ filter_columns_nonhope<-function(df){
 #First we will edit the dates to include two variables that indicate the difference between the date of admission and the date of symptom onset and pcr test
 
 clean_columns<-function(data){
-  data <- data %>% mutate(DT_HOSPITAL_ADMISSION = as.Date(DT_HOSPITAL_ADMISSION))
+  data <- data %>% mutate(DT_HOSPITAL_ADMISSION = as.Date(DT_HOSPITAL_ADMISSION, format = "%m/%d/%y"),
+                          DT_USE_CORTICOIDS2 = as.Date(DT_USE_CORTICOIDS2, format = "%m/%d/%y"),
+                          DT_USE_CLOROQUINE2 = as.Date(DT_USE_CLOROQUINE2, format = "%m/%d/%y"),
+                          DT_USE_ANTIVIRAL_DRUGS2 = as.Date(DT_USE_ANTIVIRAL_DRUGS2, format = "%m/%d/%y"),
+                          DT_USE_TOCILIZUMAB2 = as.Date(DT_USE_TOCILIZUMAB2, format = "%m/%d/%y"))
   # mutate(ONSET_DATE_DIFF = as.numeric(as.Date(DT_HOSPITAL_ADMISSION) -as.Date(DT_ONSETSYMPTOMS)))%>%
   # mutate(ONSET_DATE_DIFF = replace(ONSET_DATE_DIFF, ONSET_DATE_DIFF<0, NA))%>%
   # mutate(TEST_DATE_DIFF = as.numeric(as.Date(DT_HOSPITAL_ADMISSION) -as.Date(DT_TEST_COVID)))%>%
@@ -400,7 +398,7 @@ clean_columns<-function(data){
            MAXTEMPERATURE_ADMISSION = gsub("????","",MAXTEMPERATURE_ADMISSION),
            MAXTEMPERATURE_ADMISSION = gsub("????","",MAXTEMPERATURE_ADMISSION),
            MAXTEMPERATURE_ADMISSION = gsub("????","",MAXTEMPERATURE_ADMISSION),
-           MAXTEMPERATURE_ADMISSION = gsub("????",".",MAXTEMPERATURE_ADMISSION),
+           #MAXTEMPERATURE_ADMISSION = gsub("????",".",MAXTEMPERATURE_ADMISSION),
            MAXTEMPERATURE_ADMISSION = replace(MAXTEMPERATURE_ADMISSION, MAXTEMPERATURE_ADMISSION=="357", "35.7"),
            MAXTEMPERATURE_ADMISSION = replace(MAXTEMPERATURE_ADMISSION, MAXTEMPERATURE_ADMISSION=="n", NA),
            MAXTEMPERATURE_ADMISSION = replace(MAXTEMPERATURE_ADMISSION, MAXTEMPERATURE_ADMISSION=="N", NA),
@@ -409,7 +407,9 @@ clean_columns<-function(data){
            MAXTEMPERATURE_ADMISSION = replace(MAXTEMPERATURE_ADMISSION, MAXTEMPERATURE_ADMISSION=="369", "36.9"),
            MAXTEMPERATURE_ADMISSION = replace(MAXTEMPERATURE_ADMISSION, MAXTEMPERATURE_ADMISSION==">38", NA),
            MAXTEMPERATURE_ADMISSION = str_replace(MAXTEMPERATURE_ADMISSION, "36.8.*", "36.8"),
+           MAXTEMPERATURE_ADMISSION = str_replace(MAXTEMPERATURE_ADMISSION, "37.7Â°", "37.7"),
            MAXTEMPERATURE_ADMISSION = str_replace(MAXTEMPERATURE_ADMISSION, ">", ""),
+           MAXTEMPERATURE_ADMISSION = gsub("[^0-9.-]", "",MAXTEMPERATURE_ADMISSION),
            MAXTEMPERATURE_ADMISSION = as.numeric(as.character(MAXTEMPERATURE_ADMISSION)))
   
   #Determine regimen
@@ -500,12 +500,12 @@ filter_missing<-function(data, threshold){
   return(d)
 }
 
-imputation <- function(dat, reps, maxiterations, group, treatments, outcomes, indicator_cols){
+imputation <- function(dat, reps, maxiterations, group, treatments, outcomes, indicator_cols,dates){
   
   #Select the appropriate columns to impute
   DF = dat %>% 
     filter(SOURCE_COUNTRY %in% group)%>%
-    dplyr::select(-treatments,-outcomes)
+    dplyr::select(-treatments,-outcomes,-dates)
   
   #Convert characters to factors
   DF[sapply(DF, is.character)] <- lapply(DF[sapply(DF, is.character)], as.factor)
@@ -522,6 +522,7 @@ imputation <- function(dat, reps, maxiterations, group, treatments, outcomes, in
   
   completedData[,treatments] = rel_dat[,treatments]
   completedData[,outcomes] = rel_dat[,outcomes]
+  completedData[,dates] = rel_dat[,dates]
   
   return(completedData)
 }
