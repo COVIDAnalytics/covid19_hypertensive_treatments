@@ -26,6 +26,8 @@ prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
 treatment = 'CORTICOSTEROIDS'
 treatment_list = [treatment, 'NO_'+treatment]
 
+training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
+
 #%% For each method, generate predictions and accuracies of each method
 
 for outcome in prediction_list:
