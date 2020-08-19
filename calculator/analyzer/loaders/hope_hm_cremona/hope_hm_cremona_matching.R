@@ -41,8 +41,12 @@ merge_mult <- function(x, y){
 create_treatment_specific_dataset <- function(z){
 
 outcomes = c('DEATH','COMORB_DEATH',"HF" ,"ARF","SEPSIS","EMBOLIC","OUTCOME_VENT")
+#treatment_options = c('CORTICOSTEROIDS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS',
+#                      'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS')
 treatment_options = c('CORTICOSTEROIDS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS',
-                      'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS')
+                      'INTERFERONOR', 'ACEI_ARBS')
+
+dates = c('CORTICOSTEROIDS_START_DATE','CLOROQUINE_START_DATE','ANTIVIRAL_START_DATE','TOCILIZUMAB_START_DATE')
 
 treatments = treatment_options[!treatment_options %in% z]
 
@@ -66,6 +70,9 @@ treatments = treatment_options[!treatment_options %in% z]
 # Derivation group
 groups = c("Hope-Spain","HM-Spain")
 # groups = c("SPAIN")
+
+#For treatments for which the response is NA, we will consider them as non-prescribed
+data[,treatments][is.na(data[,treatments])] <- 0
 
 # Filter the appropriate dataframe
 df_full = data %>% filter(SOURCE_COUNTRY %in% groups)%>%dplyr::select(-REGIMEN)
@@ -97,10 +104,10 @@ features_matching = c("AGE",
                       "PCR_B",
                       "DDDIMER_B",
                       "LDL_B",
-                      treatments,
                       "TRANSAMINASES_B",
                       "IN_DVITAMINSUPLEMENT",
-                      "BLOOD_PRESSURE_ABNORMAL_B"
+                      "BLOOD_PRESSURE_ABNORMAL_B",
+                      treatments
                       )
 
 df <- df_full[,features_matching]
@@ -238,7 +245,7 @@ print(tableOne_aftermatching, smd = TRUE, quote = TRUE, noSpaces = TRUE)
 ## Remove irrelevant columns and regimen components
 ## keep source_country for train/test split
 final <- matched_data %>% 
-  dplyr::select(-c('DT_HOSPITAL_ADMISSION','HOSPITAL','SOURCE'))
+  dplyr::select(-c('DT_HOSPITAL_ADMISSION','HOSPITAL','SOURCE',dates))
 
 ## check sizes
 table(final[,z], final$SOURCE_COUNTRY == "Hope-Spain"| final$SOURCE_COUNTRY == "HM-Spain" | final$SOURCE_COUNTRY == "Cremona-Italy")
@@ -246,6 +253,7 @@ table(final[,z], final$SOURCE_COUNTRY == "Hope-Spain"| final$SOURCE_COUNTRY == "
 final= final%>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)
 
 write.csv(final, paste0(write_path, z,"_hope_hm_cremona_matched.csv"), row.names = FALSE)
+write.csv(matched_data[,c('DT_HOSPITAL_ADMISSION','HOSPITAL','SOURCE',dates)], paste0(write_path, z,"_hope_hm_cremona_matched_dates.csv"), row.names = FALSE)
 
 ## Split into training, testing, and validation sets
 # Unmatched
@@ -301,6 +309,6 @@ write.csv(df_other%>%filter(HOSPITAL!='Cremona'), paste0(write_path, z, "_hope_h
 treatment_options = c('CORTICOSTEROIDS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS',
                       'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS')
 
-z = "ANTICOAGULANTS"
+z = "CORTICOSTEROIDS"
 create_treatment_specific_dataset(z)
   
