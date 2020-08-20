@@ -42,6 +42,7 @@ SEEDS = [1]
 
 split_type = 'bycountry'
 
+treatment_list = ['CORTICOSTEROIDS']
 treatment_list = ['CORTICOSTEROIDS', 'ACEI_ARBS','INTERFERONOR']
                      #ANTICOAGULANTS, 'TOCILIZUMAB', 'ANTIBIOTICS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS']
 neg_treatment_options = ['NO_' + s for s in treatment_list]

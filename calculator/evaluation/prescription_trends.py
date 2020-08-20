@@ -256,3 +256,13 @@ fig.suptitle('Prescription trends by '+col_rename, fontsize=20)
 plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+col_rename+'_prescriptions.png',
             bbox_inches = "tight")
 
+#%% compare prescriptions by algorithm
+
+result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+
+result['Prescribe_Yes'] = result['Prescribe']=='CORTICOSTEROIDS'
+result.groupby('Algorithm')['Prescribe_Yes'].mean()
+
+result.groupby('Algorithm').agg({'CORTICOSTEROIDS':'mean',
+                                 'NO_CORTICOSTEROIDS':'mean'})
+
