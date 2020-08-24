@@ -104,7 +104,10 @@ def algorithm_prediction_evaluation(X, Z, y, treatment_list, algorithm, matched,
         #For a given treatment and algorithm get the predicted probability 
         probs_t = df.loc[df['Regimen'] == t][t]
         y_t = df.loc[df['Regimen'] == t]['Outcome']
-        auc_t = metrics.roc_auc_score(y_t, probs_t)
+        if y_t.unique().size == 1:
+            auc_t = np.nan
+        else: 
+            auc_t = metrics.roc_auc_score(y_t, probs_t)
         df_results.append(auc_t)
                 
     return df_results
