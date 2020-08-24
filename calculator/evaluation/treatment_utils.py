@@ -297,8 +297,10 @@ def get_prescription_AUC(n_summary, prediction = 'DEATH'):
     
     y_t = n_summary[n_summary['Match']==True][prediction]
     pred_t = n_summary[n_summary['Match']==True]['AverageProbability']
-    
-    auc_res = metrics.roc_auc_score(y_t, pred_t)
+    if y_t.unique().size == 1:
+        auc_res = np.nan
+    else: 
+        auc_res = metrics.roc_auc_score(y_t, pred_t)
     
     return auc_res
 
