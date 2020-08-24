@@ -96,8 +96,8 @@ for outcome in prediction_list:
           
             #Compare different schemes
             
-            # schemes = ['weighted']
-            schemes = ['weighted','no_weights']
+            schemes = ['no_weights']
+            # schemes = ['weighted','no_weights']
             for weighted_status in schemes:
                 print("Prescription scheme = ", weighted_status)
                 
@@ -114,6 +114,7 @@ for outcome in prediction_list:
                     #     summary['AverageProbability'] = summary.min(axis=1)
                     #     summary['Benefit'] = summary.apply(lambda row: (row['NO_'+treatment] -  row[treatment])/row['NO_'+treatment], axis = 1)
                     # else: 
+                    summary['NO_'+treatment] = summary['NO_'+treatment].replace(0,1e-4)
                     summary['Benefit'] = summary.apply(lambda row: (row['NO_'+treatment] -  row[treatment])/row['NO_'+treatment], axis = 1)
                     summary['Prescribe'] = summary.apply(lambda row: treatment if row['Benefit'] > threshold else 'NO_'+treatment, axis = 1)
                     summary['AverageProbability'] = summary.apply(lambda row: row[row['Prescribe']], axis = 1)        
