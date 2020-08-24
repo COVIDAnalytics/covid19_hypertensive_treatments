@@ -19,12 +19,12 @@ matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
-# algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
-# data_list = ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']
+algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
+data_list = ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']
 # prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
-algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
-prediction_list = ['COMORB_DEATH']
-data_list = ['train','test']
+# algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
+prediction_list = ['COMORB_DEATH','OUTCOME_VENT']
+# data_list = ['train','test']
 
 treatment = 'CORTICOSTEROIDS'
 treatment_list = [treatment, 'NO_'+treatment]
@@ -96,8 +96,8 @@ for outcome in prediction_list:
           
             #Compare different schemes
             
+            # schemes = ['weighted']
             schemes = ['weighted','no_weights']
-            # schemes = ['weighted']s
             for weighted_status in schemes:
                 print("Prescription scheme = ", weighted_status)
                 

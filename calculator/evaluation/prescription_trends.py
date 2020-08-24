@@ -45,51 +45,59 @@ df = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imput
 df.groupby('SOURCE_COUNTRY')[treatments].mean()
 df.groupby([treatment])[outcome].mean()
 
+
+
 #%%  Evaluate specific version
 data_version = 'train' # in ['train','test','validation','validation_cremona','validation_hope']:
 weighted_status = 'weighted'
+threshold = 0.01
 
 #Read in the relevant data
 X, Z, y = u.load_data(data_path,training_set_name,
                     split=data_version, matched=matched, prediction = outcome)
 
-summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
+summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
 Z_presc = summary['Prescribe']
 Y_presc = summary['AverageProbability']
 
+
+X_test, Z_test, y_test = u.load_data(data_path,training_set_name,
+                    split='test', matched=matched, prediction = outcome)
+
+
 #%% Create multi-class classification tre
-grid = iai.GridSearch(
-    iai.OptimalTreeClassifier(
-        random_seed=1,
-    ),
-    max_depth=range(3, 9),
-    criterion = ['gini','entropy']
-)
-grid.fit(X, Z_presc, validation_criterion = 'entropy')
+# grid = iai.GridSearch(
+#     iai.OptimalTreeClassifier(
+#         random_seed=1,
+#     ),
+#     max_depth=range(3, 9),
+#     criterion = ['gini','entropy']
+# )
+# grid.fit(X, Z_presc, validation_criterion = 'entropy')
 
-lnr = grid.get_learner()
-lnr.write_html(save_path+data_version+'_'+match_status+'_'+weighted_status+'_prescription_explanations.html')
+# lnr = grid.get_learner()
+# lnr.write_html(save_path+data_version+'_'+match_status+'_'+weighted_status+'_prescription_explanations.html')
 
-lnr.score(X, Z_presc, criterion = 'misclassification')
+# lnr.score(X, Z_presc, criterion = 'misclassification')
 
-df_list = [pd.Series(['dataset','misclassification','entropy','gini'])]
-for data_version in ['train','test','validation','validation_cremona','validation_hope']:
-  X_test, Z_test, y_test = u.load_data(data_path,'hope_hm_cremona_matched_all_treatments_train.csv',
-                                  split=data_version,matched=matched)
-  X_test = X_test.reindex(X.columns, axis = 1, fill_value = 0)
-  # Load presccriptions
-  summary_test = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
-  Z_test_presc = summary_test['Prescribe']
-  # compute misclassification
-  s1 = lnr.score(X_test, Z_test_presc, criterion = 'misclassification')
-  s2 = lnr.score(X_test, Z_test_presc, criterion = 'entropy')
-  s3 = lnr.score(X_test, Z_test_presc, criterion = 'gini')
-  df_list.append(pd.Series([data_version, s1, s2, s3]))
-  print("Version = ", data_version, "; Score = ", s1)
+# df_list = [pd.Series(['dataset','misclassification','entropy','gini'])]
+# for data_version in ['train','test','validation','validation_cremona','validation_hope']:
+#   X_test, Z_test, y_test = u.load_data(data_path,'hope_hm_cremona_matched_all_treatments_train.csv',
+#                                   split=data_version,matched=matched)
+#   X_test = X_test.reindex(X.columns, axis = 1, fill_value = 0)
+#   # Load presccriptions
+#   summary_test = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
+#   Z_test_presc = summary_test['Prescribe']
+#   # compute misclassification
+#   s1 = lnr.score(X_test, Z_test_presc, criterion = 'misclassification')
+#   s2 = lnr.score(X_test, Z_test_presc, criterion = 'entropy')
+#   s3 = lnr.score(X_test, Z_test_presc, criterion = 'gini')
+#   df_list.append(pd.Series([data_version, s1, s2, s3]))
+#   print("Version = ", data_version, "; Score = ", s1)
 
-df_performance = pd.concat(df_list, axis=1)
-df_performance.to_csv(save_path+match_status+'_prescription_explanations_performance.csv',
-  index = False, header = False)
+# df_performance = pd.concat(df_list, axis=1)
+# df_performance.to_csv(save_path+match_status+'_prescription_explanations_performance.csv',
+#   index = False, header = False)
 
 
 #%% Descriptive Analysis
@@ -141,7 +149,7 @@ for idx, pair in enumerate(list(itertools.combinations(treatment_list, 2))):
                                        left_index = True, right_index = True)
 
 desc_all['Min_Significance'] = np.min(desc_all.loc[:,desc_all.columns.str.startswith('SigTest')], axis =  1)
-desc_all.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_prescription_descriptive.csv', index = True)
+desc_all.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_prescription_descriptive.csv', index = True)
 
 #%%
 #We would like to see how the treatments get distributed
@@ -151,8 +159,8 @@ X['Y'] = y
 X['Y_presc'] = Y_presc
 
 ## run this and replace png with _treatfreq.png to see frequency of prescription
-X['Y'] = Z.replace({treatment:1, 'NO_'+treatment: 0})
-X['Y_presc'] = Z_presc.replace({treatment:1, 'NO_'+treatment: 0})
+X['Z_bin'] = Z.replace({treatment:1, 'NO_'+treatment: 0})
+X['Z_presc_bin'] = Z_presc.replace({treatment:1, 'NO_'+treatment: 0})
 
 cross_treatments = X[['Z_presc', 'Z']].groupby(['Z_presc', 'Z']).size().to_frame('size').reset_index()
 cross_treatments = cross_treatments.pivot(index='Z_presc', columns='Z', values='size')
@@ -166,51 +174,39 @@ cross_treatments_norm.to_csv(save_path+data_version+'_'+match_status+'_'+weighte
 # data to plot
 bins= [0,40,55,70,110]
 X['AgeGroup'] = pd.cut(X['AGE'], bins=bins,right=False)
-
-
-age_table = X.groupby('AgeGroup')[['Y','Y_presc']].mean()
-ax = age_table.plot.bar(rot=0)
-# Add title and axis names
-plt.title('Mortality Rate by Age Group')
-plt.ylabel('Mortality Rate')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'ageplot_treatfreq.png')
-#%%
-gender_table = X.groupby('GENDER_MALE')[['Y','Y_presc']].mean()
-ax = gender_table.plot.bar(rot=0)
-# Add title and axis names
-plt.title('Mortality Rate by Gender')
-plt.ylabel('Mortality Rate')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'genderplot_treatfreq.png')
-
-#%%
-so2_table = X.groupby('SAT02_BELOW92')[['Y','Y_presc']].mean()
-ax = so2_table.plot.bar(rot=0)
-# Add title and axis names
-plt.title('Mortality Rate by SATO2')
-plt.ylabel('Mortality Rate')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'sa02plot_treatfreq.png')
-
-#%%
 bins= [0,0.8,2]
 X['CreatinineGroups'] = pd.cut(X['CREATININE'], bins=bins,right=False)
 
-cr_table = X.groupby('CreatinineGroups')[['Y','Y_presc']].mean()
-ax = cr_table.plot.bar(rot=0)
-# Add title and axis names
-plt.title('Mortality Rate by Creatinine Group')
-plt.ylabel('Mortality Rate')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'creatplot_treatfreq.png')
+def plot_byfeature(ft, file_name):
+    age_table = X.groupby(ft)[['Y','Y_presc']].mean()
+    ax = age_table.plot.bar(rot=0)
+    # Add title and axis names
+    plt.title('Mortality Rate by '+ft)
+    plt.ylabel('Mortality Rate')
+    plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+file_name+'.png')
+    
+    
+    age_table = X.groupby(ft)[['Z_bin','Z_presc_bin']].mean()
+    ax = age_table.plot.bar(rot=0)
+    # Add title and axis names
+    plt.title('Treatment Frequency by '+ft)
+    plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+file_name+'_treatfreq.png')
+    
+    
+plot_byfeature('AgeGroup','plotAgeGroup')
+plot_byfeature('GENDER_MALE','plotGender')
+plot_byfeature('CreatinineGroups','plotCreatinine')
+plot_byfeature('SAT02_BELOW92','plotSatO2')
 
 
 #%% Assess expected benefit
 
-summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
-summary['PROB_DIFF'] = np.abs(summary[treatment]  - summary['NO_'+treatment])
-ax = plt.hist(summary['PROB_DIFF'], 20)
-plt.title('Difference in Outcome Probabilities')
-plt.ylabel('Frequency')
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'expected_difference.png')
-
+# summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'_t0.0.csv')
+# summary['PROB_DIFF'] = np.abs(summary[treatment]  - summary['NO_'+treatment])
+# ax = plt.hist(summary['PROB_DIFF'], 20)
+# plt.title('Difference in Outcome Probabilities')
+# plt.ylabel('Frequency')
+# plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+'expected_difference.png')
 
 
 #%% Look at prescription trends by subpopulation
@@ -220,10 +216,10 @@ plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+'exp
 column = 'GENDER_MALE'
 col_rename = 'Gender (Male)'
 
-X['Z'] = Z.str.replace('_',' ')
-X['Z_presc'] = Z_presc.str.replace('_',' ')
-X['Y'] = y
-X['Y_presc'] = Y_presc
+# X['Z'] = Z.str.replace('_',' ')
+# X['Z_presc'] = Z_presc.str.replace('_',' ')
+# X['Y'] = y
+# X['Y_presc'] = Y_presc
 
 hist_true =  X.groupby([column, 'Z']).size().reset_index()
 hist_true.columns = [col_rename, 'Treatment','Given']
@@ -253,7 +249,7 @@ for x, i in enumerate(sorted(X[column].unique())):
     axes[x].set_title(col_rename+' = '+str(i))
 
 fig.suptitle('Prescription trends by '+col_rename, fontsize=20)
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_'+col_rename+'_prescriptions.png',
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+col_rename+'_prescriptions.png',
             bbox_inches = "tight")
 
 #%% compare prescriptions by algorithm

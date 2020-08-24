@@ -25,9 +25,9 @@ results_path = '../../covid19_treatments_results/'+version
         
 matched = True
 match_status = 'matched' if matched else 'unmatched'
-weighted_status = 'no_weights'
+weighted_status = 'weighted'
 
-treatment = 'CORTICOSTEROIDS'
+treatment = 'ACEI_ARBS'
 outcome = 'COMORB_DEATH'
 data_version = 'test'
 

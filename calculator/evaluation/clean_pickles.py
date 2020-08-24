@@ -227,7 +227,8 @@ for treated in [True,False]:
                 alg_pkl['model'] = model_file['model']
                 alg_pkl['AUC'] = model_file['AUC']
                 alg_pkl['Misclassification'] = model_file['Misclassification']
-                cols = model_file['columns']
+                cols = model_file['train'].drop(outcome, axis=1).columns
+                print(cols)
                 if np.any(cols != X.columns):
                     print("ERROR: columns do not match")
                     break
