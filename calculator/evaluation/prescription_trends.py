@@ -262,3 +262,97 @@ result.groupby('Algorithm')['Prescribe_Yes'].mean()
 result.groupby('Algorithm').agg({'CORTICOSTEROIDS':'mean',
                                  'NO_CORTICOSTEROIDS':'mean'})
 
+#%%  Evaluate consistency between different treatments
+
+#Define a function to get the covariates matrix
+
+def read_data_of_treatment(t, dataset_version,weighted_status='no_weights', threshold = 0.01):
+    treatment = t
+    treatment_list = [treatment, 'NO_'+treatment]
+    
+    data_path = '../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'
+    outcome = 'COMORB_DEATH'
+
+    preload = True
+    matched = True
+    match_status = 'matched' if matched else 'unmatched'
+
+
+    version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(treatment)+'/'+str(outcome)+'/'
+    results_path = '../../covid19_treatments_results/'
+    save_path = results_path + version_folder + 'summary/'
+    training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
+    
+    data_version = dataset_version # in ['train','test','validation','validation_cremona','validation_hope']:
+    weighted_status = weighted_status
+    threshold = threshold
+    
+    #Read in the relevant data
+    X, Z, y = u.load_data(data_path,training_set_name,
+                    split=data_version, matched=matched, prediction = outcome)
+
+    summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
+    Z_presc = summary['Prescribe']
+    Y_presc = summary['AverageProbability']
+
+    X['Z'] = Z     
+    X['Z_presc'] = Z_presc
+    X['Y'] = y
+    X['Y_presc'] = Y_presc
+    
+    ## run this and replace png with _treatfreq.png to see frequency of prescription
+    X['Z_bin'] = Z.replace({treatment:1, 'NO_'+treatment: 0})
+    X['Z_presc_bin'] = Z_presc.replace({treatment:1, 'NO_'+treatment: 0})
+
+    return X
+
+def dataframe_difference(df1, df2, which=None):
+    """Find rows which are different between two DataFrames."""
+    comparison_df = df1.merge(df2, 
+                              left_on = df1.columns.drop(cols_exclude_corts).tolist(),
+                              right_on = df2.columns.drop(cols_exclude_ace).tolist(),
+                              indicator=True,
+                              how='outer')
+    if which is None:
+        diff_df = comparison_df[comparison_df['_merge'] != 'both']
+    else:
+        diff_df = comparison_df[comparison_df['_merge'] == which]
+    return diff_df
+
+corts = read_data_of_treatment('CORTICOSTEROIDS', 'train')
+ace = read_data_of_treatment('ACEI_ARBS', 'train')
+
+cols_exclude_corts = ['Z', 'Z_presc', 'Y', 'Y_presc', 'Z_bin', 'Z_presc_bin','ACEI_ARBS']
+cols_exclude_ace = ['Z', 'Z_presc', 'Y', 'Y_presc', 'Z_bin', 'Z_presc_bin','CORTICOSTEROIDS']
+
+corts_add = corts[cols_exclude_corts]
+ace_add = ace[cols_exclude_ace]
+
+corts_match = corts.drop(cols_exclude_corts, axis=1)
+ace_match = ace.drop(cols_exclude_ace, axis=1)
+
+same_rows =  dataframe_difference(corts, ace, which='both')
+
+#For each patient we need to evaluate the following scenarios:
+# 1. Evaluate corticosteroids when ACE_ARBS = 0 
+# 2. Evaluate corticosteroids and ACE_ARBS = 1
+# 3. Evaluate ACE_ARBS and corticosteroids = 0
+# 4. Evaluate ACE_ARBS and corticosteroids = 1 
+
+df0_1 = same_rows[(same_rows['ACEI_ARBS']==0)& (same_rows['Z_presc_bin_x']==1)& (same_rows['CORTICOSTEROIDS']==1) & (same_rows['Z_presc_bin_y']==0)]
+df0_0 = same_rows[(same_rows['ACEI_ARBS']==0)& (same_rows['Z_presc_bin_x']==0)& (same_rows['CORTICOSTEROIDS']==0) & (same_rows['Z_presc_bin_y']==0)]
+df1_0 = same_rows[(same_rows['ACEI_ARBS']==1)& (same_rows['Z_presc_bin_x']==0)& (same_rows['CORTICOSTEROIDS']==0) & (same_rows['Z_presc_bin_y']==1)]
+df1_1 = same_rows[(same_rows['ACEI_ARBS']==1)& (same_rows['Z_presc_bin_x']==1)& (same_rows['CORTICOSTEROIDS']==1) & (same_rows['Z_presc_bin_y']==1)]
+
+print('We prescribe CORTS, without ACEs versus prescribe NO ACEs with corticosteroids', round(100*(df0_1['Y_presc_x']-df0_1['Y_presc_y']).abs().mean(),2),'%, n=', len(df0_1))    
+print('We prescribe NO CORTS, without ACEs versus prescribe NO ACEs without corticosteroids', round(100*(df0_0['Y_presc_x']-df0_0['Y_presc_y']).abs().mean(),2),'%, n=', len(df0_0))
+print('We prescribe ACE, without corticosteroids versus prescribe NO CORTS with ACE', round(100*(df1_0['Y_presc_x']-df1_0['Y_presc_y']).abs().mean(),2),'%, n=', len(df1_0))
+print('We prescribe CORTS, with ACEs versus prescribe ACEs with corticosteroids', round(100*(df1_1['Y_presc_x']-df1_1['Y_presc_y']).abs().mean(),2),'%, n=', len(df1_1))     
+
+
+
+
+
+
+
+
