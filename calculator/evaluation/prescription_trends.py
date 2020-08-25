@@ -49,7 +49,7 @@ df.groupby([treatment])[outcome].mean()
 
 #%%  Evaluate specific version
 data_version = 'train' # in ['train','test','validation','validation_cremona','validation_hope']:
-weighted_status = 'weighted'
+weighted_status = 'no_weights'
 threshold = 0.01
 
 #Read in the relevant data

@@ -125,7 +125,7 @@ for outcome in prediction_list:
                     summary.to_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
                     n_summary = summary
                 else:
-                    result['NO_'+treatment] = result['NO_'+treatment].replace(0,1e-4
+                    result['NO_'+treatment] = result['NO_'+treatment].replace(0,1e-4)
                     result['Benefit'] = result.apply(lambda row: (row['NO_'+treatment] -  row[treatment])/row['NO_'+treatment], axis = 1)
                     result['Prescribe'] = result.apply(lambda row: treatment if row['Benefit'] > threshold else 'NO_'+treatment, axis = 1)
                     result['Prescribe_Prediction'] = result.apply(lambda row: row[row['Prescribe']], axis = 1)    
