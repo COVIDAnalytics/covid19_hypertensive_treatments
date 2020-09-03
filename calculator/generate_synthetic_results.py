@@ -246,7 +246,7 @@ df3[alt_treatment] = 1
 
 df_corts = pd.concat([df2,df3], ignore_index=True)
 
-columns = ['ID', 'ACE_ARBS_rec', 'ACE_ARBS_alt','CORTS_rec','CORTS_alt']
+columns = ['ID', 'ACE_ARBS_rec', 'ACE_ARBS_alt','ACE_ARBS_proba','CORTS_rec','CORTS_alt','CORTS_proba']
 df_results = pd.DataFrame(index=df0['ID'], columns=columns)
 
 
@@ -257,34 +257,61 @@ for i in df_results.index:
         df_results.loc[df_results.index==i,'ACE_ARBS_rec']= df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==0)]['Prescribe'].iloc[0]
         if df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==0)]['AverageProbability'].iloc[0] > df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==1)]['AverageProbability'].iloc[0]:        
             df_results.loc[df_results.index==i,'ACE_ARBS_alt']= 'CORTICOSTEROIDS'
+            df_results.loc[df_results.index==i,'ACE_ARBS_proba']= df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==1)]['AverageProbability'].iloc[0]
         else:
             df_results.loc[df_results.index==i,'ACE_ARBS_alt']= 'NO_CORTICOSTEROIDS'
+            df_results.loc[df_results.index==i,'ACE_ARBS_proba']= df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==0)]['AverageProbability'].iloc[0]
     else:
         if df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==0)]['AverageProbability'].iloc[0] > df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==1)]['AverageProbability'].iloc[0]:
             df_results.loc[df_results.index==i,'ACE_ARBS_rec']= df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==1)]['Prescribe'].iloc[0]
             df_results.loc[df_results.index==i,'ACE_ARBS_alt']= 'CORTICOSTEROIDS'
+            df_results.loc[df_results.index==i,'ACE_ARBS_proba']= df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==1)]['AverageProbability'].iloc[0]
         else: 
             df_results.loc[df_results.index==i,'ACE_ARBS_rec']= df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==0)]['Prescribe'].iloc[0]
             df_results.loc[df_results.index==i,'ACE_ARBS_alt']= 'NO_CORTICOSTEROIDS'
+            df_results.loc[df_results.index==i,'ACE_ARBS_proba']= df_ace[(df_ace['ID']==i)&(df_ace['CORTICOSTEROIDS']==0)]['AverageProbability'].iloc[0]
 
     if df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==0)]['Prescribe'].iloc[0] == df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==1)]['Prescribe'].iloc[0]:
         df_results.loc[df_results.index==i,'CORTS_rec']= df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==0)]['Prescribe'].iloc[0]
         if df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==0)]['AverageProbability'].iloc[0] > df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==1)]['AverageProbability'].iloc[0]:        
             df_results.loc[df_results.index==i,'CORTS_alt']= 'ACEI_ARBS'
+            df_results.loc[df_results.index==i,'CORTS_proba']= df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==1)]['AverageProbability'].iloc[0]
         else:
             df_results.loc[df_results.index==i,'CORTS_alt']= 'NO_ACEI_ARBS'
+            df_results.loc[df_results.index==i,'CORTS_proba']= df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==0)]['AverageProbability'].iloc[0]
     else:
         if df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==0)]['AverageProbability'].iloc[0] > df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==1)]['AverageProbability'].iloc[0]:
             df_results.loc[df_results.index==i,'CORTS_rec']= df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==1)]['Prescribe'].iloc[0]
             df_results.loc[df_results.index==i,'CORTS_alt']= 'ACEI_ARBS'
+            df_results.loc[df_results.index==i,'CORTS_proba']= df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==1)]['AverageProbability'].iloc[0]
         else: 
             df_results.loc[df_results.index==i,'CORTS_rec']= df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==0)]['Prescribe'].iloc[0]
             df_results.loc[df_results.index==i,'CORTS_alt']= 'NO_ACEI_ARBS'
-
+            df_results.loc[df_results.index==i,'CORTS_proba']= df_corts[(df_corts['ID']==i)&(df_corts['ACEI_ARBS']==0)]['AverageProbability'].iloc[0]
+            
 len(df_results[df_results['ACE_ARBS_alt']==df_results['CORTS_rec']])/len(df_results)
 len(df_results[df_results['ACE_ARBS_rec']==df_results['CORTS_alt']])/len(df_results)
 
 len(df_results[(df_results['ACE_ARBS_rec']==df_results['CORTS_alt'])& (df_results['ACE_ARBS_alt']==df_results['CORTS_rec'])])/len(df_results)
+
+#Average agreement rate
+(df_results['ACE_ARBS_proba'] - df_results['CORTS_proba']).abs().mean()
+
+#Percent difference in agreement
+df_agree = df_results[(df_results['ACE_ARBS_rec']==df_results['CORTS_alt'])& (df_results['ACE_ARBS_alt']==df_results['CORTS_rec'])]
+(df_agree['ACE_ARBS_proba'] - df_agree['CORTS_proba']).abs().mean()
+
+#What happens when they disagree:
+df_disagree_corts = df_results[(df_results['ACE_ARBS_rec']==df_results['CORTS_alt'])& (df_results['ACE_ARBS_alt']!=df_results['CORTS_rec'])]
+(df_disagree_corts['ACE_ARBS_proba'] - df_disagree_corts['CORTS_proba']).abs().mean()
+
+df_disagree_ace = df_results[(df_results['ACE_ARBS_rec']!=df_results['CORTS_alt'])& (df_results['ACE_ARBS_alt']==df_results['CORTS_rec'])]
+(df_disagree_ace['ACE_ARBS_proba'] - df_disagree_ace['CORTS_proba']).abs().mean()
+
+df_disagree = df_results[(df_results['ACE_ARBS_rec']!=df_results['CORTS_alt'])& (df_results['ACE_ARBS_alt']!=df_results['CORTS_rec'])]
+(df_disagree['ACE_ARBS_proba'] - df_disagree['CORTS_proba']).abs().mean()
+
+
 
 
 
