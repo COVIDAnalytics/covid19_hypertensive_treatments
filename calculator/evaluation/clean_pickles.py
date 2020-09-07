@@ -286,3 +286,21 @@ def get_feature_names():
      'TOCILIZUMAB':'Tocilizumab',
      'TRANSAMINASES_B':'Elevated Transaminase (>40 U/L)',
      'VIH':'HIV'}
+
+#%% Check pickled file
+with open(os.path.join(website_path,treatment+'.pkl'), 'rb') as handle:
+    model_file = pickle.load(handle)
+
+algorithm_list = model_file['treatment-models'].keys() #exclude OCT
+
+X_small = X
+
+probs_all = pd.DataFrame(index = X_small.index, columns = algorithm_list)
+for alg in algorithm_list:
+    m = model_file['treatment-models'][alg]['model']
+    probs = m.predict_proba(X_small)[:,1]
+    probs_all[alg] = probs
+    
+# X_small.to_csv('example_X.csv',index = False)
+# probs_all.to_csv('example_probs.csv',index = False)
+    
