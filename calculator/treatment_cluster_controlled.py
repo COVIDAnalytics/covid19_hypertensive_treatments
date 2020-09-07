@@ -84,7 +84,7 @@ comorbidities = True
 vitals = True
 lab_tests=True
 med_hx=False ## change on 7/27
-other_tx=True
+other_tx=False
 # mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
 # print(name_datasets[mask])
 
