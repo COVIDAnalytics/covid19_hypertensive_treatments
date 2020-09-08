@@ -42,7 +42,8 @@ for outcome in prediction_list:
     # for data_version in ['train']:
             print("Data = ", data_version, "; Prediction = ", outcome)
             X, Z, y = u.load_data(data_path,training_set_name,
-                                split=data_version, matched=matched, prediction = outcome)
+                                split=data_version, matched=matched, prediction = outcome,
+                                med_hx  = False, other_hx = False)
             print("X observations: "
                   , str(X.shape[0]))
             result = pd.concat([u.algorithm_predictions(X, treatment_list = treatment_list, 

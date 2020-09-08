@@ -15,7 +15,8 @@ import math
 
 import analyzer.dataset as ds
 
-def load_data(folder, train_name, split, matched, prediction = 'DEATH', med_hx=False,treatment=None):
+def load_data(folder, train_name, split, matched, prediction = 'DEATH', 
+    med_hx=False, other_hx = True, treatment=None):
     file = train_name
     #if split == 'validation':
     if 'validation'in split:
@@ -26,7 +27,7 @@ def load_data(folder, train_name, split, matched, prediction = 'DEATH', med_hx=F
     print(file)
     df = pd.read_csv(folder+file)
     X, y = ds.create_dataset_treatment(df, prediction = prediction, 
-                                       med_hx=med_hx, include_regimen=True)
+                                       med_hx=med_hx, other_hx = other_hx, include_regimen=True)
     X.index.name = 'ID'
     y.index.name = 'ID'
     Z = X['REGIMEN']
