@@ -40,10 +40,12 @@ def create_dataset_treatment(data, treatment = None,
         comorbidities*comorb_cols + vitals*vital_cols + 
         lab_tests*lab_cols  + med_hx*med_hx_cols + other_tx*other_tx_cols)   
 
-    # Remove treatment column of interest - replace NO_ if running negative treatment
-    if (treatment != None) & other_tx:
-        cols_include.remove(treatment.replace("NO_", ""))
+    # Filter to single treatment
+    if (treatment != None):
         data_sub = data.loc[data['REGIMEN']==treatment,:]
+        # Remove treatment column of interest - replace NO_ if running negative treatment
+        if other_tx:
+            cols_include.remove(treatment.replace("NO_", ""))
     else:
         data_sub = data
 
