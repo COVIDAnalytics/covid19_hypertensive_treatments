@@ -3,7 +3,7 @@ import pandas as pd
 import analyzer.loaders.cremona.utils as uc
 import analyzer.loaders.partners.utils as u 
 import re
-data_path = '../../covid19_partners/data/v2/'
+data_path = '../../covid19_partners/data/v3/'
 save_path = '../../covid19_partners/processed/'
 
 
@@ -22,19 +22,23 @@ patients_exclude.extend([37739,47285]) ## weird cases of multiple encounters
 patients_covid = partners_demographics_raw.loc[partners_demographics_raw['COV2Result'].isin(u.COVID_LABELS),'pdgID'].unique()
 patients_include = set(patients_covid).difference(patients_exclude)
 
-partners_demographics = partners_demographics_raw.loc[partners_demographics_raw['pdgID'].isin(patients_include),:]
-partners_demographics['length_add'] = partners_demographics['minFromPrevHospitalization'].fillna(0) + partners_demographics['hospitalLOSMin']
-lengths = partners_demographics.groupby('pdgID')['length_add'].sum().rename('TotalLOSMin').reset_index()
-partners_demographics = pd.merge(partners_demographics, lengths, how = 'left', left_on = 'pdgID', right_on = 'pdgID')
+partners_demographics_byenc = partners_demographics_raw.loc[partners_demographics_raw['pdgID'].isin(patients_include),:]
+partners_demographics_byenc['length_add'] = partners_demographics_byenc['minFromPrevHospitalization'].fillna(0) + partners_demographics_byenc['hospitalLOSMin']
+lengths = partners_demographics_byenc.groupby('pdgID')['length_add'].sum().rename('TotalLOSMin').reset_index()
+partners_demographics_byenc = pd.merge(partners_demographics_byenc, lengths, how = 'left', left_on = 'pdgID', right_on = 'pdgID')
+partners_demographics_byenc['minFromFirstHospitalization'] = partners_demographics_byenc.groupby('pdgID')['minFromPrevHospitalization'].cumsum(skipna = True).fillna(0) + \
+    partners_demographics_byenc.groupby('pdgID')['hospitalLOSMin'].cumsum(skipna = True).fillna(0) - \
+        partners_demographics_byenc['hospitalLOSMin'].fillna(0)
+    
 
 ## restrict to first entry
 ## confirm that outcomes are (1) consistent across all records for a patient, (2) no duplicate entries for an encounter
-assert np.all(partners_demographics.groupby('pdgID')['DEATH'].nunique() == 1)
-assert partners_demographics['hospitalEncounterHash'].nunique() == len(partners_demographics['hospitalEncounterHash'])
+assert np.all(partners_demographics_byenc.groupby('pdgID')['DEATH'].nunique() == 1)
+assert partners_demographics_byenc['hospitalEncounterHash'].nunique() == len(partners_demographics_byenc['hospitalEncounterHash'])
 
-partners_demographics['EncounterID'] = partners_demographics['pdgID'].astype(str)+'_'+partners_demographics['Encounter_Number'].astype(str)
-encounter_recode = partners_demographics[['hospitalEncounterHash','EncounterID']]
-partners_demographics = partners_demographics.groupby('pdgID').first().reset_index()
+partners_demographics_byenc['EncounterID'] = partners_demographics_byenc['pdgID'].astype(str)+'_'+partners_demographics_byenc['Encounter_Number'].astype(str)
+encounter_recode = partners_demographics_byenc[['hospitalEncounterHash','EncounterID']]
+partners_demographics = partners_demographics_byenc.groupby('pdgID').first().reset_index()
 
 # Clean columns and identify death events 
 partners_demographics = partners_demographics.rename(columns = {'age': 'AGE', 'gender': 'GENDER','ethnicity':'ETHNICITY'})
@@ -161,11 +165,7 @@ partners_vitals['MAXTEMPERATURE_ADMISSION'] = partners_vitals['Body Temperature'
 #%% Process previous diagnoses from medical history and problem list
 
 ## Load medical history
-medhx_march = pd.read_csv('%s/20200301_20200331/medical_history.csv' %data_path)
-medhx_april = pd.read_csv('%s/20200401_20200430/medical_history.csv' %data_path)
-medhx_may = pd.read_csv('%s/20200501_20200531/medical_history.csv' %data_path)
-medhx_june = pd.read_csv('%s/20200601_20200610/medical_history.csv' %data_path)
-medhx_all = pd.concat([medhx_march, medhx_april, medhx_may, medhx_june], axis = 0)
+medhx_all = pd.read_csv(data_path+'medicalhistory_additional/medical_history.csv')
 medhx_all = medhx_all[['pdgID', 'hospitalEncounterHash', 'firstContactDaysFromAdmission',
        'lastContactDaysFromAdmission', 'CurrentICD10ListTXT']].rename(
            {'firstContactDaysFromAdmission':'startDate', 'lastContactDaysFromAdmission':'endDate'}, axis=1)
@@ -176,11 +176,7 @@ medhx_all = medhx_all.loc[~medhx_all['EncounterID'].isnull(),:]
 medhx_all['Source'] = 'Medical History'
 
 ## Load problem list
-problems_march = pd.read_csv('%s/20200301_20200331/problem_list.csv' %data_path)
-problems_april = pd.read_csv('%s/20200401_20200430/problem_list.csv' %data_path)
-problems_may = pd.read_csv('%s/20200501_20200531/problem_list.csv' %data_path)
-problems_june = pd.read_csv('%s/20200601_20200610/problem_list.csv' %data_path)
-problems_all = pd.concat([problems_march, problems_april, problems_may, problems_june], axis = 0)
+problems_all = pd.read_csv(data_path+'medicalhistory_additional/problem_list.csv')
 problems_all = problems_all[['pdgID', 'hospitalEncounterHash', 'firstDiagnosedDaysFromAdmission',
        'resolvedDaysFromAdmission', 'ProblemStatusDSC', 'CurrentICD10ListTXT']].rename(
            {'firstDiagnosedDaysFromAdmission':'startDate', 'resolvedDaysFromAdmission':'endDate',
@@ -193,6 +189,14 @@ dx_all = pd.concat([medhx_all, problems_all], axis = 0, ignore_index = False)
 dx_all['CurrentICD10ListTXT'] = dx_all['CurrentICD10ListTXT'].apply(lambda x: x.replace('.', ''))
 icd_dict = pd.read_csv('analyzer/hcup_dictionary_icd10.csv')
 dx_all = dx_all.merge(icd_dict[['DIAGNOSIS_CODE', 'HCUP_ORDER', 'GROUP_HCUP']], how = 'left', left_on = 'CurrentICD10ListTXT', right_on = 'DIAGNOSIS_CODE')
+
+## Re-index all start/end dates with respect to first encounter (e.g. if 3 encounters and startDate = -10 for third encounter, must adjust for when first encounter was)
+dx_all = dx_all.merge(partners_demographics_byenc[['pdgID', 'hospitalEncounterHash', 'minFromFirstHospitalization', 'EncounterID']], how = 'left')
+dx_all['startDate_adj'] = dx_all['startDate'] + np.round(dx_all['minFromFirstHospitalization']/(60*24))  ## subtract time between visits
+dx_all['endDate_adj'] =  dx_all['endDate'] + np.round(dx_all['minFromFirstHospitalization']/(60*24))
+
+compare = dx_all[['pdgID','hospitalEncounterHash','minFromFirstHospitalization','EncounterID','startDate','endDate','startDate_adj','endDate_adj']]
+
 
 #%% Identify comorbidities (pre-existing and active)
 
@@ -225,9 +229,7 @@ partners_morbidities.loc[:,'OUTCOME_VENT'] = np.nan
 
 #%% Process medications
 # Load the Medication ID
-treatments_nonrem = pd.read_csv(data_path+'temp/hospital_meds.csv')
-treatments_rem = pd.read_csv(data_path+'temp/hospital_meds_remdesivir.csv')
-# treatments = pd.read_csv(data_path+'medications_redone/hospital_meds_combined.csv')
+treatments = pd.read_csv(data_path+'medications_redone/hospital_meds.csv')
 treatments = pd.concat([treatments_rem, treatments_nonrem], axis = 0)
 # treatments_home = pd.read_csv(data_path+'medications_redone/home_meds.csv')
 treatments =  pd.merge(treatments, encounter_recode, how = 'left', on = 'hospitalEncounterHash')
