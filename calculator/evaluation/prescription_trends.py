@@ -30,7 +30,7 @@ algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
 #%% Generate predictions across all combinations
  #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
 
-treatment = 'CORTICOSTEROIDS'
+treatment = 'INTERFERONOR'
 treatment_list = [treatment, 'NO_'+treatment]
 
 results_path = '../../covid19_treatments_results/'
@@ -45,6 +45,41 @@ df = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imput
 df.groupby('SOURCE_COUNTRY')[treatments].mean()
 df.groupby([treatment])[outcome].mean()
 
+#%% Compare prescriptions by algorithm
+
+# summary_weight = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_weighted_t'+str(threshold)+'.csv')
+# summary_weight['Algorithm'] = 'weighted'
+# summary_weight.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
+
+data_version = 'test'
+threshold = 0.01
+
+summary_vote = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_no_weights_t'+str(threshold)+'.csv')
+summary_vote['Algorithm'] = 'vote'
+summary_vote.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
+
+result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+
+result = pd.concat([result[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
+          # summary_weight[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
+          summary_vote[['ID','Algorithm','Prescribe','Prescribe_Prediction']]],
+          axis=0, ignore_index = True)
+
+comparison =  pd.DataFrame(columns = ['algorithm','prescription_count','prescription_prob','agreement_weighted', 'agreement_no_weights'])
+
+for alg in result.Algorithm.unique():
+    alg_presc = result.loc[result['Algorithm']==alg].set_index('ID')
+    t_count = sum(alg_presc['Prescribe'] == treatment)
+    prob = alg_presc['Prescribe_Prediction'].mean()
+    # agreement_weighted = (alg_presc['Prescribe']==summary_weight['Prescribe']).mean()
+    agreement_weighted = np.nan
+    agreement_vote = (alg_presc['Prescribe']==summary_vote['Prescribe']).mean()
+    comparison.loc[len(comparison)] = [alg, t_count, prob,
+                                       agreement_weighted, agreement_vote]
+
+comparison.to_csv(save_path+data_version+'_'+match_status+'_t'+str(threshold)+'_'+'agreement_byalgorithm.csv', index = False)
+
+
 
 
 #%%  Evaluate specific version
@@ -54,7 +89,8 @@ threshold = 0.01
 
 #Read in the relevant data
 X, Z, y = u.load_data(data_path,training_set_name,
-                    split=data_version, matched=matched, prediction = outcome)
+                    split=data_version, matched=matched, prediction = outcome,
+                    other_tx = False)
 
 summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
 Z_presc = summary['Prescribe']
@@ -64,40 +100,6 @@ Y_presc = summary['AverageProbability']
 X_test, Z_test, y_test = u.load_data(data_path,training_set_name,
                     split='test', matched=matched, prediction = outcome)
 
-
-#%% Create multi-class classification tre
-# grid = iai.GridSearch(
-#     iai.OptimalTreeClassifier(
-#         random_seed=1,
-#     ),
-#     max_depth=range(3, 9),
-#     criterion = ['gini','entropy']
-# )
-# grid.fit(X, Z_presc, validation_criterion = 'entropy')
-
-# lnr = grid.get_learner()
-# lnr.write_html(save_path+data_version+'_'+match_status+'_'+weighted_status+'_prescription_explanations.html')
-
-# lnr.score(X, Z_presc, criterion = 'misclassification')
-
-# df_list = [pd.Series(['dataset','misclassification','entropy','gini'])]
-# for data_version in ['train','test','validation','validation_cremona','validation_hope']:
-#   X_test, Z_test, y_test = u.load_data(data_path,'hope_hm_cremona_matched_all_treatments_train.csv',
-#                                   split=data_version,matched=matched)
-#   X_test = X_test.reindex(X.columns, axis = 1, fill_value = 0)
-#   # Load presccriptions
-#   summary_test = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
-#   Z_test_presc = summary_test['Prescribe']
-#   # compute misclassification
-#   s1 = lnr.score(X_test, Z_test_presc, criterion = 'misclassification')
-#   s2 = lnr.score(X_test, Z_test_presc, criterion = 'entropy')
-#   s3 = lnr.score(X_test, Z_test_presc, criterion = 'gini')
-#   df_list.append(pd.Series([data_version, s1, s2, s3]))
-#   print("Version = ", data_version, "; Score = ", s1)
-
-# df_performance = pd.concat(df_list, axis=1)
-# df_performance.to_csv(save_path+match_status+'_prescription_explanations_performance.csv',
-#   index = False, header = False)
 
 
 #%% Descriptive Analysis
@@ -112,14 +114,15 @@ features = {'categorical':['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY'
        # 'IN_ORALANTICOAGL', 'IN_BETABLOCKERS', 'IN_BETAGONISTINHALED',
        # 'IN_GLUCORTICOIDSINHALED', 'IN_DVITAMINSUPLEMENT', 'IN_BENZODIACEPINES',
        # 'IN_ANTIDEPRESSANT', 
-       'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
-       'ANTIBIOTICS', 'ACEI_ARBS', 'GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN',
+       #  'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
+       # 'ANTIBIOTICS', 'ACEI_ARBS', 
+       'GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN',
        'RACE_ORIENTAL', 'RACE_OTHER'],
                 'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES',
        'HEMOGLOBIN', 'PLATELETS'],
                 'multidrop':[]}
 
-features['categorical'].remove(treatment)
+# features['categorical'].remove(treatment)
 
 df = pd.concat([X,y,Z_presc], axis=1)
 desc_list = []
@@ -197,6 +200,36 @@ plot_byfeature('AgeGroup','plotAgeGroup')
 plot_byfeature('GENDER_MALE','plotGender')
 plot_byfeature('CreatinineGroups','plotCreatinine')
 plot_byfeature('SAT02_BELOW92','plotSatO2')
+plot_byfeature('HYPERTENSION','plotHypertension')
+plot_byfeature('BLOOD_PRESSURE_ABNORMAL_B','plotLowBP')
+plot_byfeature('PCR_B','plotHighCRP')
+plot_byfeature('DDDIMER_B','plotHighDD')
+
+
+#%% Performance summary on all datasets
+
+lr = False
+perf_all = []
+
+for data_version in ['train','test','validation','validation_cremona','validation_hope']:
+    perf_list = []
+    for t in treatments:
+        perf_list.append(pd.read_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/' \
+                                     +str(t)+'/'+ str(outcome)+'/summary/'+data_version+'_'+match_status+'_performance_allmethods.csv'))  
+        if lr:
+            res = pd.concat(perf_list, axis=1).mean(axis=0).transpose()
+        else: 
+            res = pd.concat(perf_list, axis=1).query('Algorithm != "lr"').mean(axis=0).transpose()
+    res['Data'] = data_version
+    perf_all.append(res)
+    
+perf_all = pd.concat(perf_all, axis=1).transpose()
+perf_all = perf_all[['Data', 'ACEI_ARBS', 'NO_ACEI_ARBS', 'CORTICOSTEROIDS', 'NO_CORTICOSTEROIDS', 'INTERFERONOR', 'NO_INTERFERONOR']]
+
+if lr:
+    perf_all.to_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/performance_summary.csv', index = False)
+else: 
+    perf_all.to_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/performance_summary_no_lr.csv', index = False)
 
 
 #%% Assess expected benefit
@@ -213,54 +246,91 @@ plot_byfeature('SAT02_BELOW92','plotSatO2')
 # import matplotlib
 # matplotlib.use('Agg') ## suppress display for cluster
 
-column = 'GENDER_MALE'
-col_rename = 'Gender (Male)'
+# column = 'GENDER_MALE'
+# col_rename = 'Gender (Male)'
 
-# X['Z'] = Z.str.replace('_',' ')
-# X['Z_presc'] = Z_presc.str.replace('_',' ')
-# X['Y'] = y
-# X['Y_presc'] = Y_presc
+# # X['Z'] = Z.str.replace('_',' ')
+# # X['Z_presc'] = Z_presc.str.replace('_',' ')
+# # X['Y'] = y
+# # X['Y_presc'] = Y_presc
 
-hist_true =  X.groupby([column, 'Z']).size().reset_index()
-hist_true.columns = [col_rename, 'Treatment','Given']
-hist_presc =  X.groupby([column, 'Z_presc']).size().reset_index()
-hist_presc.columns = [col_rename, 'Treatment','Prescribed']
+# hist_true =  X.groupby([column, 'Z']).size().reset_index()
+# hist_true.columns = [col_rename, 'Treatment','Given']
+# hist_presc =  X.groupby([column, 'Z_presc']).size().reset_index()
+# hist_presc.columns = [col_rename, 'Treatment','Prescribed']
 
-hist = hist_true.merge(hist_presc, on = [col_rename, 'Treatment'], how = 'left')
-hist.Treatment = hist.Treatment.str.replace('Chloroquine','HCQ')
+# hist = hist_true.merge(hist_presc, on = [col_rename, 'Treatment'], how = 'left')
+# hist.Treatment = hist.Treatment.str.replace('Chloroquine','HCQ')
 
-#%% Create plot
-from matplotlib import style
-style.use('ggplot')
+# #%% Create plot
+# from matplotlib import style
+# style.use('ggplot')
 
-cols = X[column].value_counts().shape[0]
-fig, axes = plt.subplots(1, cols, figsize=(8*cols, 8), sharey = True)
+# cols = X[column].value_counts().shape[0]
+# fig, axes = plt.subplots(1, cols, figsize=(8*cols, 8), sharey = True)
 
-for x, i in enumerate(sorted(X[column].unique())):
-    data = hist[hist[col_rename] == i]
-    n = data['Given'].sum()
-    data['Given'] = data['Given']/n
-    data['Prescribed'] = data['Prescribed']/n
-    print (data)
-    data.plot(x="Treatment", y=["Given", "Prescribed"], kind="bar",
-              ax = axes[x])    # axes[x].set_xticklabels(data.index.values)
-    axes[x].legend(loc='best')
-    axes[x].grid(True)
-    axes[x].set_title(col_rename+' = '+str(i))
+# for x, i in enumerate(sorted(X[column].unique())):
+#     data = hist[hist[col_rename] == i]
+#     n = data['Given'].sum()
+#     data['Given'] = data['Given']/n
+#     data['Prescribed'] = data['Prescribed']/n
+#     print (data)
+#     data.plot(x="Treatment", y=["Given", "Prescribed"], kind="bar",
+#               ax = axes[x])    # axes[x].set_xticklabels(data.index.values)
+#     axes[x].legend(loc='best')
+#     axes[x].grid(True)
+#     axes[x].set_title(col_rename+' = '+str(i))
 
-fig.suptitle('Prescription trends by '+col_rename, fontsize=20)
-plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+col_rename+'_prescriptions.png',
-            bbox_inches = "tight")
+# fig.suptitle('Prescription trends by '+col_rename, fontsize=20)
+# plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+col_rename+'_prescriptions.png',
+#             bbox_inches = "tight")
 
 #%% compare prescriptions by algorithm
 
-result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+# result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
 
-result['Prescribe_Yes'] = result['Prescribe']=='CORTICOSTEROIDS'
-result.groupby('Algorithm')['Prescribe_Yes'].mean()
+# result['Prescribe_Yes'] = result['Prescribe']=='CORTICOSTEROIDS'
+# result.groupby('Algorithm')['Prescribe_Yes'].mean()
 
-result.groupby('Algorithm').agg({'CORTICOSTEROIDS':'mean',
-                                 'NO_CORTICOSTEROIDS':'mean'})
+# result.groupby('Algorithm').agg({'CORTICOSTEROIDS':'mean',
+#                                  'NO_CORTICOSTEROIDS':'mean'})
+
+#%% Create multi-class classification tre
+# grid = iai.GridSearch(
+#     iai.OptimalTreeClassifier(
+#         random_seed=1,
+#     ),
+#     max_depth=range(3, 9),
+#     criterion = ['gini','entropy']
+# )
+# grid.fit(X, Z_presc, validation_criterion = 'entropy')
+
+# lnr = grid.get_learner()
+# lnr.write_html(save_path+data_version+'_'+match_status+'_'+weighted_status+'_prescription_explanations.html')
+
+# lnr.score(X, Z_presc, criterion = 'misclassification')
+
+# df_list = [pd.Series(['dataset','misclassification','entropy','gini'])]
+# for data_version in ['train','test','validation','validation_cremona','validation_hope']:
+#   X_test, Z_test, y_test = u.load_data(data_path,'hope_hm_cremona_matched_all_treatments_train.csv',
+#                                   split=data_version,matched=matched)
+#   X_test = X_test.reindex(X.columns, axis = 1, fill_value = 0)
+#   # Load presccriptions
+#   summary_test = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'.csv')
+#   Z_test_presc = summary_test['Prescribe']
+#   # compute misclassification
+#   s1 = lnr.score(X_test, Z_test_presc, criterion = 'misclassification')
+#   s2 = lnr.score(X_test, Z_test_presc, criterion = 'entropy')
+#   s3 = lnr.score(X_test, Z_test_presc, criterion = 'gini')
+#   df_list.append(pd.Series([data_version, s1, s2, s3]))
+#   print("Version = ", data_version, "; Score = ", s1)
+
+# df_performance = pd.concat(df_list, axis=1)
+# df_performance.to_csv(save_path+match_status+'_prescription_explanations_performance.csv',
+#   index = False, header = False)
+
+
+
 
 #%%  Evaluate consistency between different treatments
 
