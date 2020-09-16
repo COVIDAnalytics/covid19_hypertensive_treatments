@@ -28,7 +28,7 @@ match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
 # algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
-algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
+algorithm_list = ['lr','rf','cart','xgboost','qda','gb']
 
 #%% Generate predictions across all combinations
  #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']

@@ -1,14 +1,16 @@
 import numpy as np
 import pandas as pd
 import analyzer.loaders.cremona.utils as uc
-import analyzer.loaders.partners.utils as u 
+import analyzer.loaders.partners.utils as u
 import re
+from sklearn.impute import KNNImputer
+
 data_path = '../../covid19_partners/data/v3/'
 save_path = '../../covid19_partners/processed/'
 
 
 #%% Process demographic data
-
+ 
 partners_demographics_raw = pd.read_csv(data_path+'demographics_redone/demographics2.csv')
 partners_demographics_raw['COV2Positive'] = partners_demographics_raw['COV2Result'].isin(u.COVID_LABELS)
 partners_demographics_raw['DEATH'] = (partners_demographics_raw['deathMinPostAdmission'].notna()).astype(int)
@@ -16,7 +18,7 @@ cov_count = partners_demographics_raw.groupby('pdgID')['COV2Positive'].agg(['cou
 
 partners_demographics_raw['Encounter_Number'] = partners_demographics_raw.groupby(['pdgID']).cumcount()+1
 
-## Only include patients who have (1) at least 1 positive covid result and (2) no encounters separated by more than a day
+## Only include patients who have (1) at least 1 positive covid result and (2) no encounters separated by more than 2 days
 patients_exclude = list(partners_demographics_raw.loc[partners_demographics_raw['minFromPrevHospitalization'] > 60*24*2,'pdgID'].unique())
 patients_exclude.extend([37739,47285]) ## weird cases of multiple encounters
 patients_covid = partners_demographics_raw.loc[partners_demographics_raw['COV2Result'].isin(u.COVID_LABELS),'pdgID'].unique()
@@ -43,11 +45,16 @@ partners_demographics = partners_demographics_byenc.groupby('pdgID').first().res
 # Clean columns and identify death events 
 partners_demographics = partners_demographics.rename(columns = {'age': 'AGE', 'gender': 'GENDER','ethnicity':'ETHNICITY'})
 partners_demographics['GENDER'] = partners_demographics['GENDER'].str.upper()
-demographics_clean = partners_demographics[['pdgID','hospitalEncounterHash','AGE','GENDER','ETHNICITY','TotalLOSMin','DEATH']]
+
+eth_map = pd.read_csv('../../covid19_partners/processed/ethnicity_recode.csv')
+partners_demographics = pd.merge(partners_demographics, eth_map[['ETHNICITY','RACE']], on = 'ETHNICITY', how = 'left')
+
+demographics_clean = partners_demographics[['pdgID','hospitalEncounterHash','AGE','GENDER','RACE','TotalLOSMin','DEATH']]
 demographics_clean.set_index('pdgID', inplace = True)
 # demographics_clean.to_csv('../../covid19_partners/processed/demographics_clean.csv')
 
 partners_demographics.TotalLOSMin.sort_values()
+
 
 #%% process ICU data
 icu_raw = pd.read_csv(data_path+'demographics_redone/icu_admission.csv')
@@ -70,6 +77,11 @@ labs['componentNM'] = labs['componentNM'].apply(lambda x: u.PARTNERS_LABS[x])
 labs = labs.sort_values(['pdgID', 'resultDTSMinPostAdmission'], ascending = [True, True])
 labs = labs.drop_duplicates(['pdgID', 'componentNM']).reset_index(drop = True)
 
+labs.query('componentNM == "C-Reactive Protein (CRP)"')[['ReferenceRangeLowNBR', 'ReferenceRangeHighNBR', 'ReferenceRangeUnitCD']]
+
+labs.query('componentNM == "D-DIMER"')[['ReferenceRangeLowNBR', 'ReferenceRangeHighNBR', 'ReferenceRangeUnitCD']]
+
+
 # labs.groupby(['pdgID','componentNM']).resultDTSMinPostAdmission.count()
 # t =  labs_raw.query('pdgID == 36148')
 
@@ -83,6 +95,8 @@ for patient in labs['pdgID'].unique():
             else:
                 partners_labs.loc[patient, exam] = value
 
+partners_labs.drop(['SPECIMEN SOURCE/DESCRIPTION','SPECIMEN SOURCE', 
+       'SARS-COV 2 (COVID-19) PCR','SARS-COV-2 - EXTERNAL', 'COVID-19 SOURCE'], axis = 1, inplace = True)
 # Clean data for consistency
 # partners_labs.loc[partners_labs['CBC: Hemoglobin'] > 20, 'CBC: Hemoglobin'] = np.NaN
 # partners_labs.loc[partners_labs['CBC: Leukocytes'] > 50, 'CBC: Leukocytes'] = np.NaN
@@ -103,23 +117,23 @@ partners_labs.loc[:, 'LYMPHOCYTES'] = partners_labs.loc[:, 'LYMPHOCYTES']*1000
 partners_labs.loc[:, 'PLATELETS'] = partners_labs.loc[:, 'PLATELETS']*1000
 partners_labs.loc[:, 'LEUCOCYTES'] = partners_labs.loc[:, 'LEUCOCYTES']*1000
 
-partners_labs['SAT02_BELOW92'] = \
-    partners_labs['ABG: Oxygen Saturation (SaO2)'].apply(lambda x: 1 if x < 92 else np.nan if pd.isnull(x) else 0)
-partners_labs['DDDIMER_B'] = \
-    partners_labs['D-DIMER (UG/ML)'].apply(lambda x: 1 if x > 0.5 else np.nan if pd.isnull(x) else 0)
-partners_labs['PROCALCITONIN_B'] = \
-    partners_labs['PROCALCITONIN'].apply(lambda x: 1 if x > 0.5 else np.nan if pd.isnull(x) else 0)
-partners_labs['PCR_B'] = \
-    partners_labs['CRP (MG/L)'].apply(lambda x: 1 if x > 100 else np.nan if pd.isnull(x) else 0)
+# partners_labs['SAT02_BELOW92'] = \
+#     partners_labs['ABG: Oxygen Saturation (SaO2)'].apply(lambda x: 1 if x < 92 else np.nan if pd.isnull(x) else 0)
+# partners_labs['DDDIMER_B'] = \
+#     partners_labs['D-DIMER (UG/ML)'].apply(lambda x: 1 if x > 0.5 else np.nan if pd.isnull(x) else 0)
+# partners_labs['PROCALCITONIN_B'] = \
+#     partners_labs['PROCALCITONIN'].apply(lambda x: 1 if x > 0.5 else np.nan if pd.isnull(x) else 0)
+# partners_labs['PCR_B'] = \
+#     partners_labs['CRP (MG/L)'].apply(lambda x: 1 if x > 100 else np.nan if pd.isnull(x) else 0)
 
-partners_labs['ALT_B'] = \
-    partners_labs['Alanine Aminotransferase (ALT)'].apply(lambda x: 1 if x >= 40 else np.nan if pd.isnull(x) else 0)
-partners_labs['AST_B'] = \
-    partners_labs['Aspartate Aminotransferase (AST)'].apply(lambda x: 1 if x >= 40 else np.nan if pd.isnull(x) else 0)
-partners_labs['TRANSAMINASES_B'] = partners_labs[['ALT_B', 'AST_B']].max(axis=1)
+# partners_labs['ALT_B'] = \
+#     partners_labs['Alanine Aminotransferase (ALT)'].apply(lambda x: 1 if x >= 40 else np.nan if pd.isnull(x) else 0)
+# partners_labs['AST_B'] = \
+#     partners_labs['Aspartate Aminotransferase (AST)'].apply(lambda x: 1 if x >= 40 else np.nan if pd.isnull(x) else 0)
+# partners_labs['TRANSAMINASES_B'] = partners_labs[['ALT_B', 'AST_B']].max(axis=1)
     
-partners_labs['LDL_B'] = \
-    partners_labs['LDH'].apply(lambda x: 1 if x < 240 or x > 480 else np.nan if pd.isnull(x) else 0)
+# partners_labs['LDL_B'] = \
+#     partners_labs['LDH'].apply(lambda x: 1 if x < 240 or x > 480 else np.nan if pd.isnull(x) else 0)
 
 # partners_labs['Lab_Data'] = 1
 # partners_join = demographics_clean.join(partners_labs, how = 'left')
@@ -158,10 +172,10 @@ for patient in vitals['pdgID'].unique():
 
 # Clean data for consistency                    
 partners_vitals['Systolic Blood Pressure'] = partners_vitals['Systolic Blood Pressure'].apply(lambda x: float(x.split('/')[0]))
-partners_vitals['BLOOD_PRESSURE_ABNORMAL_B'] = partners_vitals['Systolic Blood Pressure'].apply(lambda x: 1 if x < 100 else np.nan if pd.isnull(x) else 0)
-partners_vitals['FAST_BREATHING'] = partners_vitals['Respiratory Frequency'].apply(lambda x: 1 if x > 22 else np.nan if pd.isnull(x) else 0)
-partners_vitals['MAXTEMPERATURE_ADMISSION'] = partners_vitals['Body Temperature'] # for now, assume that only one temperature is available at beginning of admission
-                                                     
+partners_vitals['MAXTEMPERATURE_ADMISSION'] = (partners_vitals['Body Temperature']-32)*5/9 # for now, assume that only one temperature is available at beginning of admission
+# partners_vitals['BLOOD_PRESSURE_ABNORMAL_B'] = partners_vitals['Systolic Blood Pressure'].apply(lambda x: 1 if x < 100 else np.nan if pd.isnull(x) else 0)
+# partners_vitals['FAST_BREATHING'] = partners_vitals['Respiratory Frequency'].apply(lambda x: 1 if x > 22 else np.nan if pd.isnull(x) else 0)
+                                        
 #%% Process previous diagnoses from medical history and problem list
 
 ## Load medical history
@@ -192,15 +206,18 @@ dx_all = dx_all.merge(icd_dict[['DIAGNOSIS_CODE', 'HCUP_ORDER', 'GROUP_HCUP']], 
 
 ## Re-index all start/end dates with respect to first encounter (e.g. if 3 encounters and startDate = -10 for third encounter, must adjust for when first encounter was)
 dx_all = dx_all.merge(partners_demographics_byenc[['pdgID', 'hospitalEncounterHash', 'minFromFirstHospitalization', 'EncounterID']], how = 'left')
-dx_all['startDate_adj'] = dx_all['startDate'] + np.round(dx_all['minFromFirstHospitalization']/(60*24))  ## subtract time between visits
-dx_all['endDate_adj'] =  dx_all['endDate'] + np.round(dx_all['minFromFirstHospitalization']/(60*24))
+dx_all['daysFromFirstHospitalization'] = np.round(dx_all['minFromFirstHospitalization']/(60*24))
+dx_all['startDate_adj'] = dx_all['startDate'] + dx_all['daysFromFirstHospitalization']  ## subtract time between visits
+dx_all['endDate_adj'] =  dx_all['endDate'] + dx_all['daysFromFirstHospitalization']
+dx_all = dx_all.groupby(['pdgID', 'CurrentICD10ListTXT', 'Source',
+       'DIAGNOSIS_CODE', 'HCUP_ORDER', 'GROUP_HCUP']).last().reset_index()
 
-compare = dx_all[['pdgID','hospitalEncounterHash','minFromFirstHospitalization','EncounterID','startDate','endDate','startDate_adj','endDate_adj']]
+compare = dx_all[['pdgID','hospitalEncounterHash','GROUP_HCUP','daysFromFirstHospitalization','EncounterID','startDate','endDate','startDate_adj','endDate_adj']]
 
 
 #%% Identify comorbidities (pre-existing and active)
 
-dx_previous = dx_all.query('startDate <=0 & Status == "Active"')
+dx_previous = dx_all.query('startDate_adj <=0 & Status == "Active"')
 partners_comorbs = pd.DataFrame(0, index = demographics_clean.index, columns = uc.COMORBS_TREATMENTS_NAMES)
 for i in range(len(uc.COMORBS_TREATMENTS_HCUP)):
     name = uc.COMORBS_TREATMENTS_NAMES[i]
@@ -211,7 +228,7 @@ for i in range(len(uc.COMORBS_TREATMENTS_HCUP)):
 
 #%% Identify morbidities (new within encounter)
 
-dx_new = dx_all.query('startDate >= 0')
+dx_new = dx_all.query('startDate_adj >= 0')
 
 MORB_CODES = {'SEPSIS': [2],
     'ARF': [145], #ACUTE RENAL FAILURE
@@ -230,7 +247,7 @@ partners_morbidities.loc[:,'OUTCOME_VENT'] = np.nan
 #%% Process medications
 # Load the Medication ID
 treatments = pd.read_csv(data_path+'medications_redone/hospital_meds.csv')
-treatments = pd.concat([treatments_rem, treatments_nonrem], axis = 0)
+# treatments = pd.concat([treatments_rem, treatments_nonrem], axis = 0)
 # treatments_home = pd.read_csv(data_path+'medications_redone/home_meds.csv')
 treatments =  pd.merge(treatments, encounter_recode, how = 'left', on = 'hospitalEncounterHash')
 treatments = treatments.loc[~treatments['EncounterID'].isnull(),:].drop_duplicates()
@@ -306,24 +323,74 @@ partners_all = pd.concat([demographics_clean, partners_labs,
 ft_summary = partners_all.describe().transpose()
 ft_summary.to_csv(save_path+'feature_summary.csv')
 
+partners_all.to_csv('../../covid19_treatments_data/partners_treatment_missing.csv', index = False)
+
+#%% Impute missing data
+partners_clean = partners_all.drop(['hospitalEncounterHash','GENDER','RACE',
+                                    'TotalLOSMin','DEATH','ICU_Admission']+u.MORBIDITIES, axis=1)
+
+## coalesce ABG and SaO2 readings given high missingness - better than imputation
+partners_clean.loc[:, 'ABG: Oxygen Saturation (SaO2)'] = partners_clean['ABG: Oxygen Saturation (SaO2)'].fillna(partners_clean['SaO2'])
+partners_clean.drop('SaO2', axis=1, inplace=True)
+
+imp = KNNImputer(n_neighbors=10, weights="uniform")
+partners_fit = imp.fit_transform(partners_clean)
+partners_fit = pd.DataFrame(partners_fit, columns = partners_clean.columns, index = partners_clean.index)
+partners_imputed = pd.concat([partners_fit, 
+                               partners_all[['hospitalEncounterHash','GENDER','RACE',
+                                    'TotalLOSMin','DEATH','ICU_Admission']+u.MORBIDITIES]], axis = 1)
+
+#%% Create binary variables
+
+
+
+partners_imputed['SAT02_BELOW92'] = \
+    partners_imputed['ABG: Oxygen Saturation (SaO2)'].apply(lambda x: 1 if x < 92 else np.nan if pd.isnull(x) else 0)
+# partners_imputed['DDDIMER_B'] = \
+#     partners_imputed['D-DIMER (UG/ML)'].apply(lambda x: 1 if x > 0.5 else np.nan if pd.isnull(x) else 0)
+partners_imputed['DDDIMER_B'] = \
+    partners_imputed['D-DIMER'].apply(lambda x: 1 if x > 500 else np.nan if pd.isnull(x) else 0)
+partners_imputed['PROCALCITONIN_B'] = \
+    partners_imputed['PROCALCITONIN'].apply(lambda x: 1 if x > 0.5 else np.nan if pd.isnull(x) else 0)
+# partners_imputed['PCR_B'] = \
+#     partners_imputed['CRP (MG/L)'].apply(lambda x: 1 if x > 100 else np.nan if pd.isnull(x) else 0)
+partners_imputed['PCR_B'] = \
+    partners_imputed['C-Reactive Protein (CRP)'].apply(lambda x: 1 if x > 10 else np.nan if pd.isnull(x) else 0)
+
+partners_imputed['ALT_B'] = \
+    partners_imputed['Alanine Aminotransferase (ALT)'].apply(lambda x: 1 if x >= 40 else np.nan if pd.isnull(x) else 0)
+partners_imputed['AST_B'] = \
+    partners_imputed['Aspartate Aminotransferase (AST)'].apply(lambda x: 1 if x >= 40 else np.nan if pd.isnull(x) else 0)
+partners_imputed['TRANSAMINASES_B'] = partners_imputed[['ALT_B', 'AST_B']].max(axis=1)
+    
+partners_imputed['LDL_B'] = \
+    partners_imputed['LDH'].apply(lambda x: 1 if x < 240 or x > 480 else np.nan if pd.isnull(x) else 0)
+
+partners_imputed['BLOOD_PRESSURE_ABNORMAL_B'] = partners_imputed['Systolic Blood Pressure'].apply(lambda x: 1 if x < 100 else np.nan if pd.isnull(x) else 0)
+partners_imputed['FAST_BREATHING'] = partners_imputed['Respiratory Frequency'].apply(lambda x: 1 if x > 22 else np.nan if pd.isnull(x) else 0)
+
+
 
 #%% Match format of other dataframes
 
-partners_all.loc[:, 'HOSPITAL'] = 'PARTNERS'
-partners_all.loc[:, 'COUNTRY'] = 'USA'
-partners_all.loc[:, 'DT_HOSPITAL_ADMISSION'] = np.nan
-partners_all.loc[:, 'RACE'] = partners_all.loc[:, 'ETHNICITY']
-partners_all.loc[:, 'COMORB_DEATH'] = partners_all[['DEATH']+u.MORBIDITIES].max(axis=1)
+partners_imputed.loc[:, 'SOURCE'] = 'PARTNERS'
+partners_imputed.loc[:, 'SOURCE_COUNTRY'] = 'USA'
+partners_imputed.loc[:, 'HOSPITAL'] = 'PARTNERS'
+partners_imputed.loc[:, 'COUNTRY'] = 'USA'
+partners_imputed.loc[:, 'DT_HOSPITAL_ADMISSION'] = np.nan
+partners_imputed.loc[:, 'COMORB_DEATH'] = partners_imputed[['DEATH']+u.MORBIDITIES].max(axis=1)
+partners_imputed.loc[:, 'REGIMEN'] = partners_imputed.apply(lambda row: uc.get_regimen(row['CLOROQUINE'], row['ANTIVIRAL'], row['ANTICOAGULANTS']), axis = 1)
+
 
 df_compare = pd.read_csv('../../covid19_treatments_data/matched_all_treatments_der_val_update_addl_outcomes/hope_hm_cremona_all_treatments_validation_addl_outcomes.csv')
-set(df_compare.columns).difference(partners_all.columns)
-set(u.COLS_TREATMENTS).difference(partners_all.columns)
+set(df_compare.columns).difference(partners_imputed.columns)
+set(u.COLS_TREATMENTS).difference(partners_imputed.columns)
 
 #Replace the ABG SaO2 test, which is almost absent, with the vital measurement
 # partners_labs.loc[:, 'ABG: Oxygen Saturation (SaO2)'] = partners_vitals.loc[:, 'SaO2']
 # partners_vitals = partners_vitals.rename(columns = uc.VITALS_TREAT_RENAME)
 # partners_labs = partners_labs.rename(columns = uc.LABS_TREAT_RENAME)
 
-partners_all['REGIMEN'] = partners_all.apply(lambda row: uc.get_regimen(row['CLOROQUINE'], row['ANTIVIRAL'], row['ANTICOAGULANTS']), axis = 1)
+partners_final = partners_imputed[u.COLS_TREATMENTS]
 
-partners_all.to_csv('../../covid19_treatments_data/partners_treatments_2020-08-17.csv', index = False)
+partners_final.to_csv('../../covid19_treatments_data/partners_treatments_2020-09-11.csv', index = False)

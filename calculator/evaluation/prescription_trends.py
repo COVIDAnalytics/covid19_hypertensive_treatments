@@ -30,7 +30,7 @@ algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
 #%% Generate predictions across all combinations
  #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
 
-treatment = 'INTERFERONOR'
+treatment = 'ACEI_ARBS'
 treatment_list = [treatment, 'NO_'+treatment]
 
 results_path = '../../covid19_treatments_results/'
@@ -51,7 +51,7 @@ df.groupby([treatment])[outcome].mean()
 # summary_weight['Algorithm'] = 'weighted'
 # summary_weight.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
 
-data_version = 'test'
+data_version = 'train'
 threshold = 0.01
 
 summary_vote = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_no_weights_t'+str(threshold)+'.csv')
@@ -116,7 +116,7 @@ features = {'categorical':['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY'
        # 'IN_ANTIDEPRESSANT', 
        #  'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
        # 'ANTIBIOTICS', 'ACEI_ARBS', 
-       'GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN',
+       'GENDER_MALE', 'RACE_LATIN',
        'RACE_ORIENTAL', 'RACE_OTHER'],
                 'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES',
        'HEMOGLOBIN', 'PLATELETS'],
@@ -192,7 +192,7 @@ def plot_byfeature(ft, file_name):
     age_table = X.groupby(ft)[['Z_bin','Z_presc_bin']].mean()
     ax = age_table.plot.bar(rot=0)
     # Add title and axis names
-    plt.title('Treatment Frequency by '+ft)
+    plt.title('Treatment Frequency by '+ft)y.mean
     plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+file_name+'_treatfreq.png')
     
     
@@ -204,11 +204,12 @@ plot_byfeature('HYPERTENSION','plotHypertension')
 plot_byfeature('BLOOD_PRESSURE_ABNORMAL_B','plotLowBP')
 plot_byfeature('PCR_B','plotHighCRP')
 plot_byfeature('DDDIMER_B','plotHighDD')
+plot_byfeature('ANYHEARTDISEASE','plotHeartDisease')
 
 
 #%% Performance summary on all datasets
 
-lr = False
+lr = True
 perf_all = []
 
 for data_version in ['train','test','validation','validation_cremona','validation_hope']:

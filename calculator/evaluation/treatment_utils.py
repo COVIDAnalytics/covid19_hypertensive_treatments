@@ -32,7 +32,10 @@ def load_data(folder, train_name, split, matched, prediction = 'DEATH',
     y.index.name = 'ID'
     Z = X['REGIMEN']
     X = X.drop('REGIMEN', axis = 1)
-    X = pd.get_dummies(X, prefix_sep='_', drop_first=True)
+    
+    ## Only drop when one-hot encoding if it is training set
+    drop_ind = True if split=='train' else False
+    X = pd.get_dummies(X, prefix_sep='_', drop_first=drop_ind)
     
     return X, Z, y
 
