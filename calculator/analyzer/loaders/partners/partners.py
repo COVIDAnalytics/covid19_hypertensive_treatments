@@ -7,7 +7,7 @@ from sklearn.impute import KNNImputer
 
 data_path = '../../covid19_partners/data/v3/'
 save_path = '../../covid19_partners/processed/'
-
+version = '2020-09-16'
 
 #%% Process demographic data
  
@@ -47,6 +47,7 @@ partners_demographics = partners_demographics.rename(columns = {'age': 'AGE', 'g
 partners_demographics['GENDER'] = partners_demographics['GENDER'].str.upper()
 
 eth_map = pd.read_csv('../../covid19_partners/processed/ethnicity_recode.csv')
+eth_map.replace({'OTHER':'CAUC'}, inplace = True) ## assume unavailable --> Caucasian (mode imputation)
 partners_demographics = pd.merge(partners_demographics, eth_map[['ETHNICITY','RACE']], on = 'ETHNICITY', how = 'left')
 
 demographics_clean = partners_demographics[['pdgID','hospitalEncounterHash','AGE','GENDER','RACE','TotalLOSMin','DEATH']]
@@ -323,7 +324,7 @@ partners_all = pd.concat([demographics_clean, partners_labs,
 ft_summary = partners_all.describe().transpose()
 ft_summary.to_csv(save_path+'feature_summary.csv')
 
-partners_all.to_csv('../../covid19_treatments_data/partners_treatment_missing.csv', index = False)
+partners_all.to_csv('../../covid19_treatments_data/partners_treatment_missing_'+version+'.csv', index = False)
 
 #%% Impute missing data
 partners_clean = partners_all.drop(['hospitalEncounterHash','GENDER','RACE',
@@ -393,4 +394,4 @@ set(u.COLS_TREATMENTS).difference(partners_imputed.columns)
 
 partners_final = partners_imputed[u.COLS_TREATMENTS]
 
-partners_final.to_csv('../../covid19_treatments_data/partners_treatments_2020-09-11.csv', index = False)
+partners_final.to_csv('../../covid19_treatments_data/partners_treatments_'+version+'.csv', index = False)

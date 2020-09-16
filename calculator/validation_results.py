@@ -9,6 +9,16 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
+
+from sklearn.metrics import (brier_score_loss, precision_score, recall_score,accuracy_score,
+                             f1_score, confusion_matrix)
+from sklearn.metrics import precision_recall_curve, roc_curve
+from sklearn.metrics import classification_report
+
+from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+import matplotlib.pyplot as plt
+from sklearn import metrics
+
 #%% Load data and prescriptions
 data_version = 'partners'
 data_list = ['partners']
@@ -17,7 +27,7 @@ outcome = 'COMORB_DEATH'
 prediction_list = ['COMORB_DEATH']
 
 data_path = '../../covid19_treatments_data/'
-data = pd.read_csv(data_path+'partners_treatments_2020-09-11.csv')
+data = pd.read_csv(data_path+'partners_treatments_2020-09-16.csv')
 
 ## Select results version
 version = 'matched_single_treatments_der_val_addl_outcomes/'
@@ -88,7 +98,6 @@ metrics_agg = pd.DataFrame(columns = ['data_version','weighted_status','threshol
 
 
 ## Data is already loaded (X,Z,y)
-save_path = save_path+'partners_'
 for outcome in prediction_list:
     version_folder = str(treatment)+'/'+str(outcome)+'/'
     save_path = results_path + version_folder + 'summary/'
@@ -202,12 +211,74 @@ for outcome in prediction_list:
                 metrics_agg.loc[len(metrics_agg)] = [data_version, weighted_status, threshold, 
                                                      match_rate, presc_count, average_auc, 
                                                      PE, pr_max, pr_min]
-        
-        metrics_agg.to_csv(save_path+data_version+match_status+'_metrics_summary.csv')
+        metrics_agg.to_csv(save_path+data_version+'_'+match_status+'_metrics_summary.csv')
         
 #%% Race distribution
 data_full = pd.read_csv(data_path+'hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
 
 data_full.groupby(['SOURCE_COUNTRY','RACE']).size()
 
-        
+#%% Calibration plot
+
+weighted_status = 'no_weights'
+strategy = 'quantile'
+threshold = 0.01
+summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv') 
+
+summary.rename({"('ACEI_ARBS', 'mean')":'ACEI_ARBS', "('NO_ACEI_ARBS', 'mean')":'NO_ACEI_ARBS'}, axis=1, inplace = True)
+
+summary['REGIMEN_Probability'] = summary.apply(lambda row: row[row['REGIMEN']], axis = 1)
+summary['PRESCRIBE_Probability'] = summary.apply(lambda row: row[row['Prescribe']], axis = 1)
+
+summary.REGIMEN_Probability.mean()  ## actual treatments
+summary.PRESCRIBE_Probability.mean() ## prescriptions
+summary.AverageProbability.mean() ## prescriptions (optimistic - only include methods that voted for prescription)
+
+
+summary_match = summary.query('Match == True')
+
+# for model_type in model_types:
+#     for model_lab in model_labs:
+
+#         name = "Calibration Plot of "+model_type+" "+model_lab
+#         y, y_pred, prob_pos = get_model_outcomes(model_type, model_lab, website_path, results_path)
+
+plt.close()
+
+fig_index=1
+
+
+fig = plt.figure(fig_index, figsize=(10, 10))
+ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
+ax2 = plt.subplot2grid((3, 1), (2, 0))
+
+ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+
+name = "Partners"
+
+fraction_of_positives, mean_predicted_value = \
+    calibration_curve(summary_match[outcome], summary_match['AverageProbability'], n_bins=10,
+                      strategy = strategy)
+
+model_score = brier_score_loss(summary_match[outcome], summary_match['AverageProbability'], pos_label=1)
+
+ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
+         label="%s (%1.3f)" % (name, model_score))
+
+ax2.hist(summary_match['AverageProbability'], range=(0, 1), bins=10, label=name,
+         histtype="step", lw=2)
+
+ax1.set_ylabel("Fraction of positives")
+ax1.set_ylim([-0.05, 1.05])
+ax1.legend(loc="lower right")
+ax1.set_title('Calibration plots  (reliability curve)')
+
+ax2.set_xlabel("Mean predicted value")
+ax2.set_ylabel("Count")
+ax2.legend(loc="upper center", ncol=2)
+
+plt.tight_layout()
+plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_calibration_plot_'+strategy+'.png')
+            
+            
+            
