@@ -243,23 +243,36 @@ data_full = pd.read_csv(data_path+'hope_hm_cremona_data_clean_imputed_addl_outco
 
 data_full.groupby(['SOURCE_COUNTRY','RACE']).size()
 
-#%% Calibration plot
-
+#%% Compare PE metrics
 weighted_status = 'no_weights'
 strategy = 'quantile'
 threshold = 0.01
 summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv') 
-
 summary.rename({"('ACEI_ARBS', 'mean')":'ACEI_ARBS', "('NO_ACEI_ARBS', 'mean')":'NO_ACEI_ARBS'}, axis=1, inplace = True)
 
+
+PE = summary.AverageProbability.mean() - summary[outcome].mean()
+
+## Use probabilities for baseline
 summary['REGIMEN_Probability'] = summary.apply(lambda row: row[row['REGIMEN']], axis = 1)
 summary['PRESCRIBE_Probability'] = summary.apply(lambda row: row[row['Prescribe']], axis = 1)
 
 summary.REGIMEN_Probability.mean()  ## actual treatments
 summary.PRESCRIBE_Probability.mean() ## prescriptions
 summary.AverageProbability.mean() ## prescriptions (optimistic - only include methods that voted for prescription)
+PE_prob1 = summary.PRESCRIBE_Probability.mean() - summary.REGIMEN_Probability.mean()
+PE_prob2 = summary.AverageProbability.mean() - summary.REGIMEN_Probability.mean()
 
-
+## Recalibrate probabilities based on validation event rate vs. baseline 
+summary['CalibratedAverageProbability'] = summary['AverageProbability']*(summary[outcome].mean()/y_train.mean())
+CPE = summary['CalibratedAverageProbability'].mean() - summary[outcome].mean()            
+   
+print("PE Original: " + str(round(PE,3)))
+print("Calibrated PE: " + str(round(CPE,3)))
+print("Probability-Based PE v1: " + str(round(PE_prob1,3)))
+print("Probability-Based PE v2: " + str(round(PE_prob2,3)))
+                
+#%% Calibration plot           
 summary_match = summary.query('Match == True')
 
 # for model_type in model_types:
