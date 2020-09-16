@@ -193,8 +193,30 @@ def retrieve_proba_per_prescription(result, summary, pred_results):
     
     return merged_summary
 
-def prescription_effectiveness(result_df, summary, pred_results,algorithm_list, prediction = 'DEATH'):
+# def prescription_effectiveness(result_df, summary, pred_results,algorithm_list, prediction = 'DEATH'):
+#     result_df = result_df.reset_index()        
+#     #Add the prescription decision and the outcome for every patient
+#     merged_summary = pd.merge(result_df, summary[{'Prescribe',prediction}], left_on='ID', right_index=True)
     
+#     merged_summary.drop(columns={'Prescribe_x'}, inplace=True)
+#     merged_summary.rename(columns={"Prescribe_y":"Prescribe"}, inplace=True)
+    
+#     merged_summary = merged_summary.melt(id_vars=['ID', 'Algorithm','Prescribe_Prediction', prediction, 'Prescribe'])
+    
+#     pe_list = list()
+#     for alg in algorithm_list: 
+#         #Filter to the appropriate ground truth
+#         # Convert to long format
+#         res = merged_summary[(merged_summary['Algorithm']==alg) & (merged_summary['Prescribe']==merged_summary['variable'])]
+
+#         pe = res.value.mean() - res[prediction].mean()
+#         pe_list.append(pe)
+        
+#     pe_list = pd.Series(pe_list, index = algorithm_list)
+
+#     return pe_list
+
+def prescription_effectiveness(result_df, summary, pred_results,algorithm_list, y_train, calibration=False, prediction = 'DEATH'):
     
     result_df = result_df.reset_index()        
     #Add the prescription decision and the outcome for every patient
@@ -210,13 +232,16 @@ def prescription_effectiveness(result_df, summary, pred_results,algorithm_list, 
         #Filter to the appropriate ground truth
         # Convert to long format
         res = merged_summary[(merged_summary['Algorithm']==alg) & (merged_summary['Prescribe']==merged_summary['variable'])]
-
-        pe = res.value.mean() - res[prediction].mean()
+        if calibration:
+            pe = res.value.mean()*(res[prediction].mean()/y_train.mean()) - res[prediction].mean()
+        else:
+            pe = res.value.mean() - res[prediction].mean()
         pe_list.append(pe)
         
     pe_list = pd.Series(pe_list, index = algorithm_list)
 
     return pe_list
+
 
 def prescription_robustness_a(result, summary, pred_results,algorithm_list, prediction = 'DEATH'):
     
