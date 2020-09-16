@@ -163,14 +163,34 @@ for outcome in prediction_list:
                 prescription_summary.to_csv(save_path+data_version+'_'+match_status+'_bytreatment_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
                 
                 # ===================================================================================
+                # Calibration Evaluation
+                # We will create calibration plots: line plots of the relative frequency of what was observed (y-axis) versus the predicted probability frequency  (x-axis).
+                # The better calibrated or more reliable a forecast, the closer the points will appear along the main diagonal from the bottom left to the top right of the plot.
+                # ===================================================================================
+                u.simple_calibration_plot(n_summary,  outcome, save_path, data_version, match_status, weighted_status, threshold)
+                # ===================================================================================
                 # Prescription Effectiveness
                 # We will show the difference in the percent of the population that survives.
                 # Prescription Effectiveness compares the outcome with the algorithm's suggestion versus what happened in reality
                 # ===================================================================================
-            
+                #Calculate the baseline mortality rate on the training set.
+                X_train, Z_train, y_train = u.load_data(data_path,training_set_name,
+                                split='train', matched=matched, prediction = outcome)
+
+                
                 PE = n_summary['AverageProbability'].mean() - n_summary[outcome].mean()
-                pe_list = u.prescription_effectiveness(result, summary, pred_results,algorithm_list,prediction=outcome)
+                pe_list = u.prescription_effectiveness(result, summary, pred_results,algorithm_list, y_train, calibration=False, prediction=outcome)
             
+                # ===================================================================================
+                # Calibrated Prescription Effectiveness
+                # We will show the difference in the percent of the population that survives.
+                # Prescription Effectiveness compares the outcome with the algorithm's suggestion versus what happened in reality
+                # ===================================================================================
+                                
+                n_summary['CalibratedAverageProbability'] = n_summary['AverageProbability']*(n_summary[outcome].mean()/y_train.mean())
+                CPE = n_summary['CalibratedAverageProbability'].mean() - n_summary[outcome].mean()            
+                cpe_list = u.prescription_effectiveness(result, summary, pred_results,algorithm_list,y_train, calibration=True, prediction=outcome)
+                
                 # ===================================================================================
                 # Prescription Robustness
                 # We will show the difference in the percent of the population that survives.
@@ -184,9 +204,11 @@ for outcome in prediction_list:
                 
                 #We can create a table and save all the results
                 pr_table['PE'] = pe_list
+                pr_table['CPE'] = cpe_list
                 pr_min = np.diag(pr_table).min()
                 pr_max = np.diag(pr_table).max()
                 PR.append(PE)
+                PR.append(CPE)
                 pr_table.loc['prescr'] = PR
                 pr_table.to_csv(save_path+data_version+'_'+match_status+'_prescription_robustness_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
                     
@@ -205,3 +227,11 @@ for outcome in prediction_list:
                                                      PE, pr_max, pr_min]
         
         metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
+        
+        
+        
+        
+        
+        
+        
+        
