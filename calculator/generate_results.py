@@ -163,6 +163,12 @@ for outcome in prediction_list:
                 prescription_summary.to_csv(save_path+data_version+'_'+match_status+'_bytreatment_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
                 
                 # ===================================================================================
+                # Calibration Evaluation
+                # We will create calibration plots: line plots of the relative frequency of what was observed (y-axis) versus the predicted probability frequency  (x-axis).
+                # The better calibrated or more reliable a forecast, the closer the points will appear along the main diagonal from the bottom left to the top right of the plot.
+                # ===================================================================================
+                u.simple_calibration_plot(n_summary,  outcome, save_path, data_version, match_status, weighted_status, threshold)
+                # ===================================================================================
                 # Prescription Effectiveness
                 # We will show the difference in the percent of the population that survives.
                 # Prescription Effectiveness compares the outcome with the algorithm's suggestion versus what happened in reality
@@ -205,3 +211,11 @@ for outcome in prediction_list:
                                                      PE, pr_max, pr_min]
         
         metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
+        
+        
+        
+        
+        
+        
+        
+        

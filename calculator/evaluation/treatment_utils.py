@@ -12,6 +12,8 @@ import pickle
 from sklearn import metrics
 from scipy import stats
 import math
+from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+import matplotlib.pyplot as pyplot
 
 import analyzer.dataset as ds
 
@@ -318,4 +320,27 @@ def wavg(group, avg_name, weight_name):
         return (d * w).sum() / w.sum()
     except ZeroDivisionError:
         return d.mean()
+
+def simple_calibration_plot(n_summary, outcome, save_path, data_version, match_status, weighted_status, threshold):
+    #Reduce it to where is match
+    rd_df = n_summary.loc[n_summary['Match']==True]
+    fig1 = pyplot.gcf()
+    # plot perfectly calibrated
+    pyplot.plot([0, 1], [0, 1], linestyle='--')
+    fop, mpv = calibration_curve(rd_df[outcome], rd_df['AverageProbability'], n_bins=10)
+    # plot model reliability
+    pyplot.ylabel("Fraction of positives")
+    pyplot.ylim([-0.05, 1.05])
+    pyplot.legend(loc="lower right")
+    pyplot.title('Calibration plots (reliability curve)')
+    
+    pyplot.xlabel("Mean predicted value")
+    
+    pyplot.plot(mpv, fop, marker='.')
+    
+    pyplot.show()
+    pyplot.draw()
+    fig1.savefig(save_path+data_version+'_'+match_status+'_calibration_plot_with_agreement_'+weighted_status+'_t'+str(threshold)+'.png', dpi=100)
+
+
 
