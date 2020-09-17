@@ -164,8 +164,9 @@ def resolve_ties(summary, result, pred_results):
              
                  #Add an AUC for that recommendation
                  #Find what are the algorithms for this recommendation
-                 algs = temp_res[temp_res['Prescribe']==t]['Algorithm']                
-                 list_score.append(pred_results[pred_results.index.isin(algs)][t].mean())
+                 algs = temp_res[temp_res['Prescribe']==t]['Algorithm']         
+                 list_score.append(pred_results[pred_results.index.isin(algs)].values.mean())
+                 # list_score.append(pred_results[pred_results.index.isin(algs)][t].mean())
                     
              best_treatment_idx = list_score.index(max(list_score))    
              best_treatment = prescriptions[best_treatment_idx]
