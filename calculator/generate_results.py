@@ -68,7 +68,7 @@ for outcome in prediction_list:
             
 
 #%% Part 2: save results
-metrics_agg = pd.DataFrame(columns = ['data_version','weighted_status','threshold','match_rate','presc_count','average_auc','PE','pr_low','pr_high'])
+metrics_agg = pd.DataFrame(columns = ['data_version','weighted_status','threshold','match_rate','presc_count','average_auc','PE','CPE','pr_low','pr_high'])
 
 for outcome in prediction_list:
     version_folder = str(treatment)+'/'+str(outcome)+'/'
@@ -224,7 +224,7 @@ for outcome in prediction_list:
                 
                 metrics_agg.loc[len(metrics_agg)] = [data_version, weighted_status, threshold, 
                                                      match_rate, presc_count, average_auc, 
-                                                     PE, pr_max, pr_min]
+                                                     PE, CPE, pr_max, pr_min]
         
         metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
         
