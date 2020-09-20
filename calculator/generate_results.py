@@ -19,7 +19,7 @@ matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
-algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
+algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
 data_list = ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']
 # prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
 # algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
@@ -201,12 +201,12 @@ for outcome in prediction_list:
                 
                 # This is prescription robustness of the prescriptive algorithm versus reality when both decisions take as input alternative ground truths
                 pr_table = u.prescription_robustness_a(result, summary, pred_results,algorithm_list,prediction=outcome)
+                pr_min = np.diag(pr_table).min()
+                pr_max = np.diag(pr_table).max()
                 
                 #We can create a table and save all the results
                 pr_table['PE'] = pe_list
                 pr_table['CPE'] = cpe_list
-                pr_min = np.diag(pr_table).min()
-                pr_max = np.diag(pr_table).max()
                 PR.append(PE)
                 PR.append(CPE)
                 pr_table.loc['prescr'] = PR

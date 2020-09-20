@@ -25,7 +25,7 @@ match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
 # algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
-algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
+algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
 
 #%% Generate predictions across all combinations
  #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
@@ -192,7 +192,7 @@ def plot_byfeature(ft, file_name):
     age_table = X.groupby(ft)[['Z_bin','Z_presc_bin']].mean()
     ax = age_table.plot.bar(rot=0)
     # Add title and axis names
-    plt.title('Treatment Frequency by '+ft)y.mean
+    plt.title('Treatment Frequency by '+ft)
     plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+file_name+'_treatfreq.png')
     
     
@@ -206,6 +206,118 @@ plot_byfeature('PCR_B','plotHighCRP')
 plot_byfeature('DDDIMER_B','plotHighDD')
 plot_byfeature('ANYHEARTDISEASE','plotHeartDisease')
 
+#%% Plots into panels
+
+SPINE_COLOR = 'gray'
+
+from math import sqrt
+import matplotlib
+
+
+def latexify(fig_width=None, fig_height=None, columns=1):
+    """Set up matplotlib's RC params for LaTeX plotting.
+    Call this before plotting a figure.
+    Parameters
+    ----------
+    fig_width : float, optional, inches
+    fig_height : float,  optional, inches
+    columns : {1, 2}
+    """
+
+    # code adapted from http://www.scipy.org/Cookbook/Matplotlib/LaTeX_Examples
+
+    # Width and max height in inches for IEEE journals taken from
+    # computer.org/cms/Computer.org/Journal%20templates/transactions_art_guide.pdf
+
+    assert(columns in [1,2])
+
+    if fig_width is None:
+        fig_width = 3.39 if columns==1 else 6.9 # width in inches
+
+    if fig_height is None:
+        golden_mean = (sqrt(5)-1.0)/2.0    # Aesthetic ratio
+        fig_height = fig_width*golden_mean # height in inches
+
+    MAX_HEIGHT_INCHES = 8.0
+    if fig_height > MAX_HEIGHT_INCHES:
+        print("WARNING: fig_height too large:" + fig_height +
+              "so will reduce to" + MAX_HEIGHT_INCHES + "inches.")
+        fig_height = MAX_HEIGHT_INCHES
+
+    # NB (bart): default font-size in latex is 11. This should exactly match
+    # the font size in the text if the figwidth is set appropriately.
+    # Note that this does not hold if you put two figures next to each other using
+    # minipage. You need to use subplots.
+    params = {'backend': 'ps',
+              'text.latex.preamble': ['\\usepackage{gensymb}'],
+              'axes.labelsize': 10, # fontsize for x and y labels (was 12 and before 10)
+              'axes.titlesize': 14,
+              'font.size': 10, # was 12 and before 10
+              'legend.fontsize': 10, # was 12 and before 10
+              'xtick.labelsize': 10,
+              'ytick.labelsize': 10,
+              'text.usetex': True,
+              'figure.figsize': [fig_width, fig_height],
+              'font.family': 'serif'
+    }
+
+    matplotlib.rcParams.update(params)
+
+bins= [0,40,55,70,110]
+X['AgeGroup'] = pd.cut(X['AGE'], bins=bins,right=False)
+bins= [0,0.8,2]
+X['CreatinineGroups'] = pd.cut(X['CREATININE'], bins=bins,right=False)
+
+plot_features = {'AgeGroup':'Age Group',
+ 'GENDER_MALE':'Gender (1=Male)',
+ 'HYPERTENSION':'Hypertension',
+ 'BLOOD_PRESSURE_ABNORMAL_B':'Low Systolic BP',
+ 'ANYHEARTDISEASE':'Heart Disease'}
+
+n_display =len(plot_features)   # -1 because we remove age
+n_cols = 2
+
+latexify()
+
+
+fig, axs = plt.subplots(n_display, n_cols,
+                        figsize=(10, 10), constrained_layout=True
+                        #  facecolor='w', edgecolor='k'
+                        )
+
+axs = axs.ravel()  # flatten
+
+# letters = ["\\textbf{(" + s + ")}" for s in list(string.ascii_lowercase)[1:max_display+1]]
+# Reference ranges
+
+for i, (k, ft) in enumerate(plot_features.items()):
+    idx = 2*i
+    print(ft)
+    
+    tbl_z = X.groupby(k)[['Z_bin','Z_presc_bin']].mean()
+    tbl_z.index.name = ft
+    tbl_z.plot(ax = axs[idx], kind = 'bar', rot=0, legend = False, color =['#003087','#E87722'])
+    # Add title and axis names
+    # plt.title('Treatment Frequency by '+ft)
+    
+    
+    tbl = X.groupby(k)[['Y','Y_presc']].mean()
+    tbl.index.name = ft
+    tbl.plot(ax = axs[idx+1], kind = 'bar', rot=0, legend = False, color =['#003087','#E87722'])
+
+    # axs[idx].set_title('Mortality Rate by '+ft)
+    # axs[idx].set_ylabel('Mortality Rate')
+
+axs[0].set_title('Prescription Rate', weight='bold')
+axs[1].set_title('Mortality Rate', weight='bold')
+
+
+handles, labels = axs[0].get_legend_handles_labels()
+fig.legend(handles, ['Given', 'Prescribed'],loc = 'lower right', borderaxespad=0.1)
+
+fig.savefig(save_path+data_version+'feature_plot.pdf', bbox_inches='tight')
+ 
+plt.close()
 
 #%% Performance summary on all datasets
 
