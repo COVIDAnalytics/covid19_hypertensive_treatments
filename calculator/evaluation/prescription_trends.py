@@ -206,6 +206,26 @@ plot_byfeature('PCR_B','plotHighCRP')
 plot_byfeature('DDDIMER_B','plotHighDD')
 plot_byfeature('ANYHEARTDISEASE','plotHeartDisease')
 
+#%% Table form
+s_list = []
+for ft in X.columns:
+    if (len(X[ft].unique()) == 2 )& (0 in X[ft].unique()):
+        s = X.groupby(ft)[['Z_bin','Z_presc_bin']].mean()
+        s.loc[:, 'Feature'] = ft
+        s.index.name = 'Feature_Value'
+        s.reset_index(inplace = True)
+        s_list.append(s)
+
+summ_all = pd.concat(s_list, axis=0)
+summ_all['Change_Absolute'] = (summ_all['Z_presc_bin'] - summ_all['Z_bin'])
+summ_all['Change_Relative'] = (summ_all['Z_presc_bin'] - summ_all['Z_bin'])/summ_all['Z_bin']
+summ_all.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+'prescription_rate_by_feature.csv', index = True)
+
+summ_pivot = summ_all.pivot(index = 'Feature', columns = 'Feature_Value', values = 'Change_Relative')
+summ_pivot = summ_pivot.add_prefix('Change_Relative_')
+summ_pivot['Prescription_Difference'] = summ_pivot['Change_Relative_1.0'] - summ_pivot['Change_Relative_0.0']
+summ_pivot.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+'prescription_relative_change_summary.csv', index = True)
+
 #%% Plots into panels
 
 SPINE_COLOR = 'gray'
