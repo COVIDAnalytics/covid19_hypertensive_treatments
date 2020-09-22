@@ -2,12 +2,14 @@ import numpy as np
 import pandas as pd
 import analyzer.loaders.cremona.utils as uc
 import analyzer.loaders.partners.utils as u
+import analyzer.dataset as ds
 import re
 from sklearn.impute import KNNImputer
 
 data_path = '../../covid19_partners/data/v3/'
 save_path = '../../covid19_partners/processed/'
 version = '2020-09-16'
+
 
 #%% Process demographic data
  
@@ -382,6 +384,7 @@ partners_imputed.loc[:, 'DT_HOSPITAL_ADMISSION'] = np.nan
 partners_imputed.loc[:, 'COMORB_DEATH'] = partners_imputed[['DEATH']+u.MORBIDITIES].max(axis=1)
 partners_imputed.loc[:, 'REGIMEN'] = partners_imputed.apply(lambda row: uc.get_regimen(row['CLOROQUINE'], row['ANTIVIRAL'], row['ANTICOAGULANTS']), axis = 1)
 
+partners_imputed.to_csv('../../covid19_treatments_data/partners_treatments_full_'+version+'.csv', index = False)
 
 df_compare = pd.read_csv('../../covid19_treatments_data/matched_all_treatments_der_val_update_addl_outcomes/hope_hm_cremona_all_treatments_validation_addl_outcomes.csv')
 set(df_compare.columns).difference(partners_imputed.columns)
@@ -395,3 +398,23 @@ set(u.COLS_TREATMENTS).difference(partners_imputed.columns)
 partners_final = partners_imputed[u.COLS_TREATMENTS]
 
 partners_final.to_csv('../../covid19_treatments_data/partners_treatments_'+version+'.csv', index = False)
+
+#%% Add partners to validation set
+partners_imputed = pd.read_csv('../../covid19_treatments_data/partners_treatments_full_'+version+'.csv')
+validation = pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/ACEI_ARBS_hope_hm_cremona_all_treatments_validation.csv')
+
+# X, y = ds.create_dataset_treatment(validation, prediction = 'COMORB_DEATH', 
+#                                        med_hx=False, other_tx = True, 
+#                                        include_regimen=True)
+
+set(validation.columns).difference(partners_imputed.columns)
+set(partners_imputed.columns).difference(validation.columns)
+
+# Match format
+partners_imputed['VIH'] = 0
+partners_matched = partners_imputed.reindex(validation.columns, axis = 1)
+partners_matched.to_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/ACEI_ARBS_hope_hm_cremona_all_treatments_validation_partners.csv', index = False)
+
+val_withpartners = pd.concat([validation, partners_matched], ignore_index = False)
+val_withpartners.to_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/ACEI_ARBS_hope_hm_cremona_all_treatments_validation_all.csv', index = False)
+

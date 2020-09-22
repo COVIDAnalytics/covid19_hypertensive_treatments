@@ -20,7 +20,8 @@ match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
-data_list = ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']
+# data_list = ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy']
+data_list = ['validation_all','validation_partners']
 # prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
 # algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
 prediction_list = ['COMORB_DEATH','OUTCOME_VENT']
