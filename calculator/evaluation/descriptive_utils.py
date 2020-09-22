@@ -202,10 +202,13 @@ def descriptive_table(data, features, short_version = False, digits = 1, outcome
         
     return summary_full[final_cols]
 
-def descriptive_table_treatments(data, features, short_version = False, digits = 1, outcome = 'DEATH'):
+def descriptive_table_treatments(data, features, short_version = False, digits = 1, outcome = ''):
 
     cols_numeric = [i for i in features['numeric']]
-    cols_categoric = [i for i in features['categorical']] + [outcome]
+    if outcome != '':
+        cols_categoric = [i for i in features['categorical']] + [outcome]
+    else: 
+        cols_categoric = [i for i in features['categorical']]
     
     summary_numeric = np.transpose(data[cols_numeric].describe())
     summary_numeric['Type'] = 'Numeric'
