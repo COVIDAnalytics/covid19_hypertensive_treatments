@@ -9,11 +9,15 @@ import pandas as pd
 import numpy as np
 import os
 import pickle
+import shap
+import matplotlib
 from sklearn import metrics
 from scipy import stats
 import math
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 import matplotlib.pyplot as pyplot
+from sklearn.model_selection import train_test_split
+
 
 import analyzer.dataset as ds
 
@@ -368,5 +372,53 @@ def simple_calibration_plot(n_summary, outcome, save_path, data_version, match_s
     pyplot.draw()
     fig1.savefig(save_path+data_version+'_'+match_status+'_calibration_plot_with_agreement_'+weighted_status+'_t'+str(threshold)+'.png', dpi=100)
 
+def calculate_average_shap(file_name, treatment, outcome,algorithm, top_features):
+    
+    if file_name == '':
+        print("Invalid treatment/outcome combination (" + str(treatment) + ", " + str(outcome)+ ")")
+    else:
+        with open(file_name, 'rb') as file:
+             model_file = pickle.load(file)
+          
+    model = model_file['model']
+    data = model_file['train']
+    data_test = model_file['test']
+
+    X = data.drop(["COMORB_DEATH"], axis=1, inplace = False)
+    y = data["COMORB_DEATH"]
+    X_test = data_test.drop(["COMORB_DEATH"], axis=1, inplace = False)
+    y_test = data_test["COMORB_DEATH"]
+
+    ## Calculate SHAP values (for each observation x feature)
+    if algorithm in ['rf','cart','xgboost']:
+        explainer = shap.TreeExplainer(model,
+                                   data=X_test,
+                                   model_output="probability",
+                                   );
+        shap_values = explainer.shap_values(X_test);
+        
+    else:
+        X_train_summary = shap.kmeans(X, 50)
+        explainer = shap.KernelExplainer(model.predict_proba,
+                                   data=X_train_summary,
+                                   model_output="logit",
+                                   );
+        shap_values = explainer.shap_values(X_test);
+
+    
+    df = pd.DataFrame(columns = ['Risk Factor', 'Mean Absolute SHAP Value']) 
+    
+    for i in range(0,len(X.columns)):
+        if isinstance(shap_values, list):
+            df = df.append({'Risk Factor' : X.columns[i], 'Mean Absolute SHAP Value' : pd.Series(shap_values[1][:,i]).abs().mean()},  
+                ignore_index = True) 
+        else:
+            df = df.append({'Risk Factor' : X.columns[i], 'Mean Absolute SHAP Value' : pd.Series(shap_values[:,i]).abs().mean()},  
+                ignore_index = True)
+    
+    df = df.sort_values(by='Mean Absolute SHAP Value', ascending=False)    
+    df = df.head(top_features)
+    
+    return df
 
 
