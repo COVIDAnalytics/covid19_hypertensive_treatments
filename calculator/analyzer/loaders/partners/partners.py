@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import analyzer.loaders.cremona.utils as uc
-import analyzer.loaders.partners.utils as u
+# import analyzer.loaders.partners.utils as u
 import analyzer.dataset as ds
 import re
 from sklearn.impute import KNNImputer
@@ -412,6 +412,7 @@ set(partners_imputed.columns).difference(validation.columns)
 
 # Match format
 partners_imputed['VIH'] = 0
+partners_imputed['REGIMEN'] = partners_imputed['ACEI_ARBS'].apply(lambda x: treatment if x==1 else 'NO_'+treatment)
 partners_matched = partners_imputed.reindex(validation.columns, axis = 1)
 partners_matched.to_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/ACEI_ARBS_hope_hm_cremona_all_treatments_validation_partners.csv', index = False)
 

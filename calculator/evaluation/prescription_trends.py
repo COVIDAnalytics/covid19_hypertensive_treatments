@@ -51,39 +51,39 @@ df.groupby([treatment])[outcome].mean()
 # summary_weight['Algorithm'] = 'weighted'
 # summary_weight.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
 
-data_version = 'train'
-threshold = 0.01
+# data_version = 'train'
+# threshold = 0.01
 
-summary_vote = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_no_weights_t'+str(threshold)+'.csv')
-summary_vote['Algorithm'] = 'vote'
-summary_vote.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
+# summary_vote = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_no_weights_t'+str(threshold)+'.csv')
+# summary_vote['Algorithm'] = 'vote'
+# summary_vote.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
 
-result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+# result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
 
-result = pd.concat([result[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
-          # summary_weight[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
-          summary_vote[['ID','Algorithm','Prescribe','Prescribe_Prediction']]],
-          axis=0, ignore_index = True)
+# result = pd.concat([result[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
+#           # summary_weight[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
+#           summary_vote[['ID','Algorithm','Prescribe','Prescribe_Prediction']]],
+#           axis=0, ignore_index = True)
 
-comparison =  pd.DataFrame(columns = ['algorithm','prescription_count','prescription_prob','agreement_weighted', 'agreement_no_weights'])
+# comparison =  pd.DataFrame(columns = ['algorithm','prescription_count','prescription_prob','agreement_weighted', 'agreement_no_weights'])
 
-for alg in result.Algorithm.unique():
-    alg_presc = result.loc[result['Algorithm']==alg].set_index('ID')
-    t_count = sum(alg_presc['Prescribe'] == treatment)
-    prob = alg_presc['Prescribe_Prediction'].mean()
-    # agreement_weighted = (alg_presc['Prescribe']==summary_weight['Prescribe']).mean()
-    agreement_weighted = np.nan
-    agreement_vote = (alg_presc['Prescribe']==summary_vote['Prescribe']).mean()
-    comparison.loc[len(comparison)] = [alg, t_count, prob,
-                                       agreement_weighted, agreement_vote]
+# for alg in result.Algorithm.unique():
+#     alg_presc = result.loc[result['Algorithm']==alg].set_index('ID')
+#     t_count = sum(alg_presc['Prescribe'] == treatment)
+#     prob = alg_presc['Prescribe_Prediction'].mean()
+#     # agreement_weighted = (alg_presc['Prescribe']==summary_weight['Prescribe']).mean()
+#     agreement_weighted = np.nan
+#     agreement_vote = (alg_presc['Prescribe']==summary_vote['Prescribe']).mean()
+#     comparison.loc[len(comparison)] = [alg, t_count, prob,
+#                                        agreement_weighted, agreement_vote]
 
-comparison.to_csv(save_path+data_version+'_'+match_status+'_t'+str(threshold)+'_'+'agreement_byalgorithm.csv', index = False)
+# comparison.to_csv(save_path+data_version+'_'+match_status+'_t'+str(threshold)+'_'+'agreement_byalgorithm.csv', index = False)
 
 
 
 
 #%%  Evaluate specific version
-data_version = 'train' # in ['train','test','validation','validation_cremona','validation_hope']:
+data_version = 'validation_all' # in ['train','test','validation','validation_cremona','validation_hope']:
 weighted_status = 'no_weights'
 threshold = 0.01
 
@@ -116,13 +116,14 @@ features = {'categorical':['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY'
        # 'IN_ANTIDEPRESSANT', 
        #  'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
        # 'ANTIBIOTICS', 'ACEI_ARBS', 
-       'GENDER_MALE', 'RACE_LATIN',
+       'GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN',
        'RACE_ORIENTAL', 'RACE_OTHER'],
                 'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES',
        'HEMOGLOBIN', 'PLATELETS'],
                 'multidrop':[]}
 
-# features['categorical'].remove(treatment)
+if ~np.any(X.columns.str.contains('RACE_OTHER')):
+    features['categorical'].remove('RACE_OTHER')
 
 df = pd.concat([X,y,Z_presc], axis=1)
 desc_list = []
@@ -209,7 +210,7 @@ plot_byfeature('ANYHEARTDISEASE','plotHeartDisease')
 #%% Table form
 s_list = []
 for ft in X.columns:
-    if (len(X[ft].unique()) == 2 )& (0 in X[ft].unique()):
+    if ((len(X[ft].unique()) == 2 )& (0 in X[ft].unique())) | (ft == "AgeGroup"):
         s = X.groupby(ft)[['Z_bin','Z_presc_bin']].mean()
         s.loc[:, 'Feature'] = ft
         s.index.name = 'Feature_Value'
@@ -221,6 +222,7 @@ summ_all['Change_Absolute'] = (summ_all['Z_presc_bin'] - summ_all['Z_bin'])
 summ_all['Change_Relative'] = (summ_all['Z_presc_bin'] - summ_all['Z_bin'])/summ_all['Z_bin']
 summ_all.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+'prescription_rate_by_feature.csv', index = True)
 
+summ_all = summ_all.query('Feature != "AgeGroup"')
 summ_pivot = summ_all.pivot(index = 'Feature', columns = 'Feature_Value', values = 'Change_Relative')
 summ_pivot = summ_pivot.add_prefix('Change_Relative_')
 summ_pivot['Prescription_Difference'] = summ_pivot['Change_Relative_1.0'] - summ_pivot['Change_Relative_0.0']
@@ -228,76 +230,29 @@ summ_pivot.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_
 
 #%% Plots into panels
 
+import string
+
 SPINE_COLOR = 'gray'
-
-from math import sqrt
-import matplotlib
-
-
-def latexify(fig_width=None, fig_height=None, columns=1):
-    """Set up matplotlib's RC params for LaTeX plotting.
-    Call this before plotting a figure.
-    Parameters
-    ----------
-    fig_width : float, optional, inches
-    fig_height : float,  optional, inches
-    columns : {1, 2}
-    """
-
-    # code adapted from http://www.scipy.org/Cookbook/Matplotlib/LaTeX_Examples
-
-    # Width and max height in inches for IEEE journals taken from
-    # computer.org/cms/Computer.org/Journal%20templates/transactions_art_guide.pdf
-
-    assert(columns in [1,2])
-
-    if fig_width is None:
-        fig_width = 3.39 if columns==1 else 6.9 # width in inches
-
-    if fig_height is None:
-        golden_mean = (sqrt(5)-1.0)/2.0    # Aesthetic ratio
-        fig_height = fig_width*golden_mean # height in inches
-
-    MAX_HEIGHT_INCHES = 8.0
-    if fig_height > MAX_HEIGHT_INCHES:
-        print("WARNING: fig_height too large:" + fig_height +
-              "so will reduce to" + MAX_HEIGHT_INCHES + "inches.")
-        fig_height = MAX_HEIGHT_INCHES
-
-    # NB (bart): default font-size in latex is 11. This should exactly match
-    # the font size in the text if the figwidth is set appropriately.
-    # Note that this does not hold if you put two figures next to each other using
-    # minipage. You need to use subplots.
-    params = {'backend': 'ps',
-              'text.latex.preamble': ['\\usepackage{gensymb}'],
-              'axes.labelsize': 10, # fontsize for x and y labels (was 12 and before 10)
-              'axes.titlesize': 14,
-              'font.size': 10, # was 12 and before 10
-              'legend.fontsize': 10, # was 12 and before 10
-              'xtick.labelsize': 10,
-              'ytick.labelsize': 10,
-              'text.usetex': True,
-              'figure.figsize': [fig_width, fig_height],
-              'font.family': 'serif'
-    }
-
-    matplotlib.rcParams.update(params)
 
 bins= [0,40,55,70,110]
 X['AgeGroup'] = pd.cut(X['AGE'], bins=bins,right=False)
 bins= [0,0.8,2]
 X['CreatinineGroups'] = pd.cut(X['CREATININE'], bins=bins,right=False)
 
-plot_features = {'AgeGroup':'Age Group',
- 'GENDER_MALE':'Gender (1=Male)',
+plot_features = {
+ 'ANYHEARTDISEASE':'Heart Disease',
  'HYPERTENSION':'Hypertension',
- 'BLOOD_PRESSURE_ABNORMAL_B':'Low Systolic BP',
- 'ANYHEARTDISEASE':'Heart Disease'}
+ 'AgeGroup':'Age Group',
+ 'GENDER_MALE':'Gender (1=Male)'
+ # 'BLOOD_PRESSURE_ABNORMAL_B':'Low Systolic BP',
+}
 
 n_display =len(plot_features)   # -1 because we remove age
 n_cols = 2
 
-latexify()
+u.latexify()
+
+letters = ["\\textbf{(" + s + ")}" for s in list(string.ascii_lowercase)[0:n_display*n_cols+1]]
 
 
 fig, axs = plt.subplots(n_display, n_cols,
@@ -307,7 +262,6 @@ fig, axs = plt.subplots(n_display, n_cols,
 
 axs = axs.ravel()  # flatten
 
-# letters = ["\\textbf{(" + s + ")}" for s in list(string.ascii_lowercase)[1:max_display+1]]
 # Reference ranges
 
 for i, (k, ft) in enumerate(plot_features.items()):
@@ -317,16 +271,25 @@ for i, (k, ft) in enumerate(plot_features.items()):
     tbl_z = X.groupby(k)[['Z_bin','Z_presc_bin']].mean()
     tbl_z.index.name = ft
     tbl_z.plot(ax = axs[idx], kind = 'bar', rot=0, legend = False, color =['#003087','#E87722'])
-    # Add title and axis names
-    # plt.title('Treatment Frequency by '+ft)
     
-    
+    axs[idx].text(0.05, 0.9, letters[idx],
+        horizontalalignment='center',
+        verticalalignment='center',
+        transform=axs[idx].transAxes,
+        weight='bold',
+    )
+
     tbl = X.groupby(k)[['Y','Y_presc']].mean()
     tbl.index.name = ft
     tbl.plot(ax = axs[idx+1], kind = 'bar', rot=0, legend = False, color =['#003087','#E87722'])
 
-    # axs[idx].set_title('Mortality Rate by '+ft)
-    # axs[idx].set_ylabel('Mortality Rate')
+    axs[idx+1].text(0.05, 0.9, letters[idx+1],
+        horizontalalignment='center',
+        verticalalignment='center',
+        transform=axs[idx+1].transAxes,
+        weight='bold',
+    )
+
 
 axs[0].set_title('Prescription Rate', weight='bold')
 axs[1].set_title('Mortality Rate', weight='bold')
@@ -334,6 +297,7 @@ axs[1].set_title('Mortality Rate', weight='bold')
 
 handles, labels = axs[0].get_legend_handles_labels()
 fig.legend(handles, ['Given', 'Prescribed'],loc = 'lower right', borderaxespad=0.1)
+fig.tight_layout(h_pad = 2)
 
 fig.savefig(save_path+data_version+'feature_plot.pdf', bbox_inches='tight')
  
@@ -341,28 +305,28 @@ plt.close()
 
 #%% Performance summary on all datasets
 
-lr = True
-perf_all = []
+# lr = True
+# perf_all = []
 
-for data_version in ['train','test','validation','validation_cremona','validation_hope']:
-    perf_list = []
-    for t in treatments:
-        perf_list.append(pd.read_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/' \
-                                     +str(t)+'/'+ str(outcome)+'/summary/'+data_version+'_'+match_status+'_performance_allmethods.csv'))  
-        if lr:
-            res = pd.concat(perf_list, axis=1).mean(axis=0).transpose()
-        else: 
-            res = pd.concat(perf_list, axis=1).query('Algorithm != "lr"').mean(axis=0).transpose()
-    res['Data'] = data_version
-    perf_all.append(res)
+# for data_version in ['train','test','validation','validation_cremona','validation_hope']:
+#     perf_list = []
+#     for t in treatments:
+#         perf_list.append(pd.read_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/' \
+#                                      +str(t)+'/'+ str(outcome)+'/summary/'+data_version+'_'+match_status+'_performance_allmethods.csv'))  
+#         if lr:
+#             res = pd.concat(perf_list, axis=1).mean(axis=0).transpose()
+#         else: 
+#             res = pd.concat(perf_list, axis=1).query('Algorithm != "lr"').mean(axis=0).transpose()
+#     res['Data'] = data_version
+#     perf_all.append(res)
     
-perf_all = pd.concat(perf_all, axis=1).transpose()
-perf_all = perf_all[['Data', 'ACEI_ARBS', 'NO_ACEI_ARBS', 'CORTICOSTEROIDS', 'NO_CORTICOSTEROIDS', 'INTERFERONOR', 'NO_INTERFERONOR']]
+# perf_all = pd.concat(perf_all, axis=1).transpose()
+# perf_all = perf_all[['Data', 'ACEI_ARBS', 'NO_ACEI_ARBS', 'CORTICOSTEROIDS', 'NO_CORTICOSTEROIDS', 'INTERFERONOR', 'NO_INTERFERONOR']]
 
-if lr:
-    perf_all.to_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/performance_summary.csv', index = False)
-else: 
-    perf_all.to_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/performance_summary_no_lr.csv', index = False)
+# if lr:
+#     perf_all.to_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/performance_summary.csv', index = False)
+# else: 
+#     perf_all.to_csv('../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/performance_summary_no_lr.csv', index = False)
 
 
 #%% Assess expected benefit

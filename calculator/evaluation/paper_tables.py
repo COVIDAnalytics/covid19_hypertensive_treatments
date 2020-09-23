@@ -40,7 +40,7 @@ weighted_status = 'no_weights'
 
 SEEDS = range(1, 2)
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
-data_list = ['train','test','validation']
+data_list = ['train','test','validation_all']
 
 outcome = 'COMORB_DEATH'
 treatment = 'ACEI_ARBS'
@@ -68,7 +68,7 @@ for data_version in data_list:
 res.index = res.index.str.upper()
 res.loc['Average AUC',:] = res.mean(axis=0)
 
-col_dict = dict({'train':'Training Data', 'test':'Testing Data', 'validation':'Validation Data',
+col_dict = dict({'train':'Training Data', 'test':'Testing Data', 'validation_all':'Validation Data',
                  'ACEI_ARBS':'ACEI/ARBs','NO_ACEI_ARBS':'No ACEI/ARBs'})
 res.rename(col_dict, axis = 1, inplace = True)
 
@@ -82,7 +82,7 @@ columns = pd.MultiIndex.from_product([data_list,treatment_list])
 index = algorithm_list_lr
 
 res = pd.DataFrame(columns = pd.MultiIndex.from_product([data_list,treatment_list]), 
-             index = algorithm_list_lr)
+              index = algorithm_list_lr)
 
 for data_version in data_list:
     pred_results = pd.read_csv(save_path+data_version+'_'+match_status+'_performance_allmethods_withlr.csv')
@@ -93,13 +93,13 @@ for data_version in data_list:
 res.index = res.index.str.upper()
 res.loc['Average AUC',:] = res.mean(axis=0)
 
-col_dict = dict({'train':'Training Data', 'test':'Testing Data', 'validation':'Validation Data',
-                 'ACEI_ARBS':'ACEI/ARBs','NO_ACEI_ARBS':'No ACEI/ARBs'})
+col_dict = dict({'train':'Training Data', 'test':'Testing Data', 'validation_all':'Validation Data',
+                  'ACEI_ARBS':'ACEI/ARBs','NO_ACEI_ARBS':'No ACEI/ARBs'})
 res.rename(col_dict, axis = 1, inplace = True)
 
 res.to_latex(buf = save_path+'latex_predictive_table_withlr.txt', 
-             column_format = 'l'+'c'*res.shape[1],
-             float_format="%.3f", bold_rows = True, multicolumn = True, multicolumn_format = 'c')
+              column_format = 'l'+'c'*res.shape[1],
+              float_format="%.3f", bold_rows = True, multicolumn = True, multicolumn_format = 'c')
 
 
 #%% Prescriptive Methods table
@@ -111,12 +111,14 @@ summ = summ.loc[summ.data_version.isin(data_list),:]
 summ = summ[['data_version', 'match_rate', 'presc_count', 
              'average_auc', 'PE', 'CPE', 'pr_low', 'pr_high']]
 
-summ.data_version = summ.data_version.str.capitalize()
+# summ.data_version = summ.data_version.str.capitalize()
 summ.rename({'data_version':'Data Version', 'match_rate':'Match Rate',
             'presc_count':'Presc. Count', 'average_auc':'Avg. AUC', 
             'pr_low':'PR (Low)', 'pr_high':'PR (High)'}, axis=1, inplace = True)
 
 summ.set_index('Data Version', inplace = True)
+summ = summ.rename(index = col_dict)
+
 summ.to_latex(buf = save_path+'latex_prescriptive_table.txt', 
              column_format = 'l'+'c'*summ.shape[1],
              float_format="%.3f", bold_rows = True, multicolumn = True, multicolumn_format = 'c',
@@ -162,8 +164,13 @@ agr.to_latex(buf = save_path+'latex_agreement_table.txt',
                   
 #%% Descriptive analysis: pre- vs. post-matching
 
+data_mgb = pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_all_treatments_validation_partners.csv')
+data_mgb['ACEI_ARBS'] = data_mgb['REGIMEN'].apply(lambda x: 1 if x == treatment else 0)
+
 data_pre = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
 data_pre['REGIMEN'] = data_pre[treatment].apply(lambda x: treatment if x == 1 else 'NO_'+treatment)
+data_pre = pd.concat([data_pre, data_mgb], axis=0, ignore_index = False)
+
 data_pre = pd.get_dummies(data_pre, columns = ['GENDER','RACE'], drop_first = True)
 data_pre['Version'] = 'Pre-Match'
 
@@ -183,7 +190,7 @@ features = {'categorical':['GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN', 'RACE_ORIEN
        'RENALINSUF', 'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE',
        'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE', 'LIVER_DISEASE',
        'CANCER',
-       'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 
+       'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS',
        'DEATH','COMORB_DEATH','HF', 'ARF', 'SEPSIS', 'EMBOLIC', 'OUTCOME_VENT'],
                 'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 
                            'LEUCOCYTES', 'LYMPHOCYTES','HEMOGLOBIN', 'PLATELETS'],
@@ -254,8 +261,10 @@ col_mapping = {'ACEI_ARBS': 'ACE Inhibitors or ARBs',
 columns = pd.MultiIndex.from_product([['Pre-Match','Post-Match'],treatment_list])
 index = col_order
 
+
+#%% Create pre/post data comparison
 # df = pd.concat([data_pre[col_order], data_post[col_order]], axis=0)
-df = data_pre
+df = data_pre.query('COUNTRY == "Spain"') ## restrict to data in derivation cohort
 
 desc_list = []
 for p in treatment_list:
@@ -294,18 +303,23 @@ res = res.rename(index = col_mapping, columns =  {'ACEI_ARBS':'ACEI/ARBs','NO_AC
 res.index.name = 'Feature'
 
 res.to_latex(buf = save_path+'latex_descriptive_prematch.txt', 
-             column_format = 'l'+'c'*desc_all.shape[1],
+             column_format = 'l'+'c'*res.shape[1],
              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
              index_names = False)
 
 #%% Break down pre-treatment data by site
+
+# deriv = data_pre.query('COUNTRY == "Spain"')
+# val = data_pre.query('COUNTRY != "Spain"')
+
 df = data_pre
 df.SOURCE_COUNTRY = df.SOURCE_COUNTRY.replace({'Hope-Italy':'Hope-Other',
                                                'Hope-Ecuador':'Hope-Other',
-                                               'Hope-Germany':'Hope-Other'})
-
+                                               'Hope-Germany':'Hope-Other',
+                                               'USA':'MGB-USA'})
+## Derivation Cohort
 desc_list = []
-for p in ['Hope-Spain','HM-Spain','Cremona-Italy','Hope-Other']:
+for p in ['Hope-Spain','HM-Spain']:
     df_sub = df.loc[df['SOURCE_COUNTRY']==p,:]
     desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
     desc = desc.drop('Percent Missing', axis=1)
@@ -318,9 +332,89 @@ desc_country = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
 
 desc_country = desc_country.rename(index = col_mapping)
 
-desc_country.to_latex(buf = save_path+'latex_descriptive_bycountry.txt', 
-             column_format = 'l'+'c'*desc_all.shape[1],
+desc_country.to_latex(buf = save_path+'latex_descriptive_bycountry_derivation.txt', 
+             column_format = 'l'+'c'*desc_country.shape[1],
+             float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
+             index_names = False)
+
+## Repeat for validation cohort
+desc_list = []
+for p in ['Cremona-Italy','Hope-Other','MGB-USA']:
+    df_sub = df.loc[df['SOURCE_COUNTRY']==p,:]
+    desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
+    desc = desc.drop('Percent Missing', axis=1)
+    desc.loc['Treatment'] = p
+    # desc = desc.add_suffix('_'+p)
+    desc = desc.rename({'Output':p}, axis=1) 
+    desc_list.append(desc)
+desc_country = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
+# desc_pre.rename({'index':'Feature'}, inplace = True, axis = 1)
+
+desc_country = desc_country.rename(index = col_mapping)
+
+desc_country.to_latex(buf = save_path+'latex_descriptive_bycountry_validation.txt', 
+             column_format = 'l'+'c'*desc_country.shape[1],
+             float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
+             index_names = False)
+
+#%% Compare validation and derivation populations by ACE/ARBs
+
+deriv = data_post
+val = data_pre.query('COUNTRY != "Spain"')
+
+# df['Split'] = df['COUNTRY'].apply(lambda x: 'Derivation' if x == "Spain" else 'Validation')
+
+res = pd.DataFrame(columns = pd.MultiIndex.from_product([['Derivation','Validation'],treatment_list]), 
+             index = index)
+
+for split in ['Derivation','Validation']:
+    df = deriv if split == 'Derivation' else val
+    desc_list = []
+    for p in treatment_list:
+        df_sub = df.loc[(df['REGIMEN']==p),:]
+        desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
+        desc = desc.drop('Percent Missing', axis=1)
+        desc.loc['Treatment'] = p
+        # desc = desc.add_suffix('_'+p)
+        desc = desc.rename({'Output':p}, axis=1) 
+        desc_list.append(desc)
+    desc_table = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
+    # desc_post.rename({'index':'Feature'}, inplace = True, axis = 1)
+    res[split] = desc_table
+
+
+res = res.rename(index = col_mapping, columns =  {'ACEI_ARBS':'ACEI/ARBs','NO_ACEI_ARBS':'No ACEI/ARBs'})
+res.index.name = 'Feature'
+
+
+res.to_latex(buf = save_path+'latex_descriptive_derivation_validation.txt', 
+             column_format = 'l'+'c'*res.shape[1],
              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
              index_names = False)
 
 
+#%% Save % changegs 
+data_version = 'validation_all'
+summ_all = pd.read_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+'prescription_rate_by_feature.csv')
+
+summ_all['Feature_Value'] = summ_all['Feature_Value'].replace({'[0, 40)':'L','[40, 55)':'M','[55, 70)':'H','[70, 110)':'VH',
+                                                               '0.0':'L','1.0':'H',
+                                                               '0':'L','1':'H'})
+summ_all['Label'] = summ_all.apply(lambda row: 'ValChange_'+row['Feature']+'_'+str(row['Feature_Value']), axis=1)
+
+def convert_to_latex(command_name, val):   
+    command_strip = command_name.replace('_','')
+    val_pct = str(np.round(val*100,1))+'\%'
+    com = '\\newcommand{\\' + command_strip +'}{'+val_pct+'}'  
+    return com
+
+shortcuts = list()
+
+for i, row in summ_all.iterrows():
+    shortcuts.append(convert_to_latex(row['Label'],row['Change_Relative']))
+
+#Save the shortcuts in a txt
+results_shortcuts_path = save_path+'latex_clinical_validation_shortcuts.txt'
+with open(results_shortcuts_path, 'w') as f:
+    for item in shortcuts:
+        f.write("%s\n" % item)
