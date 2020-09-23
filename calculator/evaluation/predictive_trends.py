@@ -65,3 +65,56 @@ for algorithm in shap_algorithm_list:
         df = u.calculate_average_shap(file_name, treatment, outcome, algorithm, top_features)   
         df.to_csv(save_file_name, index = False)
 
+#%% Merge all results
+
+
+shap_algorithm_list  = ['rf','cart','qda','gb','xgboost']
+
+version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(main_treatment)+'/'+str(outcome)+'/'
+save_path = results_path + version_folder + 'summary/'
+
+        
+importance_all = []
+for algorithm in shap_algorithm_list:
+    for treatment in treatment_list:
+        file_start = str(treatment) + '_' + match_status + '_' + outcome.lower() + '_seed' + str(SEED)
+        save_file_name = save_path+file_start+'_'+algorithm+'_shap_values.csv'
+        imp = pd.read_csv(save_file_name)
+        imp['Rank'] = np.arange(len(imp))+1
+        imp['Algorithm'] = algorithm
+        imp['Treatment'] = treatment
+        importance_all.append(imp)
+    
+importance_all = pd.concat(importance_all, axis=0)
+  
+metric = 'Rank'
+# imp_table = importance_all.pivot(index = 'Algorithm', columns = 'Risk Factor', values = metric)
+imp_table_t = importance_all.query('Rank <= 5').pivot(index = ['Treatment','Risk Factor'], columns = ['Algorithm'], values = metric)
+imp_table_t.loc[:,'Average'] = imp_table_t.mean(axis=1)
+imp_table_final = imp_table_t.reset_index().sort_values(by=['Treatment','Average'], ascending = [True, True]).\
+    set_index(['Treatment','Risk Factor'])
+    
+imp_table_final.index.names = [None,None]                            
+imp_table_final.to_csv(save_path+'variable_importance_byrank.csv')
+imp_table_final.to_latex(buf = save_path+'latex_variable_importance_byrank.txt', 
+             column_format = 'l'*2+'c'*imp_table_t.shape[1],
+             float_format="%.3f", bold_rows = False, multicolumn = False, multicolumn_format = 'c',
+             index_names = False, na_rep = '--',
+             multirow = True)
+
+
+
+metric = 'Mean Absolute SHAP Value'
+imp_table_t = importance_all.query('Rank <= 5').pivot(index = ['Treatment','Risk Factor'], columns = ['Algorithm'], values = metric)
+imp_table_t.loc[:,'Average'] = imp_table_t.mean(axis=1)
+imp_table_final = imp_table_t.reset_index().sort_values(by=['Treatment','Average'], ascending = [False, True]).\
+    set_index(['Treatment','Risk Factor'])
+    
+imp_table_final.index.names = [None,None]                                      
+imp_table_final.to_csv(save_path+'variable_importance_bySHAP.csv')
+imp_table_final.to_latex(buf = save_path+'latex_variable_importance_bySHAP.txt', 
+             column_format = 'l'*2+'c'*imp_table_t.shape[1],
+             float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
+             index_names = False, na_rep = '--',
+             multirow = True)
+
