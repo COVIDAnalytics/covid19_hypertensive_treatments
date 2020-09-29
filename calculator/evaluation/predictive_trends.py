@@ -61,14 +61,46 @@ for algorithm in shap_algorithm_list:
         file_start = str(treatment) + '_' + match_status + '_' + outcome.lower() + '_seed' + str(SEED)
         file_name = result_path+file_start
         save_file_name = save_path+file_start+'_'+algorithm+'_shap_values.csv'
-
-        df = u.calculate_average_shap(file_name, treatment, outcome, algorithm, top_features)   
+        # plot_file argumemnt calls summary plot - only works for tree models (will skip others)
+        df = u.calculate_average_shap(file_name, treatment, outcome, algorithm, top_features, 
+                                      plot_file = save_path+file_start+'_'+algorithm+'summary_plot.pdf')   
         df.to_csv(save_file_name, index = False)
+        
+        
+#%% OCT results
+
+from julia import Julia           
+jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
+from interpretableai import iai
+
+model = iai.read_json(file_name+'.json')
+            
+version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(main_treatment)+'/'+str(outcome)+'/'
+save_path = results_path + version_folder + 'summary/'
+result_path = results_path+version_folder+'oct'+'/'
+
+for treatment in treatment_list:
+    file_start = str(treatment) + '_' + match_status + '_' + outcome.lower() + '_seed' + str(SEED)
+    file_name = result_path+file_start
+    model = iai.read_json(file_name+'.json')
+    # pull feature importance
+    ft_imp = model.variable_importance()
+    # save as CSv
+    save_file_name = save_path+file_start+'_'+'oct'+'_shap_values.csv'
+    ft_imp.rename({'Feature':'Risk Factor'}, axis=1)
+    ft_imp.to_csv(save_file_name, index = False)
+    
+    
+
 
 #%% Merge all results
 
+shap_algorithm_list  = ['rf','cart','oct','qda','gb','xgboost']
 
-shap_algorithm_list  = ['rf','cart','qda','gb','xgboost']
+# set up column name remapping
+col_mapping = u.col_mapping
+col_mapping['ACEI_ARBS'] = 'ACEI/ARBs'
+col_mapping['NO_ACEI_ARBS'] = 'No ACEI/ARBs'
 
 version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(main_treatment)+'/'+str(outcome)+'/'
 save_path = results_path + version_folder + 'summary/'
@@ -80,41 +112,50 @@ for algorithm in shap_algorithm_list:
         file_start = str(treatment) + '_' + match_status + '_' + outcome.lower() + '_seed' + str(SEED)
         save_file_name = save_path+file_start+'_'+algorithm+'_shap_values.csv'
         imp = pd.read_csv(save_file_name)
+        if algorithm == 'oct':
+            imp.rename({'Feature':'Risk Factor'}, axis=1, inplace = True)
         imp['Rank'] = np.arange(len(imp))+1
-        imp['Algorithm'] = algorithm
+        imp['Algorithm'] = algorithm.upper()
         imp['Treatment'] = treatment
         importance_all.append(imp)
     
-importance_all = pd.concat(importance_all, axis=0)
+importance_all = pd.concat(importance_all, axis=0, ignore_index = False)
   
+ft_limit = '5'
 metric = 'Rank'
 # imp_table = importance_all.pivot(index = 'Algorithm', columns = 'Risk Factor', values = metric)
-imp_table_t = importance_all.query('Rank <= 5').pivot(index = ['Treatment','Risk Factor'], columns = ['Algorithm'], values = metric)
+imp_table_t = importance_all.query('Rank <= '+ft_limit).pivot(index = ['Treatment','Risk Factor'], columns = ['Algorithm'], values = metric)
 imp_table_t.loc[:,'Average'] = imp_table_t.mean(axis=1)
 imp_table_final = imp_table_t.reset_index().sort_values(by=['Treatment','Average'], ascending = [True, True]).\
     set_index(['Treatment','Risk Factor'])
     
+
+imp_table_final.rename(index = col_mapping, inplace = True)
+
 imp_table_final.index.names = [None,None]                            
-imp_table_final.to_csv(save_path+'variable_importance_byrank.csv')
-imp_table_final.to_latex(buf = save_path+'latex_variable_importance_byrank.txt', 
+imp_table_final.to_csv(save_path+'variable_importance_byrank_top'+str(ft_limit)+'.csv')
+imp_table_final.to_latex(buf = save_path+'latex_variable_importance_byrank_top'+str(ft_limit)+'.txt', 
              column_format = 'l'*2+'c'*imp_table_t.shape[1],
-             float_format="%.3f", bold_rows = False, multicolumn = False, multicolumn_format = 'c',
+             float_format="%.1f", bold_rows = False, multicolumn = False, multicolumn_format = 'c',
              index_names = False, na_rep = '--',
              multirow = True)
 
 
 
 metric = 'Mean Absolute SHAP Value'
-imp_table_t = importance_all.query('Rank <= 5').pivot(index = ['Treatment','Risk Factor'], columns = ['Algorithm'], values = metric)
+imp_table_t = importance_all.query('Rank <= '+ft_limit).pivot(index = ['Treatment','Risk Factor'], columns = ['Algorithm'], values = metric)
 imp_table_t.loc[:,'Average'] = imp_table_t.mean(axis=1)
-imp_table_final = imp_table_t.reset_index().sort_values(by=['Treatment','Average'], ascending = [False, True]).\
+imp_table_final = imp_table_t.reset_index().sort_values(by=['Treatment','Average'], ascending = [True, False]).\
     set_index(['Treatment','Risk Factor'])
     
+imp_table_final.rename(index = col_mapping, inplace = True)
+
 imp_table_final.index.names = [None,None]                                      
-imp_table_final.to_csv(save_path+'variable_importance_bySHAP.csv')
-imp_table_final.to_latex(buf = save_path+'latex_variable_importance_bySHAP.txt', 
+imp_table_final.to_csv(save_path+'variable_importance_bySHAP_top'+str(ft_limit)+'.csv')
+imp_table_final.to_latex(buf = save_path+'latex_variable_importance_bySHAP_top'+str(ft_limit)+'.txt', 
              column_format = 'l'*2+'c'*imp_table_t.shape[1],
              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
              index_names = False, na_rep = '--',
              multirow = True)
+
 

@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 import analyzer.loaders.cremona.utils as uc
-# import analyzer.loaders.partners.utils as u
+import analyzer.loaders.partners.utils as u
 import analyzer.dataset as ds
 import re
 from sklearn.impute import KNNImputer
+import matplotlib.pyplot as plt
 
 data_path = '../../covid19_partners/data/v3/'
 save_path = '../../covid19_partners/processed/'
@@ -419,3 +420,33 @@ partners_matched.to_csv('../../covid19_treatments_data/matched_single_treatments
 val_withpartners = pd.concat([validation, partners_matched], ignore_index = False)
 val_withpartners.to_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/ACEI_ARBS_hope_hm_cremona_all_treatments_validation_all.csv', index = False)
 
+#%% sao2 deep dive
+
+bins = 25
+
+fig, axs = plt.subplots(3, 1, figsize=(10, 15), constrained_layout=True)
+
+df_0 = pd.read_csv('../../covid19_treatments_data/partners_treatment_missing_'+version+'.csv')
+partners_imputed = pd.read_csv('../../covid19_treatments_data/partners_treatments_full_'+version+'.csv')
+
+axs = axs.ravel()
+
+axs[0].hist(df_0['ABG: Oxygen Saturation (SaO2)'], bins, density=False, 
+         facecolor='g', alpha=0.75, range = (60,100))
+axs[0].axvline(92, color='k', linestyle='dashed', linewidth=1)
+axs[0].set_title('Raw Frequencies - ABG: Oxygen Saturation (SaO2)')
+
+axs[1].hist(df_0['SaO2'], bins, density=False, 
+         facecolor='g', alpha=0.75, range = (60,100))
+axs[1].axvline(92, color='k', linestyle='dashed', linewidth=1)
+axs[1].set_title('Raw Frequencies - SaO2')
+
+axs[2].hist(partners_imputed['ABG: Oxygen Saturation (SaO2)'], bins, density=False, 
+         facecolor='g', alpha=0.75, range = (60,100))
+axs[2].axvline(92, color='k', linestyle='dashed', linewidth=1)
+axs[2].set_title('Final Distribution (Imputed)')
+
+fig.savefig(save_path+'feature_plot.pdf', bbox_inches='tight')
+
+
+               

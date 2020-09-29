@@ -11,6 +11,7 @@ import os
 import pickle
 import shap
 import matplotlib
+import matplotlib.pyplot as plt
 from sklearn import metrics
 from scipy import stats
 import math
@@ -22,7 +23,61 @@ from sklearn.model_selection import train_test_split
 import analyzer.dataset as ds
 
 from math import sqrt
-import matplotlib
+
+
+col_mapping = {'ACEI_ARBS': 'ACE Inhibitors or ARBs',
+     'AF': 'Atrial Fibrillation',
+     'AGE': 'Age',
+     'ANTIBIOTICS': 'Antibiotics',
+     'ANTICOAGULANTS':'Anticoagulants',
+     'ANTIVIRAL':'Antivirals',
+     'ANYCEREBROVASCULARDISEASE':'Cerebrovascular Disease',
+     'ANYHEARTDISEASE':'Heart Disease',
+     'ANYLUNGDISEASE':'Lung Disease',
+     # 'BLOOD_PRESSURE_ABNORMAL_B':'Low systolic blood pressure (<100 mm Hg)',
+     'BLOOD_PRESSURE_ABNORMAL_B':'Low systolic BP',
+     'CANCER':'Cancer',
+     'CLOROQUINE':'Hydroxychloroquine',
+     'CONECTIVEDISEASE':'Connective Tissue Disease',
+     'CREATININE':'Creatinine',
+     # 'DDDIMER_B':'Elevated D-Dimer (>0.5 mg/L)',
+     'DDDIMER_B':'Elevated D-Dimer',
+     'DIABETES':'Diabetes',
+     'DISLIPIDEMIA':'Dislipidemia',
+     'GENDER_MALE':'Gender = Male',
+     'HEMOGLOBIN':'Hemoglobin',
+     'HYPERTENSION':'Hypertension',
+     'INTERFERONOR':'Interferons',
+     # 'LDL_B':'Elevated Lactic Acid Dehydrogenase (>480 U/L)',
+     'LDL_B':'Elevated LDH',
+     'LEUCOCYTES':'White Blood Cell Count',
+     'LIVER_DISEASE':'Liver Disease',
+     'LYMPHOCYTES':'Lymphocytes',
+     'MAXTEMPERATURE_ADMISSION':'Temperature',
+     'OBESITY':'Obesity',
+     # 'PCR_B':'Elevated C-Reactive Protein (>10 mg/L)',
+     'PCR_B':'Elevated CRP',
+     'PLATELETS':'Platelets',
+     'RACE_CAUC':'Race = Caucasian',
+     'RACE_LATIN':'Race = Hispanic',
+     'RACE_ORIENTAL':'Race = Asian',
+     'RACE_OTHER':'Race = Other',
+     'RENALINSUF':'Renal Insufficiency',
+     # 'SAT02_BELOW92':'Low Oxygen Saturation (< 92)',
+     'SAT02_BELOW92':'Low Oxygen Saturation',
+     'SODIUM':'Blood Sodium',
+     'CORTICOSTEROIDS':'Corticosteroids',
+     'TOCILIZUMAB':'Tocilizumab',
+     # 'TRANSAMINASES_B':'Elevated Transaminase (>40 U/L)',
+     'TRANSAMINASES_B':'Elevated Transaminase',
+     'VIH':'HIV',
+     'HF':'Heart Failure',
+     'ARF':'Acute Renal Failure',
+     'SEPSIS':'Sepsis',
+     'EMBOLIC':'Embolic Event',
+     'OUTCOME_VENT':'Mechanical Ventilation',
+     'COMORB_DEATH':'Mortality/Morbidity',
+     'DEATH':'Death'}
 
 def load_data(folder, train_name, split, matched, prediction = 'DEATH', 
     med_hx=False, other_tx = True, treatment=None):
@@ -424,7 +479,7 @@ def latexify(fig_width=None, fig_height=None, columns=1):
 
     matplotlib.rcParams.update(params)
 
-def calculate_average_shap(file_name, treatment, outcome,algorithm, top_features):
+def calculate_average_shap(file_name, treatment, outcome,algorithm, top_features, plot_file = ''):
     
     if file_name == '':
         print("Invalid treatment/outcome combination (" + str(treatment) + ", " + str(outcome)+ ")")
@@ -449,6 +504,29 @@ def calculate_average_shap(file_name, treatment, outcome,algorithm, top_features
                                    );
         shap_values = explainer.shap_values(X_test);
         
+        ## only save plot for tree models
+        if plot_file != '':
+            plt.close()
+            if isinstance(shap_values, list):
+                shap.summary_plot(shap_values[1], X_test, show=False,
+                          max_display=10,
+                          plot_size=(10, 5),
+                          plot_type="violin")  
+            else:             
+                shap.summary_plot(shap_values, X_test, show=False,
+                      max_display=10,
+                      plot_size=(10, 5),
+                      plot_type="violin")  
+                
+            f = plt.gcf()
+            ax = plt.gca()
+            
+            plt.xlabel('SHAP value (impact on model output)')   
+        
+            f.savefig(plot_file, bbox_inches='tight')
+            
+            plt.close()
+        
     else:
         X_train_summary = shap.kmeans(X, 50)
         explainer = shap.KernelExplainer(model.predict_proba,
@@ -456,8 +534,11 @@ def calculate_average_shap(file_name, treatment, outcome,algorithm, top_features
                                    model_output="logit",
                                    );
         shap_values = explainer.shap_values(X_test);
+        
+        if plot_file != '':
+            print('Cannot plot summary plot for non-tree models')
 
-    
+
     df = pd.DataFrame(columns = ['Risk Factor', 'Mean Absolute SHAP Value']) 
     
     for i in range(0,len(X.columns)):
