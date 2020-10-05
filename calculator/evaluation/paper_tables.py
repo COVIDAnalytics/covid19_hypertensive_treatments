@@ -418,3 +418,73 @@ results_shortcuts_path = save_path+'latex_clinical_validation_shortcuts_t'+str(t
 with open(results_shortcuts_path, 'w') as f:
     for item in shortcuts:
         f.write("%s\n" % item)
+    
+#%% Results shortcuts from summary metrics
+
+metric_summ = pd.read_csv(save_path+'matched_metrics_summary.csv')
+
+metric_summ = metric_summ[(metric_summ['weighted_status']==weighted_status) &(metric_summ['threshold']==threshold) ]
+def convert_to_latex(command_name, val):   
+    command_strip = command_name.replace('_','')
+    val_pct = str(np.round(val*100,1))+'\%'
+    com = '\\newcommand{\\' + command_strip +'}{'+val_pct+'}'  
+    return com
+
+shortcuts = list()
+
+PE = np.round(metric_summ[metric_summ['data_version']=='test']['PE'].values[0]*(-1),3)
+shortcuts.append(convert_to_latex('prescriptioneffectivenessAbstract', PE))
+
+shortcuts.append(convert_to_latex('improvementThreshold', threshold))
+
+validation_size = len(pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_all_treatments_validation_all.csv'))
+testing_size = len(pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched_all_treatments_test.csv'))
+training_size = len(pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'))
+
+
+TrainProp = metric_summ[metric_summ['data_version']=='train']['presc_count'].values[0]/training_size
+shortcuts.append(convert_to_latex('proportionTrainingPrescription', TrainProp))
+
+TestProp = metric_summ[metric_summ['data_version']=='test']['presc_count'].values[0]/testing_size
+shortcuts.append(convert_to_latex('proportionTestingPrescription', TestProp))
+
+ValidationProp = metric_summ[metric_summ['data_version']=='validation_all']['presc_count'].values[0]/validation_size
+shortcuts.append(convert_to_latex('proportionValidationPrescription', ValidationProp))
+
+minimumPE = np.round(metric_summ[metric_summ['data_version']=='validation_all']['PE'].values[0]*(-1),3)
+shortcuts.append(convert_to_latex('minimumPE', minimumPE))
+
+minimumPRTest = np.round(metric_summ[metric_summ['data_version']=='test']['pr_low'].values[0]*(-1),3)
+shortcuts.append(convert_to_latex('minimumPRTest', minimumPRTest))
+
+maximumPRTest = np.round(metric_summ[metric_summ['data_version']=='test']['pr_high'].values[0]*(-1),3)
+shortcuts.append(convert_to_latex('maximumPRTest', maximumPRTest))
+
+minimumPRValidation = np.round(metric_summ[metric_summ['data_version']=='validation_all']['pr_low'].values[0]*(-1),3)
+shortcuts.append(convert_to_latex('minimumPRValidation', minimumPRValidation))
+
+maximumPRValidation = np.round(metric_summ[metric_summ['data_version']=='validation_all']['pr_high'].values[0]*(-1),3)
+shortcuts.append(convert_to_latex('maximumPRValidation', maximumPRValidation))
+
+matchrateTest = np.round(metric_summ[metric_summ['data_version']=='test']['match_rate'].values[0],3)
+shortcuts.append(convert_to_latex('matchrateTest', matchrateTest))
+
+matchrateValidation = np.round(metric_summ[metric_summ['data_version']=='validation_all']['match_rate'].values[0],3)
+shortcuts.append(convert_to_latex('matchrateValidation', matchrateValidation))
+
+prescriptionAUCTest = np.round(metric_summ[metric_summ['data_version']=='test']['average_auc'].values[0],3)
+shortcuts.append(convert_to_latex('prescriptionAUCTest', prescriptionAUCTest))
+
+prescriptionAUCValidation = np.round(metric_summ[metric_summ['data_version']=='validation_all']['average_auc'].values[0],3)
+shortcuts.append(convert_to_latex('prescriptionAUCValidation', prescriptionAUCValidation))
+
+shortcuts
+
+#Save the shortcuts in a txt
+results_shortcuts_path = save_path+'latex_prescription_metrics_summary_shortcuts_t'+str(threshold)+'.txt'
+with open(results_shortcuts_path, 'w') as f:
+    for item in shortcuts:
+        f.write("%s\n" % item)
+
+
+
