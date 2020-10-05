@@ -12,7 +12,7 @@ import os
 # os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calculator')
 
 import evaluation.treatment_utils as u
-import evaluation.descriptive_utils as d
+# import evaluation.descriptive_utils as d
 from sklearn.impute import KNNImputer
 import pandas as pd
 import numpy as np
@@ -393,7 +393,7 @@ res.to_latex(buf = save_path+'latex_descriptive_derivation_validation.txt',
              index_names = False)
 
 
-#%% Save % changegs 
+#%% Save % changes 
 data_version = 'validation_all'
 summ_all = pd.read_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+'prescription_rate_by_feature.csv')
 

@@ -1,5 +1,5 @@
 import evaluation.treatment_utils as  u
-import evaluation.descriptive_utils as d
+# import evaluation.descriptive_utils as d
 import pandas as pd
 import numpy as np
 import itertools
@@ -51,33 +51,33 @@ df.groupby([treatment])[outcome].mean()
 # summary_weight['Algorithm'] = 'weighted'
 # summary_weight.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
 
-# data_version = 'train'
-# threshold = 0.01
+data_version = 'test'
+threshold = 0.01
 
-# summary_vote = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_no_weights_t'+str(threshold)+'.csv')
-# summary_vote['Algorithm'] = 'vote'
-# summary_vote.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
+summary_vote = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_no_weights_t'+str(threshold)+'.csv')
+summary_vote['Algorithm'] = 'vote'
+summary_vote.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
 
-# result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
 
-# result = pd.concat([result[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
-#           # summary_weight[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
-#           summary_vote[['ID','Algorithm','Prescribe','Prescribe_Prediction']]],
-#           axis=0, ignore_index = True)
+result = pd.concat([result[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
+          # summary_weight[['ID','Algorithm','Prescribe','Prescribe_Prediction']],
+          summary_vote[['ID','Algorithm','Prescribe','Prescribe_Prediction']]],
+          axis=0, ignore_index = True)
 
-# comparison =  pd.DataFrame(columns = ['algorithm','prescription_count','prescription_prob','agreement_weighted', 'agreement_no_weights'])
+comparison =  pd.DataFrame(columns = ['algorithm','prescription_count','prescription_prob','agreement_weighted', 'agreement_no_weights'])
 
-# for alg in result.Algorithm.unique():
-#     alg_presc = result.loc[result['Algorithm']==alg].set_index('ID')
-#     t_count = sum(alg_presc['Prescribe'] == treatment)
-#     prob = alg_presc['Prescribe_Prediction'].mean()
-#     # agreement_weighted = (alg_presc['Prescribe']==summary_weight['Prescribe']).mean()
-#     agreement_weighted = np.nan
-#     agreement_vote = (alg_presc['Prescribe']==summary_vote['Prescribe']).mean()
-#     comparison.loc[len(comparison)] = [alg, t_count, prob,
-#                                        agreement_weighted, agreement_vote]
+for alg in result.Algorithm.unique():
+    alg_presc = result.loc[result['Algorithm']==alg].set_index('ID')
+    t_count = sum(alg_presc['Prescribe'] == treatment)
+    prob = alg_presc['Prescribe_Prediction'].mean()
+    # agreement_weighted = (alg_presc['Prescribe']==summary_weight['Prescribe']).mean()
+    agreement_weighted = np.nan
+    agreement_vote = (alg_presc['Prescribe']==summary_vote['Prescribe']).mean()
+    comparison.loc[len(comparison)] = [alg, t_count, prob,
+                                        agreement_weighted, agreement_vote]
 
-# comparison.to_csv(save_path+data_version+'_'+match_status+'_t'+str(threshold)+'_'+'agreement_byalgorithm.csv', index = False)
+comparison.to_csv(save_path+data_version+'_'+match_status+'_t'+str(threshold)+'_'+'agreement_byalgorithm.csv', index = False)
 
 
 

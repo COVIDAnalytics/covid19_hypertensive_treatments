@@ -20,7 +20,7 @@ import evaluation.treatment_utils as u
 
 #%% Choose variant and specify paths
 
-treatment = 'CORTICOSTEROIDS'
+treatment = 'ACEI_ARBS'
 outcome = 'COMORB_DEATH'
 path = '../../covid19_treatments_results/matched_single_treatments_der_val_addl_outcomes/'+treatment
 website_path = '../../website/assets/treatment_calculators/'+outcome
@@ -28,9 +28,10 @@ website_path = '../../website/assets/treatment_calculators/'+outcome
 training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
 
 X, Z, y = u.load_data('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/',
-                        training_set_name, split='train', matched=True, prediction = outcome)
+                        training_set_name, split='train', matched=True, prediction = outcome,
+                        other_tx = False, med_hx = False)
 
-load_file_path = os.path.join(path,outcome,'lr','NO_CORTICOSTEROIDS_matched_comorb_death_seed1')
+load_file_path = os.path.join(path,outcome,'lr','NO_ACEI_ARBS_matched_comorb_death_seed1')
 
 with open(load_file_path, 'rb') as file:
     load_file = pickle.load(file)
@@ -39,9 +40,9 @@ X_test = load_file['train'].drop(outcome, axis=1)
 
 #%% Load pickle for comparison
 
-with open('../../website/assets/risk_calculators/mortality/model_with_lab.pkl', 'rb') as file:
-    mort_pkl = pickle.load(file)
-json = mort_pkl['json']
+# with open('../../website/assets/risk_calculators/mortality/model_with_lab.pkl', 'rb') as file:
+#     mort_pkl = pickle.load(file)
+# json = mort_pkl['json']
 
 #%% Set up feature json
 
@@ -78,19 +79,21 @@ multidrop = [
          'LIVER_DISEASE',
          'CANCER'],
       'explanation': ['Select the existing chronic diseases or conditions.']},
-    {'name': 'Treatments',
-     'index': [],
-     'vals': ['CLOROQUINE',
-           'ANTIVIRAL',
-           'ANTICOAGULANTS',
-           'INTERFERONOR',
-           'TOCILIZUMAB',
-           'ANTIBIOTICS',
-           'ACEI_ARBS',],
-     'explanation': ['Select other treatments prescribed.']},
+    # {'name': 'Treatments',
+    #  'index': [],
+    #  'vals': ['CLOROQUINE',
+    #        'ANTIVIRAL',
+    #        'ANTICOAGULANTS',
+    #        'INTERFERONOR',
+    #        'TOCILIZUMAB',
+    #        'ANTIBIOTICS',
+    #        'ACEI_ARBS',],
+    #  'explanation': ['Select other treatments prescribed.']},
     {'name': 'Race',
      'index': [],
-     'vals': ['RACE_CAUC',
+     'vals': [
+         # 'RACE_BLACK',
+              'RACE_CAUC',
            'RACE_LATIN',
            'RACE_ORIENTAL',
            'RACE_OTHER'],
@@ -136,6 +139,7 @@ def get_feature_names():
      'OBESITY':'Obesity',
      'PCR_B':'Abnormal PCR',
      'PLATELETS':'Platelets',
+     'RACE_BLACK':'Black',
      'RACE_CAUC':'Caucasian',
      'RACE_LATIN':'Hispanic',
      'RACE_ORIENTAL':'Asian',
@@ -169,7 +173,7 @@ for i in range(0,len(categoric)):
 
 for i in range(0,len(multidrop)):
     col_list = multidrop[i]['vals']
-    multidrop[i]['index'] = [list(X.columns).index(col) for col in col_list]
+    multidrop[i]['index'] = [list(X.columns).index(col) if (col in X.columns) else np.nan for col in col_list]
 
 for i in range(0,len(checkboxes)):
     col_list = checkboxes[i]['vals']
@@ -196,18 +200,21 @@ index_list.sort()
 name_list.sort()
 
 if np.all(index_list == list(range(0,len(X.columns)))) & np.all(name_list == X.columns.sort_values()):
-    web_pkl = {'json':new_json}
+    print("Columns match")
 else: 
     print("Error: mismatch in indices or feature names. need to debug!")
 
+web_pkl = {'json':new_json}
 ##
 #%% Generate pickle
 
-algorithm_list = ['lr','rf','cart','xgboost','qda','gb'] #exclude OCT
+algorithm_list = ['rf','cart','xgboost','qda','gb'] #exclude OCT
 
 for treated in [True,False]:
     treat_pkl = {}
+    print(treated)
     for alg in algorithm_list:
+        print(alg)
         alg_pkl = {}
         for f in os.listdir(os.path.join(path,outcome,alg)):
             # print(f)
@@ -276,6 +283,7 @@ def get_feature_names():
      'OBESITY':'Obesity',
      'PCR_B':'Elevated C-Reactive Protein (>10 mg/L)',
      'PLATELETS':'Platelets',
+     'RACE_BLACK':'Black',
      'RACE_CAUC':'Caucasian',
      'RACE_LATIN':'Hispanic',
      'RACE_ORIENTAL':'Asian',

@@ -20,8 +20,7 @@ match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
-data_list = ['train','test','validation','validation_cremona','validation_hope','validation_hope_italy',
-             'validation_all','validation_partners']
+data_list = ['train','test','validation_all','validation_cremona','validation_hope','validation_hope_italy','validation_partners']
 # data_list = ['validation_all','validation_partners']
 # prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
 # algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
@@ -71,7 +70,7 @@ for outcome in prediction_list:
             
 #%% Run with LR for comparison
 algorithm_list = ['lr','rf','cart','oct','xgboost','qda','gb']
-data_list = ['validation_all','validation_partners']
+# data_list = ['validation_all','validation_partners']
 
 for outcome in prediction_list:
     version_folder = str(treatment)+'/'+str(outcome)+'/'
@@ -95,6 +94,9 @@ algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
 
 
 #%% Part 2: save results
+
+algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
+
 metrics_agg = pd.DataFrame(columns = ['data_version','weighted_status','threshold','match_rate','presc_count','average_auc','PE','CPE','pr_low','pr_high'])
 
 for outcome in prediction_list:
