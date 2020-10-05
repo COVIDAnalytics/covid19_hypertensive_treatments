@@ -52,7 +52,7 @@ df.groupby([treatment])[outcome].mean()
 # summary_weight.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
 
 data_version = 'test'
-threshold = 0.01
+threshold = 0.05
 
 summary_vote = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_no_weights_t'+str(threshold)+'.csv')
 summary_vote['Algorithm'] = 'vote'
@@ -85,7 +85,7 @@ comparison.to_csv(save_path+data_version+'_'+match_status+'_t'+str(threshold)+'_
 #%%  Evaluate specific version
 data_version = 'validation_all' # in ['train','test','validation','validation_cremona','validation_hope']:
 weighted_status = 'no_weights'
-threshold = 0.01
+threshold = 0.05
 
 #Read in the relevant data
 X, Z, y = u.load_data(data_path,training_set_name,
@@ -100,60 +100,6 @@ Y_presc = summary['AverageProbability']
 X_test, Z_test, y_test = u.load_data(data_path,training_set_name,
                     split='test', matched=matched, prediction = outcome)
 
-
-
-#%% Descriptive Analysis
-
-features = {'categorical':['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY',
-       'RENALINSUF', 'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE',
-       'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE', 'LIVER_DISEASE',
-       'CANCER', 'SAT02_BELOW92',
-       'BLOOD_PRESSURE_ABNORMAL_B', 'DDDIMER_B', 'PCR_B', 'TRANSAMINASES_B',
-       'LDL_B', 
-       # 'IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
-       # 'IN_ORALANTICOAGL', 'IN_BETABLOCKERS', 'IN_BETAGONISTINHALED',
-       # 'IN_GLUCORTICOIDSINHALED', 'IN_DVITAMINSUPLEMENT', 'IN_BENZODIACEPINES',
-       # 'IN_ANTIDEPRESSANT', 
-       #  'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
-       # 'ANTIBIOTICS', 'ACEI_ARBS', 
-       'GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN',
-       'RACE_ORIENTAL', 'RACE_OTHER'],
-                'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES',
-       'HEMOGLOBIN', 'PLATELETS'],
-                'multidrop':[]}
-
-if ~np.any(X.columns.str.contains('RACE_OTHER')):
-    features['categorical'].remove('RACE_OTHER')
-
-df = pd.concat([X,y,Z_presc], axis=1)
-desc_list = []
-
-for p in treatment_list:
-    df_sub = df.loc[df['Prescribe']==p,:]
-    desc = d.descriptive_table_treatments(df_sub, features, short_version = True, outcome = outcome)
-    desc = desc.drop('Percent Missing', axis=1)
-    desc.loc['Treatment'] = p
-    desc = desc.add_suffix('_'+p)
-    desc_list.append(desc)
-
-desc_all = pd.concat(desc_list, axis=1)
-columns = desc_all.index.drop(['Patient Count','Treatment'])
-for idx, pair in enumerate(list(itertools.combinations(treatment_list, 2))):
-    print(pair)
-    p_a, p_b  = pair
-    data_a = df.loc[df['Prescribe']==p_a,:]
-    data_b = df.loc[df['Prescribe']==p_b,:]
-    col_sub = columns[(np.var(data_a[columns], axis=0)>1e-20) & (np.var(data_b[columns], axis=0)>1e-20)]
-    sig_test = stats.ttest_ind(data_a[col_sub], data_b[col_sub], 
-                               axis = 0, equal_var = False, nan_policy = 'omit')
-    df_sig = pd.DataFrame(np.transpose(sig_test)[:,1], columns = ['SigTest'+str(idx)])
-    df_sig.index = col_sub
-    df_sig.loc['Treatment'] = p_a+', '+p_b
-    desc_all = desc_all.merge(df_sig, how = 'left',
-                                       left_index = True, right_index = True)
-
-desc_all['Min_Significance'] = np.min(desc_all.loc[:,desc_all.columns.str.startswith('SigTest')], axis =  1)
-desc_all.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_prescription_descriptive.csv', index = True)
 
 #%%
 #We would like to see how the treatments get distributed
@@ -299,9 +245,63 @@ handles, labels = axs[0].get_legend_handles_labels()
 fig.legend(handles, ['Given', 'Prescribed'],loc = 'lower right', borderaxespad=0.1)
 fig.tight_layout(h_pad = 2)
 
-fig.savefig(save_path+data_version+'feature_plot.pdf', bbox_inches='tight')
+fig.savefig(save_path+data_version+'_t'+str(threshold)+'_feature_plot.pdf', bbox_inches='tight')
  
 plt.close()
+
+#%% Descriptive Analysis
+
+features = {'categorical':['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY',
+       'RENALINSUF', 'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE',
+       'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE', 'LIVER_DISEASE',
+       'CANCER', 'SAT02_BELOW92',
+       'BLOOD_PRESSURE_ABNORMAL_B', 'DDDIMER_B', 'PCR_B', 'TRANSAMINASES_B',
+       'LDL_B', 
+       # 'IN_PREVIOUSASPIRIN', 'IN_OTHERANTIPLATELET',
+       # 'IN_ORALANTICOAGL', 'IN_BETABLOCKERS', 'IN_BETAGONISTINHALED',
+       # 'IN_GLUCORTICOIDSINHALED', 'IN_DVITAMINSUPLEMENT', 'IN_BENZODIACEPINES',
+       # 'IN_ANTIDEPRESSANT', 
+       #  'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
+       # 'ANTIBIOTICS', 'ACEI_ARBS', 
+       'GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN',
+       'RACE_ORIENTAL', 'RACE_OTHER'],
+                'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES',
+       'HEMOGLOBIN', 'PLATELETS'],
+                'multidrop':[]}
+
+if ~np.any(X.columns.str.contains('RACE_OTHER')):
+    features['categorical'].remove('RACE_OTHER')
+
+df = pd.concat([X,y,Z_presc], axis=1)
+desc_list = []
+
+for p in treatment_list:
+    df_sub = df.loc[df['Prescribe']==p,:]
+    desc = d.descriptive_table_treatments(df_sub, features, short_version = True, outcome = outcome)
+    desc = desc.drop('Percent Missing', axis=1)
+    desc.loc['Treatment'] = p
+    desc = desc.add_suffix('_'+p)
+    desc_list.append(desc)
+
+desc_all = pd.concat(desc_list, axis=1)
+columns = desc_all.index.drop(['Patient Count','Treatment'])
+for idx, pair in enumerate(list(itertools.combinations(treatment_list, 2))):
+    print(pair)
+    p_a, p_b  = pair
+    data_a = df.loc[df['Prescribe']==p_a,:]
+    data_b = df.loc[df['Prescribe']==p_b,:]
+    col_sub = columns[(np.var(data_a[columns], axis=0)>1e-20) & (np.var(data_b[columns], axis=0)>1e-20)]
+    sig_test = stats.ttest_ind(data_a[col_sub], data_b[col_sub], 
+                               axis = 0, equal_var = False, nan_policy = 'omit')
+    df_sig = pd.DataFrame(np.transpose(sig_test)[:,1], columns = ['SigTest'+str(idx)])
+    df_sig.index = col_sub
+    df_sig.loc['Treatment'] = p_a+', '+p_b
+    desc_all = desc_all.merge(df_sig, how = 'left',
+                                       left_index = True, right_index = True)
+
+desc_all['Min_Significance'] = np.min(desc_all.loc[:,desc_all.columns.str.startswith('SigTest')], axis =  1)
+desc_all.to_csv(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_prescription_descriptive.csv', index = True)
+
 
 #%% Performance summary on all datasets
 

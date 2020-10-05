@@ -54,7 +54,6 @@ training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv
 #%%Load the corresponding model
 for algorithm in shap_algorithm_list:
     for treatment in treatment_list:
-        
         version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(main_treatment)+'/'+str(outcome)+'/'
         save_path = results_path + version_folder + 'summary/'
         result_path = results_path+version_folder+algorithm+'/'
@@ -62,8 +61,8 @@ for algorithm in shap_algorithm_list:
         file_name = result_path+file_start
         save_file_name = save_path+file_start+'_'+algorithm+'_shap_values.csv'
         # plot_file argumemnt calls summary plot - only works for tree models (will skip others)
-        df = u.calculate_average_shap(file_name, treatment, outcome, algorithm, top_features, 
-                                      plot_file = save_path+file_start+'_'+algorithm+'summary_plot.pdf')   
+        df = u.calculate_average_shap(file_name, treatment, outcome, algorithm, top_features)
+                                      # plot_file = save_path+file_start+'_'+algorithm+'summary_plot.pdf')   
         df.to_csv(save_file_name, index = False)
         
         
@@ -73,7 +72,7 @@ from julia import Julia
 jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
 from interpretableai import iai
 
-model = iai.read_json(file_name+'.json')
+# model = iai.read_json(file_name+'.json')
             
 version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(main_treatment)+'/'+str(outcome)+'/'
 save_path = results_path + version_folder + 'summary/'

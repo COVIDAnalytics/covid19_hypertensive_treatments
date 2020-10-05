@@ -34,7 +34,7 @@ version = 'matched_single_treatments_der_val_addl_outcomes/'
 data_path = '../../covid19_treatments_data/'+version
 results_path = '../../covid19_treatments_results/'+version
         
-threshold = 0.01
+threshold = 0.05
 match_status = 'matched' 
 weighted_status = 'no_weights'
 
@@ -119,7 +119,7 @@ summ.rename({'data_version':'Data Version', 'match_rate':'Match Rate',
 summ.set_index('Data Version', inplace = True)
 summ = summ.rename(index = col_dict)
 
-summ.to_latex(buf = save_path+'latex_prescriptive_table.txt', 
+summ.to_latex(buf = save_path+'latex_prescriptive_table_t'+str(threshold)+'.txt', 
              column_format = 'l'+'c'*summ.shape[1],
              float_format="%.3f", bold_rows = True, multicolumn = True, multicolumn_format = 'c',
              index_names = False)
@@ -156,7 +156,7 @@ agr.rename({'prescription_count':'Prescription Count', 'agreement_no_weights':'A
 agr.index = agr.index.str.upper()
 agr.rename({'VOTE':'Prescription'}, axis = 0, inplace = True)
 
-agr.to_latex(buf = save_path+'latex_agreement_table.txt', 
+agr.to_latex(buf = save_path+'latex_agreement_table_t'+str(threshold)+'.txt', 
              column_format = 'l'+'c'*agr.shape[1],
              float_format="%.3f", bold_rows = True, multicolumn = True, multicolumn_format = 'c',
              index_names = False)
@@ -414,7 +414,7 @@ for i, row in summ_all.iterrows():
     shortcuts.append(convert_to_latex(row['Label'],row['Change_Relative']))
 
 #Save the shortcuts in a txt
-results_shortcuts_path = save_path+'latex_clinical_validation_shortcuts.txt'
+results_shortcuts_path = save_path+'latex_clinical_validation_shortcuts_t'+str(threshold)+'.txt'
 with open(results_shortcuts_path, 'w') as f:
     for item in shortcuts:
         f.write("%s\n" % item)
