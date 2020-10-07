@@ -39,10 +39,10 @@ version_folder = "matched_single_treatments_hope_bwh/"
 train_file = '_hope_matched_all_treatments_train.csv'
 test_file = '_hope_matched_all_treatments_test.csv'
 
-data_path = "../../covid19_treatments_data/matched_single_treatments_hypertension/"
-version_folder = "matched_single_treatments_hypertension/"
-train_file = '_hope_hm_remona_matched_all_treatments_train.csv'
-test_file = '_hope_hm_remona_matched_all_treatments_test.csv'
+# data_path = "../../covid19_treatments_data/matched_single_treatments_hypertension/"
+# version_folder = "matched_single_treatments_hypertension/"
+# train_file = '_hope_hm_remona_matched_all_treatments_train.csv'
+# test_file = '_hope_hm_remona_matched_all_treatments_test.csv'
 
 # SEEDS = range(1,6)
 SEEDS = [1]
@@ -50,7 +50,7 @@ SEEDS = [1]
 split_type = 'bycountry'
 
 # treatment_list = ['CORTICOSTEROIDS']
-treatment_list = ['CORTICOSTEROIDS', 'ACEI_ARBS','INTERFERONOR']
+treatment_list = ['ACEI_ARBS']
                      #ANTICOAGULANTS, 'TOCILIZUMAB', 'ANTIBIOTICS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS']
 neg_treatment_options = ['NO_' + s for s in treatment_list]
 treatment_list.extend(neg_treatment_options)
