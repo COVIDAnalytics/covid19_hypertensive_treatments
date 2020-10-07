@@ -25,7 +25,7 @@ source("descriptive_functions.R")
 # save_path = "~/Dropbox (MIT)/COVID_risk/covid19_hope/"
 save_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/"
 
-write_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/"
+write_path = "~/Dropbox (Personal)/COVID_clinical/covid19_treatments_data/matched_single_treatments_hope_bwh/"
  
 # Read in the data
 data = read.csv(paste(save_path, "hope_hm_cremona_data_clean_imputed_addl_outcomes.csv",sep=""), header = TRUE)
@@ -68,7 +68,8 @@ treatments = treatment_options[!treatment_options %in% z]
 
 # Source and countries to include
 # Derivation group
-groups = c("Hope-Spain","HM-Spain")
+# groups = c("Hope-Spain","HM-Spain")
+groups = c("Hope-Spain")
 # groups = c("SPAIN")
 
 #For treatments for which the response is NA, we will consider them as non-prescribed
@@ -96,6 +97,7 @@ features_matching = c("AGE",
                       "PLATELETS",
                       "MAXTEMPERATURE_ADMISSION",
                       "OBESITY",
+                      "HYPERTENSION",
                       "RENALINSUF",
                       "DISLIPIDEMIA",
                       "ANYLUNGDISEASE",
@@ -252,8 +254,8 @@ table(final[,z], final$SOURCE_COUNTRY == "Hope-Spain"| final$SOURCE_COUNTRY == "
 
 final= final%>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)
 
-write.csv(final, paste0(write_path, z,"_hope_hm_cremona_matched.csv"), row.names = FALSE)
-write.csv(matched_data[,c('DT_HOSPITAL_ADMISSION','HOSPITAL','SOURCE',dates)], paste0(write_path, z,"_hope_hm_cremona_matched_dates.csv"), row.names = FALSE)
+write.csv(final, paste0(write_path, z,"_hope_matched.csv"), row.names = FALSE)
+write.csv(matched_data[,c('DT_HOSPITAL_ADMISSION','HOSPITAL','SOURCE',dates)], paste0(write_path, z,"_hope_matched_dates.csv"), row.names = FALSE)
 
 ## Split into training, testing, and validation sets
 # Unmatched
@@ -271,8 +273,8 @@ for (t in to_split){
   unmatched_test <- rbind(unmatched_test, unmatched.test)
 }
 
-write.csv(unmatched_train, paste0(write_path, z, "_hope_hm_cremona_unmatched_all_treatments_train.csv"), row.names = FALSE)
-write.csv(unmatched_test, paste0(write_path, z, "_hope_hm_cremona_unmatched_all_treatments_test.csv"), row.names = FALSE)
+write.csv(unmatched_train, paste0(write_path, z, "_hope_unmatched_all_treatments_train.csv"), row.names = FALSE)
+write.csv(unmatched_test, paste0(write_path, z, "_hope_unmatched_all_treatments_test.csv"), row.names = FALSE)
 
 # Matched
 split_matched <- matched_data %>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)%>%group_split(REGIMEN)
@@ -289,19 +291,17 @@ for (t in to_split){
   matched_test <- rbind(matched_test, matched.test)
 }
 
-write.csv(matched_train, paste0(write_path, z, "_hope_hm_cremona_matched_all_treatments_train.csv"), row.names = FALSE)
-write.csv(matched_test, paste0(write_path, z, "_hope_hm_cremona_matched_all_treatments_test.csv"), row.names = FALSE)
+write.csv(matched_train, paste0(write_path, z, "_hope_matched_all_treatments_train.csv"), row.names = FALSE)
+write.csv(matched_test, paste0(write_path, z, "_hope_matched_all_treatments_test.csv"), row.names = FALSE)
 
 # Validation
-df_other = df_other%>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)
+df_other2 = df_other%>%filter(!HOSPITAL%in% c("Cremona","HM Foundation"))%>% mutate(REGIMEN = if_else(get(z)==1,z,paste("NO_",z,sep="")))%>%dplyr::select(-z)
 
-write.csv(df_other, paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation.csv"), row.names = FALSE)
+write.csv(df_other2, paste0(write_path, z, "_hope_all_treatments_validation.csv"), row.names = FALSE)
 
-write.csv(df_other%>%filter(COUNTRY=='Italy', HOSPITAL=='Cremona'), paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation_cremona.csv"), row.names = FALSE)
+write.csv(df_other2%>%filter(COUNTRY=='Italy', HOSPITAL!='Cremona'), paste0(write_path, z, "_hope_all_treatments_validation_hope_italy.csv"), row.names = FALSE)
 
-write.csv(df_other%>%filter(COUNTRY=='Italy', HOSPITAL!='Cremona'), paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation_hope_italy.csv"), row.names = FALSE)
-
-write.csv(df_other%>%filter(HOSPITAL!='Cremona'), paste0(write_path, z, "_hope_hm_cremona_all_treatments_validation_hope.csv"), row.names = FALSE)
+write.csv(df_other%>%filter(HOSPITAL!='Cremona'), paste0(write_path, z, "_hope_all_treatments_validation_hope.csv"), row.names = FALSE)
  return(z)
 }
 
@@ -309,6 +309,6 @@ write.csv(df_other%>%filter(HOSPITAL!='Cremona'), paste0(write_path, z, "_hope_h
 treatment_options = c('CORTICOSTEROIDS','CLOROQUINE', 'ANTIVIRAL', 'ANTICOAGULANTS',
                       'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 'ACEI_ARBS')
 
-z = "CORTICOSTEROIDS"
+z = "ACEI_ARBS"
 create_treatment_specific_dataset(z)
   
