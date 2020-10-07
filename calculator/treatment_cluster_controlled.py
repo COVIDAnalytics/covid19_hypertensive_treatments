@@ -34,8 +34,15 @@ except:
 
 #Define the name of the dataset for saving the results
 #version_folder = "matched_limited_treatments_der_val_update/"
-data_path = "../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/"
-version_folder = "matched_single_treatments_der_val_addl_outcomes/"
+data_path = "../../covid19_treatments_data/matched_single_treatments_hope_bwh/"
+version_folder = "matched_single_treatments_hope_bwh/"
+train_file = '_hope_matched_all_treatments_train.csv'
+test_file = '_hope_matched_all_treatments_test.csv'
+
+data_path = "../../covid19_treatments_data/matched_single_treatments_hypertension/"
+version_folder = "matched_single_treatments_hypertension/"
+train_file = '_hope_hm_remona_matched_all_treatments_train.csv'
+test_file = '_hope_hm_remona_matched_all_treatments_test.csv'
 
 # SEEDS = range(1,6)
 SEEDS = [1]
@@ -88,8 +95,8 @@ other_tx=False
 # mask = np.asarray([discharge_data, comorbidities_data, vitals_data, lab_tests, demographics_data, swabs_data])
 # print(name_datasets[mask])
 
-train_name = str(treatment_col)+'_hope_hm_cremona_matched_all_treatments_train.csv'
-test_name = str(treatment_col)+'_hope_hm_cremona_matched_all_treatments_test.csv'
+train_name = str(treatment_col)+train_file
+test_name = str(treatment_col)+test_file
 
 # if matched:
 data_train = pd.read_csv(data_path+train_name)
@@ -123,7 +130,8 @@ X_test, y_test = ds.create_dataset_treatment(data_test,
 ## Need to combine and re-split for consistent one-hot encoding
 X_full =  pd.concat([X_train, X_test], axis = 0)
 
-X_full = pd.get_dummies(X_full, prefix_sep='_', drop_first=True)
+X_full = pd.get_dummies(X_full, prefix_sep='_', drop_first=False)
+X_full.drop(['GENDER_FEMALE','RACE_OTHER'], axis=1, inplace = True)
 X_train = X_full.iloc[0:X_train.shape[0],:]
 X_test = X_full.iloc[X_train.shape[0]:,:]
 
