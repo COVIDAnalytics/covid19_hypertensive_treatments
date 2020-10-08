@@ -10,9 +10,13 @@ from pathlib import Path
 
 #%% Load data and prescriptions
 
-version = 'matched_single_treatments_der_val_addl_outcomes/'
+version = 'matched_single_treatments_hope_bwh/'
 data_path = '../../covid19_treatments_data/'+version
 results_path = '../../covid19_treatments_results/'+version
+train_file = '_hope_matched_all_treatments_train.csv'
+data_list = ['train','test','validation_partners'] # 'validation_all','validation_hope','validation_hope_italy'
+
+# train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
         
 preload = True
 matched = True
@@ -20,7 +24,7 @@ match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
-data_list = ['train','test','validation_all','validation_cremona','validation_hope','validation_hope_italy','validation_partners']
+
 # data_list = ['validation_all','validation_partners']
 # prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
 # algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
@@ -30,7 +34,7 @@ prediction_list = ['COMORB_DEATH']
 treatment = 'ACEI_ARBS'
 treatment_list = [treatment, 'NO_'+treatment]
 
-training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
+training_set_name = treatment+train_file
 
 #%% For each method, generate predictions and accuracies of each method
 ## Part 1: generate results for all outcomes
