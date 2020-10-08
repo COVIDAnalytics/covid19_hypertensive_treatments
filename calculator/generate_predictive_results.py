@@ -10,13 +10,13 @@ from pathlib import Path
 
 #%% Version-specific parameters
 
-version = 'matched_single_treatments_hope_bwh/'
-train_file = '_hope_matched_all_treatments_train.csv'
-data_list = ['train','test','validation_all','validation_partners']
+# version = 'matched_single_treatments_hope_bwh/'
+# train_file = '_hope_matched_all_treatments_train.csv'
+# data_list = ['train','test','validation_all','validation_partners']
 
-# version = 'matched_single_treatments_hypertension/'
-# train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
-# data_list = ['train','test','validation_all','validation_partners','validation_hope','validation_hope_italy','validation_cremona']
+version = 'matched_single_treatments_hypertension/'
+train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+data_list = ['train','test','validation_all','validation_partners','validation_hope','validation_hope_italy','validation_cremona']
 
 
 #%% General parameters
