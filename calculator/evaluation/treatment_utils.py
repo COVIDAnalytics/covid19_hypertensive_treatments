@@ -151,14 +151,15 @@ def generate_preds(X, treatment, algorithm, matched, result_path,
 
             model = iai.read_json(file_name+'.json')
             prob_pos = model.predict_proba(X).iloc[:,1]
-        elif algorithm == 'xgboost':
+        # elif algorithm == 'xgboost':
+        else:
             model = model_file['model']
             model_cv = CalibratedClassifierCV(model, method = "sigmoid")
             model_cv.fit(train, train_y)
             prob_pos = model_cv.predict_proba(X)[:, 1]
-        else: 
-            model = model_file['model']
-            prob_pos = model.predict_proba(X)[:, 1]
+        # else: 
+        #     model = model_file['model']
+        #     prob_pos = model.predict_proba(X)[:, 1]
         
         return prob_pos
     
