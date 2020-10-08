@@ -140,6 +140,7 @@ def generate_preds(X, treatment, algorithm, matched, result_path,
               
         ## Match data to dummy variables for this dataframe
         train = model_file['train'].drop(prediction, axis=1)
+        train_y = model_file['train'][prediction]
         X = X.reindex(labels = train.columns,  axis = 1).replace(np.nan,0)
         
                     
@@ -153,7 +154,7 @@ def generate_preds(X, treatment, algorithm, matched, result_path,
         elif algorithm == 'xgboost':
             model = model_file['model']
             model_cv = CalibratedClassifierCV(model, method = "sigmoid")
-            model_cv.fit(model, train)
+            model_cv.fit(train, train_y)
             prob_pos = model_cv.predict_proba(X)[:, 1]
         else: 
             model = model_file['model']
