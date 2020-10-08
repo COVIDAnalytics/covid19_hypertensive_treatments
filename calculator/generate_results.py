@@ -11,10 +11,16 @@ from pathlib import Path
 #%% Load data and prescriptions
 
 version = 'matched_single_treatments_hope_bwh/'
-data_path = '../../covid19_treatments_data/'+version
-results_path = '../../covid19_treatments_results/'+version
 train_file = '_hope_matched_all_treatments_train.csv'
 data_list = ['train','test','validation_partners'] # 'validation_all','validation_hope','validation_hope_italy'
+
+
+version = 'matched_single_treatments_hypertension/'
+train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+data_list = ['train','test','validation_all','validation_partners','validation_hope','validation_hope_italy']
+
+data_path = '../../covid19_treatments_data/'+version
+results_path = '../../covid19_treatments_results/'+version
 
 # train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
         
@@ -48,7 +54,8 @@ for outcome in prediction_list:
             print("Data = ", data_version, "; Prediction = ", outcome)
             X, Z, y = u.load_data(data_path,training_set_name,
                                 split=data_version, matched=matched, prediction = outcome,
-                                med_hx  = False, other_tx = False)
+                                med_hx  = False, other_tx = False, 
+                                replace_na =  'NO_'+treatment)
             print("X observations: "
                   , str(X.shape[0]))
             result = pd.concat([u.algorithm_predictions(X, treatment_list = treatment_list, 

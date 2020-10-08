@@ -80,7 +80,7 @@ col_mapping = {'ACEI_ARBS': 'ACE Inhibitors or ARBs',
      'DEATH':'Death'}
 
 def load_data(folder, train_name, split, matched, prediction = 'DEATH', 
-    med_hx=False, other_tx = True, treatment=None):
+    med_hx=False, other_tx = True, treatment=None, replace_na = None):
     file = train_name
     #if split == 'validation':
     if 'validation'in split:
@@ -94,6 +94,17 @@ def load_data(folder, train_name, split, matched, prediction = 'DEATH',
                                        med_hx=med_hx, other_tx = other_tx, include_regimen=True)
     X.index.name = 'ID'
     y.index.name = 'ID'
+    
+    if sum(X['REGIMEN'].isna() > 0):
+        if replace_na != None:
+            print("Warning: NA regimens - recode  as "+replace_na)
+            X['REGIMEN'] =  X['REGIMEN'].replace(np.nan, replace_na)
+    # elif handle_na = 'drop'
+    #     print("Warning: NA outcomes - set to 0")
+        else:
+            print("Warning: NA regimens - must recode")
+
+    
     Z = X['REGIMEN']
     X = X.drop('REGIMEN', axis = 1)
     
