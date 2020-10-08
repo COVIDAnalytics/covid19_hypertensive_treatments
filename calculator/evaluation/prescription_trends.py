@@ -6,44 +6,40 @@ import itertools
 from scipy import stats
 import matplotlib.pyplot as plt
 
+#%% Version-specific parameters
 
-# from julia import Julia           
-# # jl = Julia(compiled_modules = False)
-# jl = Julia(sysimage='/home/hwiberg/software/julia-1.2.0/lib/julia/sys_iai.so')
-# from interpretableai import iai
+# version = 'matched_single_treatments_hope_bwh/'
+# train_file = '_hope_matched_all_treatments_train.csv'
+# data_list = ['train','test','validation_all','validation_partners']
 
+version = 'matched_single_treatments_hypertension/'
+train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+data_list = ['train','test','validation_all','validation_partners',
+              'validation_hope','validation_hope_italy']
 
-treatments = ['CORTICOSTEROIDS','ACEI_ARBS','INTERFERONOR']
+#%% General parameters
 
-
-data_path = '../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'
-outcome = 'COMORB_DEATH'
-
+data_path = '../../covid19_treatments_data/'+version
+        
 preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
-# algorithm_list = ['lr','rf','cart','qda','gb','xgboost']
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
-
-#%% Generate predictions across all combinations
- #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
+# prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
+outcome = 'COMORB_DEATH'
 
 treatment = 'ACEI_ARBS'
 treatment_list = [treatment, 'NO_'+treatment]
 
+training_set_name = treatment+train_file
+
 results_path = '../../covid19_treatments_results/'
-version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(treatment)+'/'+str(outcome)+'/'
+version_folder = version+str(treatment)+'/'+str(outcome)+'/'
 save_path = results_path + version_folder + 'summary/'
 
-training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
-
-
-#%% Frequency of individual drugs
-df = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
-df.groupby('SOURCE_COUNTRY')[treatments].mean()
-df.groupby([treatment])[outcome].mean()
+training_set_name = treatment+train_file
 
 #%% Compare prescriptions by algorithm
 
@@ -90,7 +86,7 @@ threshold = 0.05
 #Read in the relevant data
 X, Z, y = u.load_data(data_path,training_set_name,
                     split=data_version, matched=matched, prediction = outcome,
-                    other_tx = False)
+                    other_tx = False, replace_na = 'NO_'+treatment)
 
 summary = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
 Z_presc = summary['Prescribe']
@@ -98,7 +94,8 @@ Y_presc = summary['AverageProbability']
 
 
 X_test, Z_test, y_test = u.load_data(data_path,training_set_name,
-                    split='test', matched=matched, prediction = outcome)
+                    split='test', matched=matched, prediction = outcome,
+                    replace_na = 'NO_'+treatment)
 
 
 #%%

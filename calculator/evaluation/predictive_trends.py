@@ -1,55 +1,44 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 23 10:59:44 2020
 
-@author: agni
-"""
-
-import evaluation.treatment_utils as  u
-import evaluation.descriptive_utils as d
-import pandas as pd
-import numpy as np
-import itertools
-from scipy import stats
-import matplotlib.pyplot as plt
-import shap
-import pickle
-import matplotlib
 import os
 
+# os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calculator')
 
-treatments = ['CORTICOSTEROIDS','ACEI_ARBS','INTERFERONOR']
-main_treatment = 'ACEI_ARBS'
+import evaluation.treatment_utils as u
+import pandas as pd
+import numpy as np
+from pathlib import Path
 
-data_path = '../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'
-outcome = 'COMORB_DEATH'
+#%% Version-specific parameters
 
+# version = 'matched_single_treatments_hope_bwh/'
+# train_file = '_hope_matched_all_treatments_train.csv'
+# data_list = ['train','test','validation_all','validation_partners']
 
+version = 'matched_single_treatments_hypertension/'
+train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+data_list = ['train','test','validation_all','validation_partners',
+             'validation_hope','validation_hope_italy']
 
+#%% General parameters
+
+data_path = '../../covid19_treatments_data/'+version
+results_path = '../../covid19_treatments_results/'+version
+
+# train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+        
 preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
-
-#%% Generate predictions across all combinations
- #['CORTICOSTEROIDS', 'INTERFERONOR', 'ACEI_ARBS']
+algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
+# prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
+prediction_list = ['COMORB_DEATH']
 
 treatment = 'ACEI_ARBS'
 treatment_list = [treatment, 'NO_'+treatment]
 
-results_path = '../../covid19_treatments_results/'
-#Set a seed
-SEED=1
-
-
-#Number of features to present
-top_features=10
-shap_algorithm_tree_list = ['rf','cart','xgboost']
-shap_algorithm_list  = ['lr','rf','cart','qda','gb','xgboost']
-training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
-
+training_set_name = treatment+train_file
 
 #%%Load the corresponding model
 for algorithm in shap_algorithm_list:

@@ -34,15 +34,15 @@ except:
 
 #Define the name of the dataset for saving the results
 #version_folder = "matched_limited_treatments_der_val_update/"
-data_path = "../../covid19_treatments_data/matched_single_treatments_hope_bwh/"
-version_folder = "matched_single_treatments_hope_bwh/"
-train_file = '_hope_matched_all_treatments_train.csv'
-test_file = '_hope_matched_all_treatments_test.csv'
+# data_path = "../../covid19_treatments_data/matched_single_treatments_hope_bwh/"
+# version_folder = "matched_single_treatments_hope_bwh/"
+# train_file = '_hope_matched_all_treatments_train.csv'
+# test_file = '_hope_matched_all_treatments_test.csv'
 
-# data_path = "../../covid19_treatments_data/matched_single_treatments_hypertension/"
-# version_folder = "matched_single_treatments_hypertension/"
-# train_file = '_hope_hm_remona_matched_all_treatments_train.csv'
-# test_file = '_hope_hm_remona_matched_all_treatments_test.csv'
+data_path = "../../covid19_treatments_data/matched_single_treatments_hypertension/"
+version_folder = "matched_single_treatments_hypertension/"
+train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+test_file = '_hope_hm_cremona_matched_all_treatments_test.csv'
 
 # SEEDS = range(1,6)
 SEEDS = [1]

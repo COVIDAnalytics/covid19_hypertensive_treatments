@@ -28,28 +28,43 @@ from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 import matplotlib.pyplot as plt
 from sklearn import metrics
 
-#%% Version information
+#%% Version-specific parameters
 
-version = 'matched_single_treatments_der_val_addl_outcomes/'
-data_path = '../../covid19_treatments_data/'+version
-results_path = '../../covid19_treatments_results/'+version
-        
+version = 'matched_single_treatments_hope_bwh/'
+train_file = '_hope_matched_all_treatments_train.csv'
+data_list = ['train','test','validation_all','validation_partners']
+
+# version = 'matched_single_treatments_hypertension/'
+# train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+# data_list = ['train','test','validation_all','validation_partners',
+#              'validation_hope','validation_hope_italy']
+
 threshold = 0.05
-match_status = 'matched' 
 weighted_status = 'no_weights'
+#%% General parameters
+
+data_path = '../../covid19_treatments_data/'+version
+train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+        
+preload = True
+matched = True
+match_status = 'matched' if matched else 'unmatched'
 
 SEEDS = range(1, 2)
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
-data_list = ['train','test','validation_all']
-
+# prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
 outcome = 'COMORB_DEATH'
+
 treatment = 'ACEI_ARBS'
 treatment_list = [treatment, 'NO_'+treatment]
 
-training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
+training_set_name = treatment+train_file
 
-version_folder = str(treatment)+'/'+str(outcome)+'/'
+results_path = '../../covid19_treatments_results/'
+version_folder = version+str(treatment)+'/'+str(outcome)+'/'
 save_path = results_path + version_folder + 'summary/'
+
+training_set_name = treatment+train_file
 
 #%% Predictive Methods table
 

@@ -98,7 +98,7 @@ def load_data(folder, train_name, split, matched, prediction = 'DEATH',
     if sum(X['REGIMEN'].isna() > 0):
         if replace_na != None:
             print("Warning: NA regimens - recode  as "+replace_na)
-            X['REGIMEN'] =  X['REGIMEN'].replace(np.nan, replace_na)
+            X.loc[:,'REGIMEN'] =  X['REGIMEN'].replace(np.nan, replace_na)
     # elif handle_na = 'drop'
     #     print("Warning: NA outcomes - set to 0")
         else:
@@ -117,7 +117,8 @@ def load_data(folder, train_name, split, matched, prediction = 'DEATH',
     
     return X, Z, y
 
-def generate_preds(X, treatment, algorithm, matched, result_path, SEED = 1, prediction = 'DEATH'): 
+def generate_preds(X, treatment, algorithm, matched, result_path, 
+                   SEED = 1, prediction = 'DEATH'): 
     ## Results path and file names
     match_status =  'matched' if matched else 'unmatched'
     result_path = result_path + str(algorithm) +'/'
@@ -151,7 +152,10 @@ def generate_preds(X, treatment, algorithm, matched, result_path, SEED = 1, pred
             prob_pos = model.predict_proba(X).iloc[:,1]
         else:
             model = model_file['model']
-            prob_pos = model.predict_proba(X)[:, 1]
+            model_cv = CalibratedClassifierCV(model, method = "sigmoid")
+            model_cv.fit(model, train)
+            prob_pos = model_cv.predict_proba(X)[:, 1]
+                # prob_pos = model.predict_proba(X)[:, 1]
         
         return prob_pos
     
