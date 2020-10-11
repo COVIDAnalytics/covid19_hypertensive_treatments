@@ -54,7 +54,7 @@ train_X, Z, y = u.load_data(data_path,training_set_name,
                     other_tx = False, replace_na = 'NO_'+treatment)
 
 df_result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods_benefit.csv')
-benefit = df_result.groupby('ID').agg({'Benefit':'mean'})
+benefit = df_result.groupby('ID').agg({'Benefit':'mean'})['Benefit']
 
 
 ### Run Model
@@ -65,7 +65,7 @@ grid = iai.GridSearch(
     max_depth=range(3, 8),
 )
 
-grid.fit(X, benefit['Benefit'])
+grid.fit(X, benefit)
 
 lnr = grid.get_learner()
 lnr.write_html(save_path+data_version+'_benefit_tree.html')
@@ -76,8 +76,10 @@ for data_version in ['train','test','validation_all']:
 	X, Z, y = u.load_data(data_path,training_set_name,
 	                    split=data_version, matched=matched, prediction = outcome,
 	                    other_tx = False, replace_na = 'NO_'+treatment)
+	X = X.reindex(train_X.columns, axis = 1, fill_value = 0)
 	df_result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods_benefit.csv')
 	benefit = df_result.groupby('ID').agg({'Benefit':'mean'})['Benefit']
 	mse = lnr.score(X, benefit, criterion = 'mse')
-	X.reindex(columns = train_X.columns).
 	print("Data = ", data_version, ": MSE = ", round(mse, 3))
+
+
