@@ -12,7 +12,7 @@ import os
 # os.chdir('/Users/hollywiberg/Dropbox (MIT)/COVID_risk/covid19_calculator/calculator')
 
 import evaluation.treatment_utils as u
-# import evaluation.descriptive_utils as d
+import evaluation.descriptive_utils as d
 from sklearn.impute import KNNImputer
 import pandas as pd
 import numpy as np
@@ -30,21 +30,20 @@ from sklearn import metrics
 
 #%% Version-specific parameters
 
-version = 'matched_single_treatments_hope_bwh/'
-train_file = '_hope_matched_all_treatments_train.csv'
-data_list = ['train','test','validation_all','validation_partners']
+# version = 'matched_single_treatments_hope_bwh/'
+# train_file = '_hope_matched_all_treatments_train.csv'
+# data_list = ['train','test','validation_all','validation_partners']
 
-# version = 'matched_single_treatments_hypertension/'
-# train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
-# data_list = ['train','test','validation_all','validation_partners',
-#              'validation_hope','validation_hope_italy']
+version = 'matched_single_treatments_hypertension/'
+train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
+data_list = ['train','test','validation_all','validation_partners',
+              'validation_hope','validation_hope_italy']
 
 threshold = 0.05
 weighted_status = 'no_weights'
 #%% General parameters
 
 data_path = '../../covid19_treatments_data/'+version
-train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
         
 preload = True
 matched = True
@@ -179,10 +178,11 @@ agr.to_latex(buf = save_path+'latex_agreement_table_t'+str(threshold)+'.txt',
                   
 #%% Descriptive analysis: pre- vs. post-matching
 
-data_mgb = pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_all_treatments_validation_partners.csv')
+data_mgb = pd.read_csv('../../covid19_treatments_data/'+version+treatment+'_hope_hm_cremona_all_treatments_validation_partners.csv')
 data_mgb['ACEI_ARBS'] = data_mgb['REGIMEN'].apply(lambda x: 1 if x == treatment else 0)
 
 data_pre = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
+data_pre = data_pre.query('HYPERTENSION == 1')
 data_pre['REGIMEN'] = data_pre[treatment].apply(lambda x: treatment if x == 1 else 'NO_'+treatment)
 data_pre = pd.concat([data_pre, data_mgb], axis=0, ignore_index = False)
 
@@ -190,8 +190,8 @@ data_pre = pd.get_dummies(data_pre, columns = ['GENDER','RACE'], drop_first = Tr
 data_pre['Version'] = 'Pre-Match'
 
 # data_post0 = pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched.csv')
-data_post_train = pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched_all_treatments_train.csv')
-data_post_test = pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched_all_treatments_test.csv')
+data_post_train = pd.read_csv('../../covid19_treatments_data/'+version+treatment+train_file)
+data_post_test = pd.read_csv('../../covid19_treatments_data/'+version+treatment+train_file.replace('train','test'))
 data_post = pd.concat([data_post_train, data_post_test], axis=0)
 # data_pre['REGIMEN'] = data_pre[treatment].apply(lambda x: treatment if x == 1 else 'NO_'+treatment)
 data_post = pd.get_dummies(data_post, columns = ['GENDER','RACE'], drop_first = True)

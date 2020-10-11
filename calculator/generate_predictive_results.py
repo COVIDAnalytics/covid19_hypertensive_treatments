@@ -16,7 +16,8 @@ from pathlib import Path
 
 version = 'matched_single_treatments_hypertension/'
 train_file = '_hope_hm_cremona_matched_all_treatments_train.csv'
-data_list = ['train','test','validation_all','validation_partners','validation_hope','validation_hope_italy','validation_cremona']
+data_list = ['train','test','validation_all',
+             'validation_partners','validation_hope','validation_hope_italy','validation_cremona']
 
 
 #%% General parameters

@@ -423,32 +423,23 @@ partners_matched.to_csv('../../covid19_treatments_data/'+variant+validation_name
 val_withpartners = pd.concat([validation, partners_matched], ignore_index = False)
 val_withpartners.to_csv('../../covid19_treatments_data/'+variant+validation_name+'_all.csv', index = False)
 
-#%% Add partners to validation set
+#%% Add partners to training set
 treatment = 'ACEI_ARBS'
 variant = 'matched_single_treatments_hypertension/'
-validation_name = 'ACEI_ARBS_hope_hm_cremona_all_treatments_validation'
+# validation_name = 'ACEI_ARBS_hope_hm_cremona_all_treatments_validation'
 partners_imputed = pd.read_csv('../../covid19_treatments_data/partners_treatments_full_'+version+'.csv')
-validation = pd.read_csv('../../covid19_treatments_data/'+variant+validation_name+'.csv')
+train = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
 
-# X, y = ds.create_dataset_treatment(validation, prediction = 'COMORB_DEATH', 
-#                                        med_hx=False, other_tx = True, 
-#                                        include_regimen=True)
 
-set(validation.columns).difference(partners_imputed.columns)
-set(partners_imputed.columns).difference(validation.columns)
-
-# Filter out non-hypertensive patients
-partners_imputed = partners_imputed.query('HYPERTENSION == 1')
+set(train.columns).difference(partners_imputed.columns)
+set(partners_imputed.columns).difference(train.columns)
 
 # Match format
 partners_imputed['VIH'] = 0
 partners_imputed['REGIMEN'] = partners_imputed['ACEI_ARBS'].apply(lambda x: treatment if x==1 else 'NO_'+treatment)
-partners_matched = partners_imputed.reindex(validation.columns, axis = 1)
-partners_matched.to_csv('../../covid19_treatments_data/'+variant+validation_name+'_partners.csv', index = False)
-
-val_withpartners = pd.concat([validation, partners_matched], ignore_index = False)
-val_withpartners.to_csv('../../covid19_treatments_data/'+variant+validation_name+'_all.csv', index = False)
-
+partners_matched = partners_imputed.reindex(train.columns, axis = 1)
+train_withpartners = pd.concat([train, partners_matched], ignore_index = False)
+train_withpartners.to_csv('../../covid19_treatments_data/hope_hm_cremona_bwh_data_clean_imputed_addl_outcomes.csv', index = False)
 
 
 #%% sao2 deep dive

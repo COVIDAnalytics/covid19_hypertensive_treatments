@@ -1,5 +1,5 @@
 import evaluation.treatment_utils as  u
-# import evaluation.descriptive_utils as d
+import evaluation.descriptive_utils as d
 import pandas as pd
 import numpy as np
 import itertools
@@ -47,7 +47,7 @@ training_set_name = treatment+train_file
 # summary_weight['Algorithm'] = 'weighted'
 # summary_weight.rename({'Unnamed: 0':'ID','AverageProbability':'Prescribe_Prediction'}, axis=1, inplace = True)
 
-data_version = 'test'
+data_version = 'train'
 threshold = 0.05
 
 summary_vote = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_summary_no_weights_t'+str(threshold)+'.csv')
@@ -79,7 +79,7 @@ comparison.to_csv(save_path+data_version+'_'+match_status+'_t'+str(threshold)+'_
 
 
 #%%  Evaluate specific version
-data_version = 'validation_all' # in ['train','test','validation','validation_cremona','validation_hope']:
+data_version = 'train' # in ['train','test','validation','validation_cremona','validation_hope']:
 weighted_status = 'no_weights'
 threshold = 0.05
 
@@ -184,7 +184,10 @@ X['CreatinineGroups'] = pd.cut(X['CREATININE'], bins=bins,right=False)
 
 plot_features = {
  'ANYHEARTDISEASE':'Heart Disease',
- 'HYPERTENSION':'Hypertension',
+ 'AF':'Atrial Fibrillation',
+ 'ANYLUNGDISEASE':'Lung Disease',
+ 'SAT02_BELOW92':'Low Oxygen Saturation',
+ # 'HYPERTENSION':'Hypertension',
  'AgeGroup':'Age Group',
  'GENDER_MALE':'Gender (1=Male)'
  # 'BLOOD_PRESSURE_ABNORMAL_B':'Low Systolic BP',
@@ -260,14 +263,14 @@ features = {'categorical':['DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY'
        # 'IN_ANTIDEPRESSANT', 
        #  'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB',
        # 'ANTIBIOTICS', 'ACEI_ARBS', 
-       'GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN',
-       'RACE_ORIENTAL', 'RACE_OTHER'],
+       'GENDER_MALE', 'RACE_BLACK','RACE_CAUC', 'RACE_LATIN',
+       'RACE_ORIENTAL'],
                 'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES',
        'HEMOGLOBIN', 'PLATELETS'],
                 'multidrop':[]}
 
-if ~np.any(X.columns.str.contains('RACE_OTHER')):
-    features['categorical'].remove('RACE_OTHER')
+# if ~np.any(X.columns.str.contains('RACE_OTHER')):
+#     features['categorical'].remove('RACE_OTHER')
 
 df = pd.concat([X,y,Z_presc], axis=1)
 desc_list = []

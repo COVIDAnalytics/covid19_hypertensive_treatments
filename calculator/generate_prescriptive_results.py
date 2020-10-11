@@ -7,6 +7,9 @@ import evaluation.treatment_utils as u
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from sklearn.metrics import (brier_score_loss, precision_score, recall_score,accuracy_score,
+                             f1_score, confusion_matrix)
+from sklearn.metrics import precision_recall_curve, roc_curve
 
 #%% Version-specific parameters
 
@@ -35,6 +38,7 @@ SEEDS = range(1, 2)
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
 # prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
 prediction_list = ['COMORB_DEATH']
+outcome = 'COMORB_DEATH'
 
 treatment = 'ACEI_ARBS'
 treatment_list = [treatment, 'NO_'+treatment]
@@ -105,6 +109,10 @@ for outcome in prediction_list:
                 else:
                     result['NO_'+treatment] = result['NO_'+treatment].replace(0,1e-4)
                     result['Benefit'] = result.apply(lambda row: (row['NO_'+treatment] -  row[treatment])/row['NO_'+treatment], axis = 1)
+                    result.to_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods_benefit.csv',
+                                  index = False)
+                    # result['Benefit_Start'] = result.apply(lambda row: (row['NO_'+treatment] -  row[treatment])/row['NO_'+treatment], axis = 1)
+                    # result['Benefit_Stop'] = result.apply(lambda row: (row[treatment]- row['NO_'+treatment])/row[treatment], axis = 1)
                     result['Prescribe'] = result.apply(lambda row: treatment if row['Benefit'] > threshold else 'NO_'+treatment, axis = 1)
                     result['Prescribe_Prediction'] = result.apply(lambda row: row[row['Prescribe']], axis = 1)    
                     summary = pd.concat([result.groupby('ID')[treatment_list].agg({'mean'}),
@@ -210,23 +218,71 @@ for outcome in prediction_list:
 version_folder = str(treatment)+'/COMORB_DEATH/'
 save_path = results_path + version_folder + 'summary/'
     
-data_version = 'validation_all'
 match_status = 'matched'
 weighted_status = 'no_weights'
-threshold = 0.01
+threshold = 0.05
 
-detailed_summary = pd.read_csv(save_path+data_version+'_'+match_status+
-        '_detailed_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
-        
-summary = pd.read_csv(save_path+data_version+'_'+match_status+
-        '_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
-        
-t = summary.query('Match')
-print("Match: ")
-print('Probability: %.3f' % t.AverageProbability.mean())
-print('Avg. Outcome: %.3f'% t.COMORB_DEATH.mean())
+for data_version in data_list:
+    print(data_version)
+    # data_version = 'train'
+    # detailed_summary = pd.read_csv(save_path+data_version+'_'+match_status+
+    #         '_detailed_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
+            
+    summary = pd.read_csv(save_path+data_version+'_'+match_status+
+            '_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
+            
+    # t = summary.query('Match')
+    # print("Match: ")
+    # print('Probability: %.3f' % t.AverageProbability.mean())
+    # print('Avg. Outcome: %.3f'% t.COMORB_DEATH.mean())
+    
+    # t = summary.query('~Match')
+    # print("No Match: ")
+    # print('Probability: %.3f' % t.AverageProbability.mean())
+    # print('Avg. Outcome: %.3f' % t.COMORB_DEATH.mean())
+    
+    summary['OutcomeProb'] = summary.apply(lambda row: row['COMORB_DEATH'] if row['Match'] else row['AverageProbability'], axis=1)
+    print("Modified PE: ")
+    print('Probability: %.3f' % summary.OutcomeProb.mean())
+    print('Avg. Outcome: %.3f' % summary.COMORB_DEATH.mean())
 
-t = summary.query('~Match')
-print("No Match: ")
-print('Probability: %.3f' % t.AverageProbability.mean())
-print('Avg. Outcome: %.3f' % t.COMORB_DEATH.mean())
+
+train_bypatient = pd.read_csv(save_path+data_version+'_'+match_status+
+        '_bypatient_allmethods.csv')
+
+train_bypatient.groupby('Algorithm')[['ACEI_ARBS','NO_ACEI_ARBS']].mean()
+        
+#%% Mortality by dataset
+
+for data_version in data_list:
+    X, Z, y = u.load_data(data_path,training_set_name,
+                        split=data_version, matched=matched, prediction = outcome,
+                        replace_na = 'NO_'+treatment)
+    print(data_version + format(y.mean()))
+                                                                                      
+#%% PE Alternative
+summary_match = summary.query('Match')
+
+
+fpr, tpr, thresholds = roc_curve(summary_match['COMORB_DEATH'],  summary_match['AverageProbability'])
+
+roc_table = pd.DataFrame({'threshold':thresholds,
+                          'fpr':fpr, 
+                          'tpr':tpr})
+
+accuracy_scores = []
+for thresh in thresholds:
+    accuracy_scores.append(accuracy_score(summary_match['COMORB_DEATH'], 
+                                         [1 if m > thresh else 0 for m in summary_match['AverageProbability']]))
+
+accuracies = np.array(accuracy_scores)
+max_accuracy = accuracies.max() 
+max_accuracy_threshold =  thresholds[accuracies.argmax()]
+
+t = roc_table.loc[roc_table['tpr'] > 0.9, 'threshold'].iloc[0]
+
+summary['PrescribeProb_Binary'] = summary['AverageProbability'].apply(lambda x: 1 if x > 0.5 else 0)   
+
+print('Probability: %.3f' % summary.AverageProbability.mean())
+print('Binarized Probability: %.3f' % summary.PrescribeProb_Binary.mean())
+print('Avg. Outcome: %.3f' % summary.COMORB_DEATH.mean())
