@@ -117,6 +117,40 @@ def load_data(folder, train_name, split, matched, prediction = 'DEATH',
     
     return X, Z, y
 
+
+def recalibrate_models(treatment, algorithm, matched, result_path, 
+                   SEED = 1, prediction = 'DEATH'): 
+    ## Results path and file names
+    match_status =  'matched' if matched else 'unmatched'
+    result_path = result_path + str(algorithm) +'/'
+    file_list = os.listdir(result_path)
+    file_start = str(treatment) + '_' + match_status + '_' + prediction.lower() + '_seed' + str(SEED)
+    file_name = ''
+    for f in file_list:
+        if f.startswith(file_start) & ~f.endswith('.json'):
+            file_name = result_path+f
+    if file_name == '':
+        print("Invalid treatment/algorithm combination (" + str(treatment) + ", " + str(algorithm)+ ")")
+    else:
+        with open(file_name, 'rb') as file:
+             model_file = pickle.load(file)
+        ## Match data to dummy variables for this dataframe
+        train = model_file['train'].drop(prediction, axis=1)
+        train_y = model_file['train'][prediction]
+        if algorithm  != 'oct':
+            model = model_file['model']
+            model_cv = CalibratedClassifierCV(model, method = "sigmoid")
+            model_cv.fit(train, train_y)
+            model_file['model_original'] = model
+            model_file['model'] = model_cv
+            ## Save calibrated model
+            with open(file_name, 'wb') as handle:
+                pickle.dump(model_file, handle, protocol=4)
+        else: 
+            model_cv = None
+    return model_cv
+
+
 def generate_preds(X, treatment, algorithm, matched, result_path, 
                    SEED = 1, prediction = 'DEATH'): 
     ## Results path and file names
