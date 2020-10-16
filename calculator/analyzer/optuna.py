@@ -97,7 +97,8 @@ def optimizer(algorithm, name_param, X, y, cv = 300, n_calls = 500, name_algo = 
             params = {"penalty": trial.suggest_categorical("penalty", ['l2']),
                     "tol": trial.suggest_uniform("tol", 1e-10, 1),
                     "C": trial.suggest_uniform("C", 1e-10, 10),
-                    "solver": trial.suggest_categorical("solver", ['lbfgs'])}
+                    "solver": trial.suggest_categorical("solver", ['lbfgs']),
+                    "max_iter":1000}
 
         elif name_algo == 'oct':
 
