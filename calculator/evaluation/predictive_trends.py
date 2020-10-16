@@ -30,20 +30,26 @@ preload = True
 matched = True
 match_status = 'matched' if matched else 'unmatched'
 
-SEEDS = range(1, 2)
+SEED =  1
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
-# prediction_list = ['COMORB_DEATH','OUTCOME_VENT','DEATH','HF','ARF','SEPSIS']
-prediction_list = ['COMORB_DEATH']
 
 treatment = 'ACEI_ARBS'
+main_treatment = 'ACEI_ARBS'
 treatment_list = [treatment, 'NO_'+treatment]
+
+outcome = 'COMORB_DEATH'
 
 training_set_name = treatment+train_file
 
+top_features = 10
+
 #%%Load the corresponding model
+
+shap_algorithm_list  = ['rf','cart','qda','gb','xgboost']
+
 for algorithm in shap_algorithm_list:
     for treatment in treatment_list:
-        version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(main_treatment)+'/'+str(outcome)+'/'
+        version_folder = str(main_treatment)+'/'+str(outcome)+'/'
         save_path = results_path + version_folder + 'summary/'
         result_path = results_path+version_folder+algorithm+'/'
         file_start = str(treatment) + '_' + match_status + '_' + outcome.lower() + '_seed' + str(SEED)
@@ -63,7 +69,7 @@ from interpretableai import iai
 
 # model = iai.read_json(file_name+'.json')
             
-version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(main_treatment)+'/'+str(outcome)+'/'
+version_folder = str(main_treatment)+'/'+str(outcome)+'/'
 save_path = results_path + version_folder + 'summary/'
 result_path = results_path+version_folder+'oct'+'/'
 
@@ -83,19 +89,17 @@ for treatment in treatment_list:
 
 #%% Merge all results
 
-shap_algorithm_list  = ['rf','cart','oct','qda','gb','xgboost']
-
 # set up column name remapping
 col_mapping = u.col_mapping
 col_mapping['ACEI_ARBS'] = 'ACEI/ARBs'
 col_mapping['NO_ACEI_ARBS'] = 'No ACEI/ARBs'
 
-version_folder = 'matched_single_treatments_der_val_addl_outcomes/'+str(main_treatment)+'/'+str(outcome)+'/'
+version_folder = str(main_treatment)+'/'+str(outcome)+'/'
 save_path = results_path + version_folder + 'summary/'
 
         
 importance_all = []
-for algorithm in shap_algorithm_list:
+for algorithm in algorithm_list:
     for treatment in treatment_list:
         file_start = str(treatment) + '_' + match_status + '_' + outcome.lower() + '_seed' + str(SEED)
         save_file_name = save_path+file_start+'_'+algorithm+'_shap_values.csv'

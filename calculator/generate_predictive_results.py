@@ -41,6 +41,19 @@ treatment_list = [treatment, 'NO_'+treatment]
 
 training_set_name = treatment+train_file
 
+#%% Start by recalibrating models
+for outcome in prediction_list:
+    version_folder = str(treatment)+'/'+str(outcome)+'/'
+    save_path = results_path + version_folder + 'summary/'
+    # create summary folder if it does not exist
+    Path(save_path).mkdir(parents=True, exist_ok=True)
+    for alg in algorithm_list:
+        for t in treatment_list:
+            u.recalibrate_models(treatment = t, 
+                                        algorithm = alg,  matched = matched, 
+                                        prediction = outcome,
+                                        result_path = results_path+version_folder) 
+
 #%% For each method, generate predictions and accuracies of each method
 ## Part 1: generate results for all outcomes
 for outcome in prediction_list:

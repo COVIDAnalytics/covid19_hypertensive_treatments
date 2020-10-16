@@ -30,7 +30,8 @@ try:
   print("Algorithms: ", algorithm_list)
   print("Valid Algorithms: ", o.algo_names)
 except:
-  print("Must provide algorithm list")
+  print("Must provide algorithm list - defaulting to all algorithms")
+  algorithm_list = ['xgboost','rf','cart','lr','oct','qda','gb']
 
 #Define the name of the dataset for saving the results
 #version_folder = "matched_limited_treatments_der_val_update/"
@@ -131,7 +132,7 @@ X_test, y_test = ds.create_dataset_treatment(data_test,
 X_full =  pd.concat([X_train, X_test], axis = 0)
 
 X_full = pd.get_dummies(X_full, prefix_sep='_', drop_first=False)
-X_full.drop(['GENDER_FEMALE','RACE_OTHER'], axis=1, inplace = True)
+X_full.drop(['GENDER_FEMALE','RACE_OTHER','HYPERTENSION'], axis=1, inplace = True)
 X_train = X_full.iloc[0:X_train.shape[0],:]
 X_test = X_full.iloc[X_train.shape[0]:,:]
 
