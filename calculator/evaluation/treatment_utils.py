@@ -538,7 +538,7 @@ def calculate_average_shap(file_name, treatment, outcome,algorithm, top_features
         with open(file_name, 'rb') as file:
              model_file = pickle.load(file)
           
-    model = model_file['model']
+    model = model_file['model_original']
     data = model_file['train']
     data_test = model_file['test']
 

@@ -48,7 +48,8 @@ training_set_name = treatment+train_file
 #%% Prescriptie results
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
 
-metrics_agg = pd.DataFrame(columns = ['data_version','weighted_status','threshold','match_rate','presc_count','average_auc','PE','CPE','pr_low','pr_high'])
+metrics_agg = pd.DataFrame(columns = ['data_version','weighted_status','threshold','match_rate','presc_count','average_auc',
+                                      'PE','CPE','PE_mod','pr_low','pr_high'])
 
 for outcome in prediction_list:
     version_folder = str(treatment)+'/'+str(outcome)+'/'
@@ -177,6 +178,10 @@ for outcome in prediction_list:
                 CPE = n_summary['CalibratedAverageProbability'].mean() - n_summary[outcome].mean()            
                 cpe_list = u.prescription_effectiveness(result, summary, pred_results,algorithm_list,y_train, calibration=True, prediction=outcome)
                 
+                # Use actual outcomes if known, counterfactual probabilities if not
+                n_summary['OutcomeProb'] = n_summary.apply(lambda row: row[outcome] if row['Match'] else row['AverageProbability'], axis=1)
+                PE_mod = n_summary['OutcomeProb'].mean() - n_summary[outcome].mean()
+        
                 # ===================================================================================
                 # Prescription Robustness
                 # We will show the difference in the percent of the population that survives.
@@ -204,53 +209,16 @@ for outcome in prediction_list:
                 print("Match Rate: ", match_rate)
                 print("Average AUC: ", average_auc)
                 print("PE: ", PE)
+                print("PE_mod: ", PE_mod)
                 print("PR Range: ", round(pr_max,3),  " - ", round(pr_min,3))
                 
                 presc_count = sum(summary['Prescribe']==treatment)
                 
                 metrics_agg.loc[len(metrics_agg)] = [data_version, weighted_status, threshold, 
                                                       match_rate, presc_count, average_auc, 
-                                                      PE, CPE, pr_max, pr_min]
+                                                      PE, CPE, PE_mod, pr_max, pr_min]
         
         metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
-        
-#%% 
-version_folder = str(treatment)+'/COMORB_DEATH/'
-save_path = results_path + version_folder + 'summary/'
-    
-match_status = 'matched'
-weighted_status = 'no_weights'
-threshold = 0.05
-
-for data_version in data_list:
-    print(data_version)
-    # data_version = 'train'
-    # detailed_summary = pd.read_csv(save_path+data_version+'_'+match_status+
-    #         '_detailed_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
-            
-    summary = pd.read_csv(save_path+data_version+'_'+match_status+
-            '_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
-            
-    # t = summary.query('Match')
-    # print("Match: ")
-    # print('Probability: %.3f' % t.AverageProbability.mean())
-    # print('Avg. Outcome: %.3f'% t.COMORB_DEATH.mean())
-    
-    # t = summary.query('~Match')
-    # print("No Match: ")
-    # print('Probability: %.3f' % t.AverageProbability.mean())
-    # print('Avg. Outcome: %.3f' % t.COMORB_DEATH.mean())
-    
-    summary['OutcomeProb'] = summary.apply(lambda row: row['COMORB_DEATH'] if row['Match'] else row['AverageProbability'], axis=1)
-    print("Modified PE: ")
-    print('Probability: %.3f' % summary.OutcomeProb.mean())
-    print('Avg. Outcome: %.3f' % summary.COMORB_DEATH.mean())
-
-
-train_bypatient = pd.read_csv(save_path+data_version+'_'+match_status+
-        '_bypatient_allmethods.csv')
-
-train_bypatient.groupby('Algorithm')[['ACEI_ARBS','NO_ACEI_ARBS']].mean()
         
 #%% Mortality by dataset
 
@@ -260,29 +228,3 @@ for data_version in data_list:
                         replace_na = 'NO_'+treatment)
     print(data_version + format(y.mean()))
                                                                                       
-#%% PE Alternative
-summary_match = summary.query('Match')
-
-
-fpr, tpr, thresholds = roc_curve(summary_match['COMORB_DEATH'],  summary_match['AverageProbability'])
-
-roc_table = pd.DataFrame({'threshold':thresholds,
-                          'fpr':fpr, 
-                          'tpr':tpr})
-
-accuracy_scores = []
-for thresh in thresholds:
-    accuracy_scores.append(accuracy_score(summary_match['COMORB_DEATH'], 
-                                         [1 if m > thresh else 0 for m in summary_match['AverageProbability']]))
-
-accuracies = np.array(accuracy_scores)
-max_accuracy = accuracies.max() 
-max_accuracy_threshold =  thresholds[accuracies.argmax()]
-
-t = roc_table.loc[roc_table['tpr'] > 0.9, 'threshold'].iloc[0]
-
-summary['PrescribeProb_Binary'] = summary['AverageProbability'].apply(lambda x: 1 if x > 0.5 else 0)   
-
-print('Probability: %.3f' % summary.AverageProbability.mean())
-print('Binarized Probability: %.3f' % summary.PrescribeProb_Binary.mean())
-print('Avg. Outcome: %.3f' % summary.COMORB_DEATH.mean())
