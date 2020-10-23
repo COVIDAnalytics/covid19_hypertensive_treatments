@@ -49,7 +49,7 @@ training_set_name = treatment+train_file
 algorithm_list = ['rf','cart','oct','xgboost','qda','gb']
 
 metrics_agg = pd.DataFrame(columns = ['data_version','weighted_status','threshold','match_rate','presc_count','average_auc',
-                                      'PE','CPE','PE_mod','pr_low','pr_high'])
+                                      'PE_0','CPE_0','PE','CPE','pr_low','pr_high'])
 
 for outcome in prediction_list:
     version_folder = str(treatment)+'/'+str(outcome)+'/'
@@ -173,14 +173,18 @@ for outcome in prediction_list:
                 # We will show the difference in the percent of the population that survives.
                 # Prescription Effectiveness compares the outcome with the algorithm's suggestion versus what happened in reality
                 # ===================================================================================
-                                
-                n_summary['CalibratedAverageProbability'] = n_summary['AverageProbability']*(n_summary[outcome].mean()/y_train.mean())
-                CPE = n_summary['CalibratedAverageProbability'].mean() - n_summary[outcome].mean()            
-                cpe_list = u.prescription_effectiveness(result, summary, pred_results,algorithm_list,y_train, calibration=True, prediction=outcome)
-                
                 # Use actual outcomes if known, counterfactual probabilities if not
                 n_summary['OutcomeProb'] = n_summary.apply(lambda row: row[outcome] if row['Match'] else row['AverageProbability'], axis=1)
                 PE_mod = n_summary['OutcomeProb'].mean() - n_summary[outcome].mean()
+
+                ## Calculate CPE using original and modified PE                           
+                n_summary['CalibratedAverageProbability'] = (n_summary[outcome].mean()/y_train.mean())*n_summary['AverageProbability']
+                CPE = n_summary['CalibratedAverageProbability'].mean() - n_summary[outcome].mean()            
+                cpe_list = u.prescription_effectiveness(result, summary, pred_results,algorithm_list,y_train, calibration=True, prediction=outcome)
+                
+                n_summary['CalibratedOutcomeProb'] = (n_summary[outcome].mean()/y_train.mean())*n_summary.apply(lambda row: row[outcome] if row['Match'] else row['AverageProbability'], axis=1)
+                CPE_mod = n_summary['CalibratedOutcomeProb'].mean() - n_summary[outcome].mean()            
+                
         
                 # ===================================================================================
                 # Prescription Robustness
@@ -216,7 +220,7 @@ for outcome in prediction_list:
                 
                 metrics_agg.loc[len(metrics_agg)] = [data_version, weighted_status, threshold, 
                                                       match_rate, presc_count, average_auc, 
-                                                      PE, CPE, PE_mod, pr_max, pr_min]
+                                                      PE, CPE, PE_mod, CPE_mod, pr_max, pr_min]
         
         metrics_agg.to_csv(save_path+match_status+'_metrics_summary.csv')
         
@@ -226,5 +230,27 @@ for data_version in data_list:
     X, Z, y = u.load_data(data_path,training_set_name,
                         split=data_version, matched=matched, prediction = outcome,
                         replace_na = 'NO_'+treatment)
-    print(data_version + format(y.mean()))
+    print(data_version)
+    
+    match_status = 'matched'
+    weighted_status = 'no_weights'
+    threshold = 0.05
+    
+    summary = pd.read_csv(save_path+data_version+'_'+match_status+
+            '_bypatient_summary_'+weighted_status+'_t'+str(threshold)+'.csv')
+    
+    summary['OutcomeProb'] = summary.apply(lambda row: row[outcome] if row['Match'] else row['AverageProbability'], axis=1)
+    
+    # t = summary.query('Match')
+    # print("Match: ")
+    # print('Probability: %.3f' % t.AverageProbability.mean())
+    # print('Avg. Outcome: %.3f'% t.COMORB_DEATH.mean())
+    
+    # t = summary.query('~Match')
+    # print("No Match: ")
+    # print('Probability: %.3f' % t.AverageProbability.mean())
+    # print('Avg. Outcome: %.3f' % t.COMORB_DEATH.mean()) 
+    
+    print('Probability: %.3f' % summary.OutcomeProb.mean())
+    print('Avg. Outcome: %.3f' % summary.COMORB_DEATH.mean()) 
                                                                                       

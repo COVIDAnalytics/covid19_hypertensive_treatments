@@ -112,7 +112,9 @@ for algorithm in algorithm_list:
         importance_all.append(imp)
     
 importance_all = pd.concat(importance_all, axis=0, ignore_index = False)
-  
+# Remove SHAP = 0 (from CART)
+importance_all =  importance_all.loc[importance_all['Mean Absolute SHAP Value'].fillna(1)!=0,:]
+
 ft_limit = '5'
 metric = 'Rank'
 # imp_table = importance_all.pivot(index = 'Algorithm', columns = 'Risk Factor', values = metric)

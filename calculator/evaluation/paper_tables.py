@@ -177,234 +177,240 @@ agr.to_latex(buf = save_path+'latex_agreement_table_t'+str(threshold)+'.txt',
                   
 #%% Descriptive analysis: pre- vs. post-matching
 
-# data_mgb = pd.read_csv('../../covid19_treatments_data/'+version+treatment+'_hope_hm_cremona_all_treatments_validation_partners.csv')
-# data_mgb['ACEI_ARBS'] = data_mgb['REGIMEN'].apply(lambda x: 1 if x == treatment else 0)
+data_mgb = pd.read_csv('../../covid19_treatments_data/'+version+treatment+'_hope_hm_cremona_all_treatments_validation_partners.csv')
+data_mgb['ACEI_ARBS'] = data_mgb['REGIMEN'].apply(lambda x: 1 if x == treatment else 0)
 
-# data_pre = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
-# data_pre = data_pre.query('HYPERTENSION == 1')
+data_pre = pd.read_csv('../../covid19_treatments_data/hope_hm_cremona_data_clean_imputed_addl_outcomes.csv')
+data_pre = data_pre.query('HYPERTENSION == 1')
+## replace NA with 0 only for validation data
+data_pre.loc[data_pre['COUNTRY'] != 'Spain',treatment] = data_pre.loc[data_pre['COUNTRY'] != 'Spain',treatment].fillna(0)
+
+data_pre = data_pre.loc[data_pre[treatment].isin([0,1]),:]
+data_pre['REGIMEN'] = data_pre[treatment].apply(lambda x: treatment if x == 1 else 'NO_'+treatment)
+data_pre = pd.concat([data_pre, data_mgb], axis=0, ignore_index = False)
+
+data_pre = pd.get_dummies(data_pre, columns = ['GENDER','RACE'], drop_first = False)
+data_pre.drop(['GENDER_FEMALE','RACE_OTHER'], axis=1, inplace = True)
+data_pre['Version'] = 'Pre-Match'
+
+# data_post0 = pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched.csv')
+data_post_train = pd.read_csv('../../covid19_treatments_data/'+version+treatment+train_file)
+data_post_test = pd.read_csv('../../covid19_treatments_data/'+version+treatment+train_file.replace('train','test'))
+data_post = pd.concat([data_post_train, data_post_test], axis=0)
 # data_pre['REGIMEN'] = data_pre[treatment].apply(lambda x: treatment if x == 1 else 'NO_'+treatment)
-# data_pre = pd.concat([data_pre, data_mgb], axis=0, ignore_index = False)
+data_post = pd.get_dummies(data_post, columns = ['GENDER','RACE'], drop_first = False)
+data_post.drop(['GENDER_FEMALE','RACE_OTHER'], axis=1, inplace = True)
+data_post['Version'] = 'Post-Match'
 
-# data_pre = pd.get_dummies(data_pre, columns = ['GENDER','RACE'], drop_first = True)
-# data_pre['Version'] = 'Pre-Match'
+features = {'categorical':['GENDER_MALE', 'RACE_BLACK', 'RACE_CAUC', 'RACE_LATIN', 'RACE_ORIENTAL',
+        'SAT02_BELOW92',
+        'BLOOD_PRESSURE_ABNORMAL_B', 'DDDIMER_B', 'PCR_B', 'TRANSAMINASES_B',
+        'LDL_B', 
+        'DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY',
+        'RENALINSUF', 'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE',
+        'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE', 'LIVER_DISEASE',
+        'CANCER',
+        'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS',
+        'DEATH','COMORB_DEATH','HF', 'ARF', 'SEPSIS', 'EMBOLIC', 'OUTCOME_VENT'],
+                'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 
+                            'LEUCOCYTES', 'LYMPHOCYTES','HEMOGLOBIN', 'PLATELETS'],
+                'multidrop':[]}
 
-# # data_post0 = pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched.csv')
-# data_post_train = pd.read_csv('../../covid19_treatments_data/'+version+treatment+train_file)
-# data_post_test = pd.read_csv('../../covid19_treatments_data/'+version+treatment+train_file.replace('train','test'))
-# data_post = pd.concat([data_post_train, data_post_test], axis=0)
-# # data_pre['REGIMEN'] = data_pre[treatment].apply(lambda x: treatment if x == 1 else 'NO_'+treatment)
-# data_post = pd.get_dummies(data_post, columns = ['GENDER','RACE'], drop_first = True)
-# data_post['Version'] = 'Post-Match'
+col_order = ['Patient Count', 'AGE','GENDER_MALE', 
+              'RACE_BLACK','RACE_CAUC', 'RACE_LATIN', 'RACE_ORIENTAL', 
+              'MAXTEMPERATURE_ADMISSION', 'CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES', 'HEMOGLOBIN', 'PLATELETS',
+              'SAT02_BELOW92', 'BLOOD_PRESSURE_ABNORMAL_B', 'DDDIMER_B', 'PCR_B', 'TRANSAMINASES_B', 'LDL_B', 
+              'DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY', 'RENALINSUF', 'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE', 'LIVER_DISEASE', 'CANCER', 
+              'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 
+              'DEATH','COMORB_DEATH','HF', 'ARF', 'SEPSIS', 'EMBOLIC', 'OUTCOME_VENT']
 
-# features = {'categorical':['GENDER_MALE', 'RACE_CAUC', 'RACE_LATIN', 'RACE_ORIENTAL', 'RACE_OTHER',
-#        'SAT02_BELOW92',
-#        'BLOOD_PRESSURE_ABNORMAL_B', 'DDDIMER_B', 'PCR_B', 'TRANSAMINASES_B',
-#        'LDL_B', 
-#        'DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY',
-#        'RENALINSUF', 'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE',
-#        'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE', 'LIVER_DISEASE',
-#        'CANCER',
-#        'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS',
-#        'DEATH','COMORB_DEATH','HF', 'ARF', 'SEPSIS', 'EMBOLIC', 'OUTCOME_VENT'],
-#                 'numeric':['AGE','MAXTEMPERATURE_ADMISSION','CREATININE', 'SODIUM', 
-#                            'LEUCOCYTES', 'LYMPHOCYTES','HEMOGLOBIN', 'PLATELETS'],
-#                 'multidrop':[]}
+col_mapping = {'ACEI_ARBS': 'ACE Inhibitors or ARBs',
+      'AF': 'Atrial Fibrillation',
+      'AGE': 'Age',
+      'ANTIBIOTICS': 'Antibiotics',
+      'ANTICOAGULANTS':'Anticoagulants',
+      'ANTIVIRAL':'Antivirals',
+      'ANYCEREBROVASCULARDISEASE':'Cerebrovascular Disease',
+      'ANYHEARTDISEASE':'Heart Disease',
+      'ANYLUNGDISEASE':'Lung Disease',
+      # 'BLOOD_PRESSURE_ABNORMAL_B':'Low systolic blood pressure (<100 mm Hg)',
+      'BLOOD_PRESSURE_ABNORMAL_B':'Low systolic BP',
+      'CANCER':'Cancer',
+      'CLOROQUINE':'Hydroxychloroquine',
+      'CONECTIVEDISEASE':'Connective Tissue Disease',
+      'CREATININE':'Creatinine',
+      # 'DDDIMER_B':'Elevated D-Dimer (>0.5 mg/L)',
+      'DDDIMER_B':'Elevated D-Dimer',
+      'DIABETES':'Diabetes',
+      'DISLIPIDEMIA':'Dislipidemia',
+      'GENDER_MALE':'Gender = Male',
+      'HEMOGLOBIN':'Hemoglobin',
+      'HYPERTENSION':'Hypertension',
+      'INTERFERONOR':'Interferons',
+      # 'LDL_B':'Elevated Lactic Acid Dehydrogenase (>480 U/L)',
+      'LDL_B':'Elevated LDH',
+      'LEUCOCYTES':'White Blood Cell Count',
+      'LIVER_DISEASE':'Liver Disease',
+      'LYMPHOCYTES':'Lymphocytes',
+      'MAXTEMPERATURE_ADMISSION':'Temperature',
+      'OBESITY':'Obesity',
+      # 'PCR_B':'Elevated C-Reactive Protein (>10 mg/L)',
+      'PCR_B':'Elevated CRP',
+      'PLATELETS':'Platelets',
+      'RACE_CAUC':'Race = Caucasian',
+      'RACE_LATIN':'Race = Hispanic',
+      'RACE_ORIENTAL':'Race = Asian',
+      'RACE_OTHER':'Race = Other',
+      'RENALINSUF':'Renal Insufficiency',
+      # 'SAT02_BELOW92':'Low Oxygen Saturation (< 92)',
+      'SAT02_BELOW92':'Low Oxygen Saturation',
+      'SODIUM':'Blood Sodium',
+      'CORTICOSTEROIDS':'Corticosteroids',
+      'TOCILIZUMAB':'Tocilizumab',
+      # 'TRANSAMINASES_B':'Elevated Transaminase (>40 U/L)',
+      'TRANSAMINASES_B':'Elevated Transaminase',
+      'VIH':'HIV',
+      'HF':'Heart Failure',
+      'ARF':'Acute Renal Failure',
+      'SEPSIS':'Sepsis',
+      'EMBOLIC':'Embolic Event',
+      'OUTCOME_VENT':'Mechanical Ventilation',
+      'COMORB_DEATH':'Mortality/Morbidity',
+      'DEATH':'Death'}
 
-# col_order = ['Patient Count', 'AGE','GENDER_MALE', 
-#              'RACE_CAUC', 'RACE_LATIN', 'RACE_ORIENTAL', 'RACE_OTHER', 
-#              'MAXTEMPERATURE_ADMISSION', 'CREATININE', 'SODIUM', 'LEUCOCYTES', 'LYMPHOCYTES', 'HEMOGLOBIN', 'PLATELETS',
-#              'SAT02_BELOW92', 'BLOOD_PRESSURE_ABNORMAL_B', 'DDDIMER_B', 'PCR_B', 'TRANSAMINASES_B', 'LDL_B', 
-#              'DIABETES', 'HYPERTENSION', 'DISLIPIDEMIA', 'OBESITY', 'RENALINSUF', 'ANYLUNGDISEASE', 'AF', 'VIH', 'ANYHEARTDISEASE', 'ANYCEREBROVASCULARDISEASE', 'CONECTIVEDISEASE', 'LIVER_DISEASE', 'CANCER', 
-#              'CORTICOSTEROIDS', 'INTERFERONOR', 'TOCILIZUMAB', 'ANTIBIOTICS', 
-#              'DEATH','COMORB_DEATH','HF', 'ARF', 'SEPSIS', 'EMBOLIC', 'OUTCOME_VENT']
-
-# col_mapping = {'ACEI_ARBS': 'ACE Inhibitors or ARBs',
-#      'AF': 'Atrial Fibrillation',
-#      'AGE': 'Age',
-#      'ANTIBIOTICS': 'Antibiotics',
-#      'ANTICOAGULANTS':'Anticoagulants',
-#      'ANTIVIRAL':'Antivirals',
-#      'ANYCEREBROVASCULARDISEASE':'Cerebrovascular Disease',
-#      'ANYHEARTDISEASE':'Heart Disease',
-#      'ANYLUNGDISEASE':'Lung Disease',
-#      # 'BLOOD_PRESSURE_ABNORMAL_B':'Low systolic blood pressure (<100 mm Hg)',
-#      'BLOOD_PRESSURE_ABNORMAL_B':'Low systolic BP',
-#      'CANCER':'Cancer',
-#      'CLOROQUINE':'Hydroxychloroquine',
-#      'CONECTIVEDISEASE':'Connective Tissue Disease',
-#      'CREATININE':'Creatinine',
-#      # 'DDDIMER_B':'Elevated D-Dimer (>0.5 mg/L)',
-#      'DDDIMER_B':'Elevated D-Dimer',
-#      'DIABETES':'Diabetes',
-#      'DISLIPIDEMIA':'Dislipidemia',
-#      'GENDER_MALE':'Gender = Male',
-#      'HEMOGLOBIN':'Hemoglobin',
-#      'HYPERTENSION':'Hypertension',
-#      'INTERFERONOR':'Interferons',
-#      # 'LDL_B':'Elevated Lactic Acid Dehydrogenase (>480 U/L)',
-#      'LDL_B':'Elevated LDH',
-#      'LEUCOCYTES':'White Blood Cell Count',
-#      'LIVER_DISEASE':'Liver Disease',
-#      'LYMPHOCYTES':'Lymphocytes',
-#      'MAXTEMPERATURE_ADMISSION':'Temperature',
-#      'OBESITY':'Obesity',
-#      # 'PCR_B':'Elevated C-Reactive Protein (>10 mg/L)',
-#      'PCR_B':'Elevated CRP',
-#      'PLATELETS':'Platelets',
-#      'RACE_CAUC':'Race = Caucasian',
-#      'RACE_LATIN':'Race = Hispanic',
-#      'RACE_ORIENTAL':'Race = Asian',
-#      'RACE_OTHER':'Race = Other',
-#      'RENALINSUF':'Renal Insufficiency',
-#      # 'SAT02_BELOW92':'Low Oxygen Saturation (< 92)',
-#      'SAT02_BELOW92':'Low Oxygen Saturation',
-#      'SODIUM':'Blood Sodium',
-#      'CORTICOSTEROIDS':'Corticosteroids',
-#      'TOCILIZUMAB':'Tocilizumab',
-#      # 'TRANSAMINASES_B':'Elevated Transaminase (>40 U/L)',
-#      'TRANSAMINASES_B':'Elevated Transaminase',
-#      'VIH':'HIV',
-#      'HF':'Heart Failure',
-#      'ARF':'Acute Renal Failure',
-#      'SEPSIS':'Sepsis',
-#      'EMBOLIC':'Embolic Event',
-#      'OUTCOME_VENT':'Mechanical Ventilation',
-#      'COMORB_DEATH':'Mortality/Morbidity',
-#      'DEATH':'Death'}
-
-# columns = pd.MultiIndex.from_product([['Pre-Match','Post-Match'],treatment_list])
-# index = col_order
+columns = pd.MultiIndex.from_product([['Pre-Match','Post-Match'],treatment_list])
+index = col_order
 
 
-# #%% Create pre/post data comparison
-# # df = pd.concat([data_pre[col_order], data_post[col_order]], axis=0)
-# df = data_pre.query('COUNTRY == "Spain"') ## restrict to data in derivation cohort
+#%% Create pre/post data comparison
+# df = pd.concat([data_pre[col_order], data_post[col_order]], axis=0)
+df = data_pre.query('COUNTRY == "Spain"') ## restrict to data in derivation cohort
 
-# desc_list = []
-# for p in treatment_list:
-#     df_sub = df.loc[df['REGIMEN']==p,:]
-#     desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
-#     desc = desc.drop('Percent Missing', axis=1)
-#     desc.loc['Treatment'] = p
-#     # desc = desc.add_suffix('_'+p)
-#     desc = desc.rename({'Output':p}, axis=1) 
-#     desc_list.append(desc)
-# desc_pre = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
-# # desc_pre.rename({'index':'Feature'}, inplace = True, axis = 1)
-
-
-# df = data_post
-# desc_list = []
-# for p in treatment_list:
-#     df_sub = df.loc[df['REGIMEN']==p,:]
-#     desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
-#     desc = desc.drop('Percent Missing', axis=1)
-#     desc.loc['Treatment'] = p
-#     # desc = desc.add_suffix('_'+p)
-#     desc = desc.rename({'Output':p}, axis=1) 
-#     desc_list.append(desc)
-# desc_post = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
-# # desc_post.rename({'index':'Feature'}, inplace = True, axis = 1)
+desc_list = []
+for p in treatment_list:
+    df_sub = df.loc[df['REGIMEN']==p,:]
+    desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
+    desc = desc.drop('Percent Missing', axis=1)
+    desc.loc['Treatment'] = p
+    # desc = desc.add_suffix('_'+p)
+    desc = desc.rename({'Output':p}, axis=1) 
+    desc_list.append(desc)
+desc_pre = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
+# desc_pre.rename({'index':'Feature'}, inplace = True, axis = 1)
 
 
-# res = pd.DataFrame(columns = columns, 
-#              index = index)
+df = data_post
+desc_list = []
+for p in treatment_list:
+    df_sub = df.loc[df['REGIMEN']==p,:]
+    desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
+    desc = desc.drop('Percent Missing', axis=1)
+    desc.loc['Treatment'] = p
+    # desc = desc.add_suffix('_'+p)
+    desc = desc.rename({'Output':p}, axis=1) 
+    desc_list.append(desc)
+desc_post = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
+# desc_post.rename({'index':'Feature'}, inplace = True, axis = 1)
 
-# res['Pre-Match'] = desc_pre
-# res['Post-Match'] = desc_post
 
-# res = res.rename(index = col_mapping, columns =  {'ACEI_ARBS':'ACEI/ARBs','NO_ACEI_ARBS':'No ACEI/ARBs'})
-# res.index.name = 'Feature'
+res = pd.DataFrame(columns = columns, 
+              index = index)
 
-# res.to_latex(buf = save_path+'latex_descriptive_prematch.txt', 
-#              column_format = 'l'+'c'*res.shape[1],
-#              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
-#              index_names = False)
+res['Pre-Match'] = desc_pre
+res['Post-Match'] = desc_post
 
-# #%% Break down pre-treatment data by site
+res = res.rename(index = col_mapping, columns =  {'ACEI_ARBS':'ACEI/ARBs','NO_ACEI_ARBS':'No ACEI/ARBs'})
+res.index.name = 'Feature'
 
-# # deriv = data_pre.query('COUNTRY == "Spain"')
-# # val = data_pre.query('COUNTRY != "Spain"')
+res.to_latex(buf = save_path+'latex_descriptive_prematch.txt', 
+              column_format = 'l'+'c'*res.shape[1],
+              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
+              index_names = False)
 
-# df = data_pre
-# df.SOURCE_COUNTRY = df.SOURCE_COUNTRY.replace({'Hope-Italy':'Hope-Other',
-#                                                'Hope-Ecuador':'Hope-Other',
-#                                                'Hope-Germany':'Hope-Other',
-#                                                'USA':'MGB-USA'})
-# ## Derivation Cohort
-# desc_list = []
-# for p in ['Hope-Spain','HM-Spain']:
-#     df_sub = df.loc[df['SOURCE_COUNTRY']==p,:]
-#     desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
-#     desc = desc.drop('Percent Missing', axis=1)
-#     desc.loc['Treatment'] = p
-#     # desc = desc.add_suffix('_'+p)
-#     desc = desc.rename({'Output':p}, axis=1) 
-#     desc_list.append(desc)
-# desc_country = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
-# # desc_pre.rename({'index':'Feature'}, inplace = True, axis = 1)
+#%% Break down pre-treatment data by site
 
-# desc_country = desc_country.rename(index = col_mapping)
-
-# desc_country.to_latex(buf = save_path+'latex_descriptive_bycountry_derivation.txt', 
-#              column_format = 'l'+'c'*desc_country.shape[1],
-#              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
-#              index_names = False)
-
-# ## Repeat for validation cohort
-# desc_list = []
-# for p in ['Cremona-Italy','Hope-Other','MGB-USA']:
-#     df_sub = df.loc[df['SOURCE_COUNTRY']==p,:]
-#     desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
-#     desc = desc.drop('Percent Missing', axis=1)
-#     desc.loc['Treatment'] = p
-#     # desc = desc.add_suffix('_'+p)
-#     desc = desc.rename({'Output':p}, axis=1) 
-#     desc_list.append(desc)
-# desc_country = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
-# # desc_pre.rename({'index':'Feature'}, inplace = True, axis = 1)
-
-# desc_country = desc_country.rename(index = col_mapping)
-
-# desc_country.to_latex(buf = save_path+'latex_descriptive_bycountry_validation.txt', 
-#              column_format = 'l'+'c'*desc_country.shape[1],
-#              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
-#              index_names = False)
-
-# #%% Compare validation and derivation populations by ACE/ARBs
-
-# deriv = data_post
+# deriv = data_pre.query('COUNTRY == "Spain"')
 # val = data_pre.query('COUNTRY != "Spain"')
 
-# # df['Split'] = df['COUNTRY'].apply(lambda x: 'Derivation' if x == "Spain" else 'Validation')
+df = data_pre
+df.SOURCE_COUNTRY = df.SOURCE_COUNTRY.replace({'Hope-Italy':'Hope-Other',
+                                                'Hope-Ecuador':'Hope-Other',
+                                                'Hope-Germany':'Hope-Other',
+                                                'USA':'MGB-USA'})
+## Derivation Cohort
+desc_list = []
+for p in ['Hope-Spain','HM-Spain']:
+    df_sub = df.loc[df['SOURCE_COUNTRY']==p,:]
+    desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
+    desc = desc.drop('Percent Missing', axis=1)
+    desc.loc['Treatment'] = p
+    # desc = desc.add_suffix('_'+p)
+    desc = desc.rename({'Output':p}, axis=1) 
+    desc_list.append(desc)
+desc_country = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
+# desc_pre.rename({'index':'Feature'}, inplace = True, axis = 1)
 
-# res = pd.DataFrame(columns = pd.MultiIndex.from_product([['Derivation','Validation'],treatment_list]), 
-#              index = index)
+desc_country = desc_country.rename(index = col_mapping)
 
-# for split in ['Derivation','Validation']:
-#     df = deriv if split == 'Derivation' else val
-#     desc_list = []
-#     for p in treatment_list:
-#         df_sub = df.loc[(df['REGIMEN']==p),:]
-#         desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
-#         desc = desc.drop('Percent Missing', axis=1)
-#         desc.loc['Treatment'] = p
-#         # desc = desc.add_suffix('_'+p)
-#         desc = desc.rename({'Output':p}, axis=1) 
-#         desc_list.append(desc)
-#     desc_table = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
-#     # desc_post.rename({'index':'Feature'}, inplace = True, axis = 1)
-#     res[split] = desc_table
+desc_country.to_latex(buf = save_path+'latex_descriptive_bycountry_derivation.txt', 
+              column_format = 'l'+'c'*desc_country.shape[1],
+              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
+              index_names = False)
+
+## Repeat for validation cohort
+desc_list = []
+for p in ['Cremona-Italy','Hope-Other','MGB-USA']:
+    df_sub = df.loc[df['SOURCE_COUNTRY']==p,:]
+    desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
+    desc = desc.drop('Percent Missing', axis=1)
+    desc.loc['Treatment'] = p
+    # desc = desc.add_suffix('_'+p)
+    desc = desc.rename({'Output':p}, axis=1) 
+    desc_list.append(desc)
+desc_country = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
+# desc_pre.rename({'index':'Feature'}, inplace = True, axis = 1)
+
+desc_country = desc_country.rename(index = col_mapping)
+
+desc_country.to_latex(buf = save_path+'latex_descriptive_bycountry_validation.txt', 
+              column_format = 'l'+'c'*desc_country.shape[1],
+              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
+              index_names = False)
+
+#%% Compare validation and derivation populations by ACE/ARBs
+
+deriv = data_pre.query('COUNTRY == "Spain"')
+val = data_pre.query('COUNTRY != "Spain"')
+
+# df['Split'] = df['COUNTRY'].apply(lambda x: 'Derivation' if x == "Spain" else 'Validation')
+
+res = pd.DataFrame(columns = pd.MultiIndex.from_product([['Derivation','Validation'],treatment_list]), 
+              index = index)
+
+for split in ['Derivation','Validation']:
+    df = deriv if split == 'Derivation' else val
+    desc_list = []
+    for p in treatment_list:
+        df_sub = df.loc[(df['REGIMEN']==p),:]
+        desc = d.descriptive_table_treatments(df_sub, features, short_version = True)
+        desc = desc.drop('Percent Missing', axis=1)
+        desc.loc['Treatment'] = p
+        # desc = desc.add_suffix('_'+p)
+        desc = desc.rename({'Output':p}, axis=1) 
+        desc_list.append(desc)
+    desc_table = pd.concat(desc_list, axis=1).reindex(col_order, axis = 0)
+    # desc_post.rename({'index':'Feature'}, inplace = True, axis = 1)
+    res[split] = desc_table
 
 
-# res = res.rename(index = col_mapping, columns =  {'ACEI_ARBS':'ACEI/ARBs','NO_ACEI_ARBS':'No ACEI/ARBs'})
-# res.index.name = 'Feature'
+res = res.rename(index = col_mapping, columns =  {'ACEI_ARBS':'ACEI/ARBs','NO_ACEI_ARBS':'No ACEI/ARBs'})
+res.index.name = 'Feature'
 
 
-# res.to_latex(buf = save_path+'latex_descriptive_derivation_validation.txt', 
-#              column_format = 'l'+'c'*res.shape[1],
-#              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
-#              index_names = False)
+res.to_latex(buf = save_path+'latex_descriptive_derivation_validation.txt', 
+              column_format = 'l'+'c'*res.shape[1],
+              float_format="%.3f", bold_rows = False, multicolumn = True, multicolumn_format = 'c',
+              index_names = False)
 
 
 #%% Save % changes 
@@ -446,14 +452,14 @@ def convert_to_latex(command_name, val):
 
 shortcuts = list()
 
-PE = np.round(metric_summ[metric_summ['data_version']=='test']['PE'].values[0]*(-1),3)
+PE = np.round(metric_summ[metric_summ['data_version']=='validation_all']['PE'].values[0]*(-1),3)
 shortcuts.append(convert_to_latex('prescriptioneffectivenessAbstract', PE))
 
 shortcuts.append(convert_to_latex('improvementThreshold', threshold))
 
-validation_size = len(pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_all_treatments_validation_all.csv'))
-testing_size = len(pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched_all_treatments_test.csv'))
-training_size = len(pd.read_csv('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/'+treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'))
+validation_size = len(pd.read_csv('../../covid19_treatments_data/'+version+treatment+'_hope_hm_cremona_all_treatments_validation_all.csv'))
+testing_size = len(pd.read_csv('../../covid19_treatments_data/'+version+treatment+'_hope_hm_cremona_matched_all_treatments_test.csv'))
+training_size = len(pd.read_csv('../../covid19_treatments_data/'+version+treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'))
 
 
 TrainProp = metric_summ[metric_summ['data_version']=='train']['presc_count'].values[0]/training_size
@@ -465,8 +471,11 @@ shortcuts.append(convert_to_latex('proportionTestingPrescription', TestProp))
 ValidationProp = metric_summ[metric_summ['data_version']=='validation_all']['presc_count'].values[0]/validation_size
 shortcuts.append(convert_to_latex('proportionValidationPrescription', ValidationProp))
 
-minimumPE = np.round(metric_summ[metric_summ['data_version']=='validation_all']['PE'].values[0]*(-1),3)
-shortcuts.append(convert_to_latex('minimumPE', minimumPE))
+testPE = np.round(metric_summ[metric_summ['data_version']=='test']['PE'].values[0]*(-1),3)
+shortcuts.append(convert_to_latex('testPE', testPE))
+
+validationPE = np.round(metric_summ[metric_summ['data_version']=='validation_all']['PE'].values[0]*(-1),3)
+shortcuts.append(convert_to_latex('validationPE', validationPE))
 
 minimumPRTest = np.round(metric_summ[metric_summ['data_version']=='test']['pr_low'].values[0]*(-1),3)
 shortcuts.append(convert_to_latex('minimumPRTest', minimumPRTest))

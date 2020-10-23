@@ -242,7 +242,7 @@ for i, (k, ft) in enumerate(plot_features.items()):
 
 
 handles, labels = axs[0].get_legend_handles_labels()
-fig.legend(handles, ['Given', 'Prescribed'],loc = 'lower right', borderaxespad=0.1)
+fig.legend(handles, ['Given', 'Recommended'],loc = 'lower right', borderaxespad=0.1)
 fig.tight_layout(h_pad = 2)
 
 fig.savefig(save_path+data_version+'_t'+str(threshold)+'_feature_plot.pdf', bbox_inches='tight')
