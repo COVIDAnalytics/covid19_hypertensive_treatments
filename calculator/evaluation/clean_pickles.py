@@ -27,11 +27,13 @@ website_path = '../../website/assets/treatment_calculators/'+outcome
 
 training_set_name = treatment+'_hope_hm_cremona_matched_all_treatments_train.csv'
 
-X, Z, y = u.load_data('../../covid19_treatments_data/matched_single_treatments_der_val_addl_outcomes/',
+X, Z, y = u.load_data('../../covid19_treatments_data/matched_single_treatments_hypertension/',
                         training_set_name, split='train', matched=True, prediction = outcome,
                         other_tx = False, med_hx = False)
 
-load_file_path_yes = os.path.join(path,outcome,'lr','ACEI_ARBS_matched_comorb_death_seed1')
+X.drop('HYPERTENSION', axis = 1, inplace = True)
+
+load_file_path_yes = os.path.join(path,outcome,'cart','ACEI_ARBS_matched_comorb_death_seed1')
 
 with open(load_file_path_yes, 'rb') as file:
     load_file_yes = pickle.load(file)
@@ -73,7 +75,7 @@ multidrop = [
     {'name': 'Comorbidities',
       'index': [],
       'vals': ['DIABETES',
-         'HYPERTENSION',
+         # 'HYPERTENSION',
          'DISLIPIDEMIA',
          'OBESITY',
          'RENALINSUF',
@@ -99,11 +101,11 @@ multidrop = [
     {'name': 'Race',
      'index': [],
      'vals': [
-         # 'RACE_BLACK',
-              'RACE_CAUC',
+           'RACE_BLACK',
+           'RACE_CAUC',
            'RACE_LATIN',
-           'RACE_ORIENTAL',
-           'RACE_OTHER'],
+           'RACE_ORIENTAL'],
+           # 'RACE_OTHER'],
      'explanation': ['Select patient race.']}]
 
 numeric_cols = ['AGE',
@@ -308,7 +310,7 @@ with open(os.path.join(website_path,treatment+'.pkl'), 'rb') as handle:
 
 algorithm_list = model_file['treatment-models'].keys() #exclude OCT
 
-X_small = X
+X_small = pd.read_csv('example_X.csv')
 
 probs_all = pd.DataFrame(index = X_small.index, columns = algorithm_list)
 for alg in algorithm_list:
@@ -316,6 +318,7 @@ for alg in algorithm_list:
     probs = m.predict_proba(X_small)[:,1]
     probs_all[alg] = probs
     
-# X_small.to_csv('example_X.csv',index = False)
-# probs_all.to_csv('example_probs.csv',index = False)
+X_small = X.iloc[100:120,:]
+X_small.to_csv('example_X.csv',index = False)
+probs_all.to_csv('example_probs.csv',index = False)
     
