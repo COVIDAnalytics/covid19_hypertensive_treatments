@@ -216,7 +216,10 @@ def descriptive_table_treatments(data, features, short_version = False, digits =
     
     summary_categoric = np.transpose(data[cols_categoric].describe())
     summary_categoric['Type'] = 'Categoric'
-    summary_categoric['output'] = round(summary_categoric['count']*summary_categoric['mean']).map(str) + " (" + round(summary_categoric['mean']*100,digits).map(str) + "%)"
+    print("NA Categoricals: ")
+    print(summary_categoric.loc[summary_categoric['mean'].isna(),:])
+    summary_categoric['mean'] = summary_categoric['mean'].replace({np.nan:0})
+    summary_categoric['output'] = round(summary_categoric['count']*summary_categoric['mean'],0).astype('int').map(str) + " (" + round(summary_categoric['mean']*100,digits).map(str) + "%)"
     
     summary_full = summary_numeric.append(summary_categoric)
     summary_full['Missing_Pct'] = round((1 - summary_full['count']/data.shape[0])*100,digits).map(str)+'%'

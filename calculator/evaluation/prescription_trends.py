@@ -98,8 +98,6 @@ X_test, Z_test, y_test = u.load_data(data_path,training_set_name,
                     replace_na = 'NO_'+treatment)
 
 
-#%%
-#We would like to see how the treatments get distributed
 X['Z'] = Z     
 X['Z_presc'] = Z_presc
 X['Y'] = y
@@ -109,6 +107,12 @@ X['Y_presc'] = Y_presc
 X['Z_bin'] = Z.replace({treatment:1, 'NO_'+treatment: 0})
 X['Z_presc_bin'] = Z_presc.replace({treatment:1, 'NO_'+treatment: 0})
 
+bins= [0,40,55,70,110]
+X['AgeGroup'] = pd.cut(X['AGE'], bins=bins,right=False)
+bins= [0,0.8,2]
+X['CreatinineGroups'] = pd.cut(X['CREATININE'], bins=bins,right=False)
+
+#%% We would like to see how the treatments get distributed
 cross_treatments = X[['Z_presc', 'Z']].groupby(['Z_presc', 'Z']).size().to_frame('size').reset_index()
 cross_treatments = cross_treatments.pivot(index='Z_presc', columns='Z', values='size')
 
@@ -119,10 +123,6 @@ cross_treatments_norm.to_csv(save_path+data_version+'_'+match_status+'_'+weighte
 #%%
 #Plot by age the mortality rate
 # data to plot
-bins= [0,40,55,70,110]
-X['AgeGroup'] = pd.cut(X['AGE'], bins=bins,right=False)
-bins= [0,0.8,2]
-X['CreatinineGroups'] = pd.cut(X['CREATININE'], bins=bins,right=False)
 
 def plot_byfeature(ft, file_name):
     age_table = X.groupby(ft)[['Y','Y_presc']].mean()
@@ -139,7 +139,7 @@ def plot_byfeature(ft, file_name):
     plt.title('Treatment Frequency by '+ft)
     plt.savefig(save_path+data_version+'_'+match_status+'_'+weighted_status+'_t'+str(threshold)+'_'+file_name+'_treatfreq.png')
     
-    
+
 plot_byfeature('AgeGroup','plotAgeGroup')
 plot_byfeature('GENDER_MALE','plotGender')
 plot_byfeature('CreatinineGroups','plotCreatinine')
@@ -215,6 +215,7 @@ for i, (k, ft) in enumerate(plot_features.items()):
     print(ft)
     
     tbl_z = X.groupby(k)[['Z_bin','Z_presc_bin']].mean()
+    tbl_z.rename(index={1:'Yes',0:'No'}, inplace = True)
     tbl_z.index.name = ft
     tbl_z.plot(ax = axs[idx], kind = 'bar', rot=0, legend = False, color =['#003087','#E87722'])
     
@@ -242,8 +243,11 @@ for i, (k, ft) in enumerate(plot_features.items()):
 
 
 handles, labels = axs[0].get_legend_handles_labels()
-fig.legend(handles, ['Given', 'Recommended'],loc = 'lower right', borderaxespad=0.1)
-fig.tight_layout(h_pad = 2)
+fig.legend(handles, ['Observed', 'Recommended'],
+           # bbox_to_anchor=(1,0), 
+           loc = 'lower right', borderaxespad=0.1)
+fig.tight_layout()
+fig.subplots_adjust(bottom = 0.06)
 
 fig.savefig(save_path+data_version+'_t'+str(threshold)+'_feature_plot.pdf', bbox_inches='tight')
  

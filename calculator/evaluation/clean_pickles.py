@@ -69,7 +69,7 @@ categoric = [{'name': 'GENDER_MALE',
               'index': 1,
               'vals': [0.0, 1.0],
               'default': 0.0,
-              'explanation': 'Select if Gender is male'}]
+              'explanation': 'Select patient gender'}]
     
 multidrop = [
     {'name': 'Comorbidities',
@@ -87,7 +87,7 @@ multidrop = [
          'CONECTIVEDISEASE',
          'LIVER_DISEASE',
          'CANCER'],
-      'explanation': ['Select the existing chronic diseases or conditions.']},
+      'explanation': ['Select existing chronic diseases or conditions']},
     # {'name': 'Treatments',
     #  'index': [],
     #  'vals': ['CLOROQUINE',
@@ -106,7 +106,7 @@ multidrop = [
            'RACE_LATIN',
            'RACE_ORIENTAL'],
            # 'RACE_OTHER'],
-     'explanation': ['Select patient race.']}]
+     'explanation': ['Select patient race']}]
 
 numeric_cols = ['AGE',
     'MAXTEMPERATURE_ADMISSION',
@@ -166,14 +166,31 @@ def get_feature_names():
 
 __, bounds_dict = ds.filter_outliers(X[numeric_cols], filter_lb = 0.0, filter_ub = 100.0)
 
+
+numeric_units = {'MAXTEMPERATURE_ADMISSION':'C',
+                 'AGE':'yrs',
+    'CREATININE':'mg/dL',
+    'SODIUM':'mmol/L',
+    'LEUCOCYTES':'cells/muL',
+    'LYMPHOCYTES':'cells/muL',
+    'HEMOGLOBIN':'g/dL',
+    'PLATELETS':'cells/muL'}
+
 numeric = []
 for col in numeric_cols:
+    if col == 'MAXTEMPERATURE_ADMISSION':
+        col_name = 'Temperature'
+    elif col == 'LEUCOCYTES':
+        col_name = 'WBC Count'
+    else: 
+        col_name = col.capitalize()
     numeric.append({'name':col,
      'index': list(X.columns).index(col),
      'min_val': bounds_dict[col]['min_val'],
      'max_val': bounds_dict[col]['max_val'],
      'default': bounds_dict[col]['default'],
-     'explanation': 'Enter value for '+col.lower()})
+     'units': numeric_units[col],
+     'explanation': 'Enter value for '+col_name})
 
 ## Find indices for categorical
 for i in range(0,len(categoric)):
