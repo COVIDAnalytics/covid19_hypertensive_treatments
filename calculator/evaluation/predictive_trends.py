@@ -160,29 +160,40 @@ from sklearn.metrics import auc
 
 from matplotlib import pyplot
 
-data_version = 'validation_all'
 
-version_folder = str(main_treatment)+'/'+str(outcome)+'/'
-save_path = results_path + version_folder + 'summary/'
-result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+res_all = pd.DataFrame(index = ['train','test','validation_all'],
+                       columns = ['yes_range', 'no_range'])
 
-# Prediction range
-result_grouped = result.groupby('ID').agg(
-    yes_min=('ACEI_ARBS','min'),
-    yes_max=('ACEI_ARBS','max'),
-    no_min=('NO_ACEI_ARBS','min'),
-    no_max=('NO_ACEI_ARBS','max'))
+for data_version in ['train','test','validation_all']:
 
-result_grouped['yes_range'] = result_grouped['yes_max'] - result_grouped['yes_min']
-result_grouped['no_range'] = result_grouped['no_max'] - result_grouped['no_min']
-result_grouped[['yes_range','no_range']].describe()
+    version_folder = str(main_treatment)+'/'+str(outcome)+'/'
+    save_path = results_path + version_folder + 'summary/'
+    result = pd.read_csv(save_path+data_version+'_'+match_status+'_bypatient_allmethods.csv')
+    
+    # Prediction range
+    result_grouped = result.groupby('ID').agg(
+        yes_min=('ACEI_ARBS','min'),
+        yes_max=('ACEI_ARBS','max'),
+        yes_sd=('ACEI_ARBS','std'),
+        no_min=('NO_ACEI_ARBS','min'),
+        no_max=('NO_ACEI_ARBS','max'),
+        no_sd=('NO_ACEI_ARBS','std'))
+    
+    # result_grouped['yes_range'] = result_grouped['yes_max'] - result_grouped['yes_min']
+    # result_grouped['no_range'] = result_grouped['no_max'] - result_grouped['no_min']
+    result_grouped['yes_range'] = result_grouped['yes_sd']
+    result_grouped['no_range'] = result_grouped['no_sd']
 
-
+    s = result_grouped[['yes_range','no_range']].describe()
+    res_all.loc[data_version,:] = ["%.3f (%.3f - %.3f)" % (s['yes_range'].loc['50%'],  s['yes_range'].loc['25%'],  s['yes_range'].loc['75%']),
+           "%.3f (%.3f - %.3f)" % (s['no_range'].loc['50%'],  s['no_range'].loc['25%'],  s['no_range'].loc['75%'])]
+        
 #%% 
 
 
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import auc
+from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot
 
 weighted_status = 'no_weights'
@@ -196,8 +207,9 @@ pred_t = summary[summary['Match']==True]['AverageProbability']
 no_skill = sum(y_t) / len(y_t)
 pyplot.plot([0, 1], [no_skill, no_skill], linestyle='--', label='No Skill')
 
-precision, recall, _ = precision_recall_curve(y_t, pred_t)
+precision, recall, threshold = precision_recall_curve(y_t, pred_t)
 pr_auc = auc(recall, precision)
+
 pyplot.plot(recall, precision, marker='.', label='Recommended Treatment (%.3f)' % pr_auc)
 
 pyplot.xlabel('Recall')
@@ -207,6 +219,15 @@ pyplot.title('Precision-Recall Curve')
 pyplot.legend()
 # show the plot
 pyplot.show()
+
+#%%
+
+t = .9
+tn, fp, fn, tp = confusion_matrix(y_true = y_t, y_pred = pred_t > t).ravel()
+pr = tp/(tp+fp)
+r = tp/(tp+fn)
+print("Precision: %.3f" % pr)
+print("Recall: %.3f" % r)
 
 #%% By algorithm
 
