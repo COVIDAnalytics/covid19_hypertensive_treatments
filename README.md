@@ -1,4 +1,4 @@
-# COVID-19 risk calculator
+# Personalized Prescriptions of ACEI/ARBs for COVID-19 Patients
 
 
 ## Hospital data
