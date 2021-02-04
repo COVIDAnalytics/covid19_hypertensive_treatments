@@ -1,12 +1,3 @@
 # Personalized Prescriptions of ACEI/ARBs for COVID-19 Patients
 
-
-## Hospital data
-Hospital data is in folder `data/` which contains symlinks to other subfolders.
-
-### Cremona
-Cremona data is in the folder `../../covid19_cremona/data` which is symlinked to `data/cremona`.
-
-### Spain
-Spain data is in the folder `../../covid19_hmfoundation/` which is symlinked to `data/spain`.
-
+The COVID-19 pandemic has prompted aninternational effort to develop and repurpose medica-tions and procedures to effectively combat the disease.Several  groups  have  focused  on  the  potential  treat-ment utility of angiotensin-converting–enzyme inhibitors(ACEIs) and angiotensin-receptor blockers (ARBs) forhypertensive COVID-19 patients, with inconclusive ev-idence  thus  far.  We  couple  electronic  medical  record(EMR) and registry data of 3,643 patients from Spain,Italy, Germany, Ecuador, and the US with a machinelearning framework to personalize the prescription ofACEIs and ARBs to hypertensive COVID-19 patients.Our  approach  leverages  clinical  and  demographic  in-formation  to  identify  hospitalized  individuals  whoseprobability of mortality or morbidity can decrease byprescribing this class of drugs. In particular, the algo-rithm  proposes  increasing  ACEI/ARBs  prescriptionsfor patients with cardiovascular disease and decreasingprescriptions for those with low oxygen saturation atadmission. We show that personalized recommendationscan improve patient outcomes by 1.0% compared to thestandard of care when applied to external populations.We develop an interactive interface for our algorithm,providing physicians with an actionable tool to easily as-sess treatment alternatives and inform clinical decisions.This work offers the first personalized recommendationsystem to accurately evaluate the efficacy and risks ofprescribing ACEIs and ARBs to hypertensive COVID-19patients.
